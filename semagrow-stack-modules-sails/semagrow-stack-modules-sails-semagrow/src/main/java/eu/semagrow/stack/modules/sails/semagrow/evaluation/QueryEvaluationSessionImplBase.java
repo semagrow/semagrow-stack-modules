@@ -2,6 +2,7 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 
 import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
+import eu.semagrow.stack.modules.api.evaluation.SessionId;
 import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.IterationWrapper;
 import org.openrdf.query.BindingSet;
@@ -12,6 +13,14 @@ import org.openrdf.query.algebra.TupleExpr;
  * Created by angel on 6/12/14.
  */
 public abstract class QueryEvaluationSessionImplBase implements QueryEvaluationSession {
+
+    private SessionUUID id;
+
+    public QueryEvaluationSessionImplBase() {
+        this.id = SessionUUID.createUniqueId();
+    }
+
+    public SessionId getSessionId() { return id; }
 
     public EvaluationStrategy getEvaluationStrategy() {
         EvaluationStrategy actualStrategy = getEvaluationStrategyInternal();
