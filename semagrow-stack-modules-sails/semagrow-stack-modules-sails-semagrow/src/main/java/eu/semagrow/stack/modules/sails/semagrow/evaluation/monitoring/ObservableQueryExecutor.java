@@ -1,8 +1,8 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring;
 
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.ObservingIteration;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.QueryExecutorWrapper;
 import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.Iteration;
 import info.aduna.iteration.Iterations;
@@ -31,7 +31,7 @@ public class ObservableQueryExecutor extends QueryExecutorWrapper {
             throws QueryEvaluationException {
 
         QueryMetadata metadata = createMetadata(endpoint, expr, bindings.getBindingNames());
-        return observeIteration(metadata, super.evaluate(endpoint, expr, bindings));
+        return observe(metadata, super.evaluate(endpoint, expr, bindings));
     }
 
     @Override
@@ -46,11 +46,11 @@ public class ObservableQueryExecutor extends QueryExecutorWrapper {
 
         QueryMetadata metadata = createMetadata(endpoint, expr, bindingNames);
 
-        return observeIteration(metadata, super.evaluate(endpoint, expr, bindingIter));
+        return observe(metadata, super.evaluate(endpoint, expr, bindingIter));
     }
 
     public CloseableIteration<BindingSet, QueryEvaluationException>
-        observeIteration(QueryMetadata metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
+        observe(QueryMetadata metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
         return new QueryObserver(metadata, iter);
     }
 

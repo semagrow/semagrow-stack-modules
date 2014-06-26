@@ -50,8 +50,7 @@ public class EvaluationStrategyImpl extends org.openrdf.query.algebra.evaluation
         this.queryExecutor = queryExecutor;
     }
 
-    public EvaluationStrategyImpl(QueryExecutor queryExecutor)
-    {
+    public EvaluationStrategyImpl(QueryExecutor queryExecutor) {
 
         this(queryExecutor,ValueFactoryImpl.getInstance());
     }

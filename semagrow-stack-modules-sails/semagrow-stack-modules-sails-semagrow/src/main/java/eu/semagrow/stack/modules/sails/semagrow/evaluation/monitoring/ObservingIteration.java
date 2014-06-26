@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring;
 
 import info.aduna.iteration.Iteration;
 import info.aduna.iteration.IterationWrapper;

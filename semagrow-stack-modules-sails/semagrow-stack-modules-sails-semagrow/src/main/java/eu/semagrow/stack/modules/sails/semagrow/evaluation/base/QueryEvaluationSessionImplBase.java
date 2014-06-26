@@ -1,8 +1,9 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.base;
 
 import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
 import eu.semagrow.stack.modules.api.evaluation.SessionId;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.SessionUUID;
 import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.IterationWrapper;
 import org.openrdf.query.BindingSet;

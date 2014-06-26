@@ -4,7 +4,9 @@ import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluation;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.RateIteration;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.EvaluationStrategyWrapper;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.QueryEvaluationSessionImplBase;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.MeasuringIteration;
 import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.Iteration;
 import org.openrdf.query.BindingSet;
@@ -14,8 +16,6 @@ import org.openrdf.query.algebra.TupleExpr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.management.QueryEval;
-
 /**
  * Created by angel on 6/11/14.
  */
@@ -23,7 +23,9 @@ public class QueryEvaluationImpl implements QueryEvaluation {
 
     protected final Logger logger = LoggerFactory.getLogger(QueryEvaluationImpl.class);
 
-    public QueryEvaluationSession createSession(TupleExpr expr, Dataset dataset, BindingSet bindings) {
+    public QueryEvaluationSession
+        createSession(TupleExpr expr, Dataset dataset, BindingSet bindings)
+    {
         return new QueryEvaluationSessionImpl();
     }
 
@@ -36,7 +38,9 @@ public class QueryEvaluationImpl implements QueryEvaluation {
             return evaluationStrategy;
         }
 
-        protected QueryExecutor getQueryExecutor() { return new QueryExecutorImpl(); }
+        protected QueryExecutor getQueryExecutor() {
+            return new QueryExecutorImpl();
+        }
 
         protected class MonitoringEvaluationStrategy extends EvaluationStrategyWrapper {
 
@@ -50,13 +54,13 @@ public class QueryEvaluationImpl implements QueryEvaluation {
                     throws QueryEvaluationException {
 
                 CloseableIteration<BindingSet,QueryEvaluationException> result = super.evaluate(expr,bindings);
-                return new RateIterationImpl(result);
+                return new MeasureIterationImpl(result);
             }
         }
 
-        protected class RateIterationImpl extends RateIteration<BindingSet,QueryEvaluationException> {
+        protected class MeasureIterationImpl extends MeasuringIteration<BindingSet,QueryEvaluationException> {
 
-            public RateIterationImpl(Iteration<BindingSet, QueryEvaluationException> iter) {
+            public MeasureIterationImpl(Iteration<BindingSet, QueryEvaluationException> iter) {
                 super(iter);
             }
 
