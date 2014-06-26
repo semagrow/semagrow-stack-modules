@@ -16,6 +16,7 @@ import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.algebra.*;
+import org.openrdf.query.algebra.evaluation.QueryOptimizer;
 import org.openrdf.query.algebra.helpers.StatementPatternCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,7 +61,7 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
 
         for (StatementPattern pattern : statementPatterns) {
             // get sources for each pattern
-            List<SourceMetadata> sources = sourceSelector.getSources(pattern,dataset,bindings);
+            Collection<SourceMetadata> sources = getSources(pattern,dataset,bindings);
 
             // apply filters that can be applied to the statementpattern
             TupleExpr e = FilterUtils.applyRemainingFilters(pattern, filterConditions);
@@ -73,13 +74,13 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
 
 
             // create alternative SourceQuery for each filtered-statementpattern
-            // FIXME: this is wrong for completeness
+            List<URI> endpoints = new LinkedList<URI>();
             for (SourceMetadata sourceMetadata : sources) {
-                // TODO: Use alternative mirror data sources and not just the first
-                // TODO: Transformation and semantic proximity
                 if (sourceMetadata.getEndpoints().size() > 0)
-                    plans.add(exprLabel, new SourceQuery(e.clone(), sourceMetadata.getEndpoints().get(0)));
+                    endpoints.add(sourceMetadata.getEndpoints().get(0));
             }
+
+            plans.add(exprLabel, new SourceQuery(e.clone(), endpoints));
         }
 
         // SPLENDID also cluster statementpatterns of the same source.
@@ -156,6 +157,10 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
         return commonURIs;
     }
 
+    protected Collection<SourceMetadata> getSources(StatementPattern pattern, Dataset dataset, BindingSet bindings) {
+        return sourceSelector.getSources(pattern,dataset,bindings);
+    }
+
     private TupleExpr pushJoinRemote(TupleExpr e1, TupleExpr e2, Collection<ValueExpr> filterConditions) {
         if (e1 instanceof SourceQuery &&
                 e2 instanceof SourceQuery) {
@@ -199,6 +204,9 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
 
         for (TupleExpr bgp : basicGraphPatterns)
             decomposebgp(bgp, dataset, bindings);
+
+        QueryOptimizer finalizeOptimizers = new LimitPushDownOptimizer();
+        finalizeOptimizers.optimize(tupleExpr, dataset, bindings);
     }
 
     public void decomposebgp(TupleExpr bgp, Dataset dataset, BindingSet bindings)
