@@ -1,14 +1,10 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 
-import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
-import eu.semagrow.stack.modules.api.evaluation.QueryEvaluation;
-import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
-import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.EvaluationStrategyWrapper;
+import eu.semagrow.stack.modules.api.evaluation.*;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.FederatedEvaluationStrategyWrapper;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.QueryEvaluationSessionImplBase;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.MeasuringIteration;
 import info.aduna.iteration.CloseableIteration;
-import info.aduna.iteration.Iteration;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.QueryEvaluationException;
@@ -31,9 +27,11 @@ public class QueryEvaluationImpl implements QueryEvaluation {
 
     protected class QueryEvaluationSessionImpl extends QueryEvaluationSessionImplBase {
 
-        protected EvaluationStrategy getEvaluationStrategyInternal() {
+        private MeasuringIteration<BindingSet,QueryEvaluationException> measurement;
+
+        protected FederatedEvaluationStrategy getEvaluationStrategyInternal() {
             QueryExecutor queryExecutor = getQueryExecutor();
-            EvaluationStrategy evaluationStrategy = new EvaluationStrategyImpl(queryExecutor);
+            FederatedEvaluationStrategy evaluationStrategy = new EvaluationStrategyImpl(queryExecutor);
             evaluationStrategy = new MonitoringEvaluationStrategy(evaluationStrategy);
             return evaluationStrategy;
         }
@@ -42,9 +40,21 @@ public class QueryEvaluationImpl implements QueryEvaluation {
             return new QueryExecutorImpl();
         }
 
-        protected class MonitoringEvaluationStrategy extends EvaluationStrategyWrapper {
+        @Override
+        public void closeSession(){
 
-            public MonitoringEvaluationStrategy(EvaluationStrategy wrapped) {
+            if (measurement != null) {
+
+                logger.info("Total rows: {}", measurement.getCount());
+                logger.info("Total execution time: {}", measurement.getRunningTime());
+                logger.info("Average consumption rate: {}", measurement.getAverageConsumedRate());
+                logger.info("Average production  rate: {}", measurement.getAverageProducedRate());
+            }
+        }
+
+        protected class MonitoringEvaluationStrategy extends FederatedEvaluationStrategyWrapper {
+
+            public MonitoringEvaluationStrategy(FederatedEvaluationStrategy wrapped) {
                 super(wrapped);
             }
 
@@ -53,24 +63,11 @@ public class QueryEvaluationImpl implements QueryEvaluation {
                 evaluate(TupleExpr expr, BindingSet bindings)
                     throws QueryEvaluationException {
 
-                CloseableIteration<BindingSet,QueryEvaluationException> result = super.evaluate(expr,bindings);
-                return new MeasureIterationImpl(result);
-            }
-        }
-
-        protected class MeasureIterationImpl extends MeasuringIteration<BindingSet,QueryEvaluationException> {
-
-            public MeasureIterationImpl(Iteration<BindingSet, QueryEvaluationException> iter) {
-                super(iter);
-            }
-
-            @Override
-            public void handleClose() throws QueryEvaluationException {
-                super.handleClose();
-                logger.info("Total rows: {}", this.getCount());
-                logger.info("Total execution time: {}", this.getRunningTime());
-                logger.info("Average consumption rate: {}", this.getAverageConsumedRate());
-                logger.info("Average production  rate: {}", this.getAverageProducedRate());
+                CloseableIteration<BindingSet,QueryEvaluationException> result =
+                        super.evaluate(expr,bindings);
+                measurement = new MeasuringIteration<BindingSet,QueryEvaluationException>(result);
+                result = measurement;
+                return result;
             }
         }
     }

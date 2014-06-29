@@ -1,6 +1,8 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation.base;
 
 import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
+import eu.semagrow.stack.modules.api.evaluation.FederatedEvaluationStrategy;
+import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
 import info.aduna.iteration.CloseableIteration;
 import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;
@@ -12,16 +14,16 @@ import org.openrdf.query.algebra.evaluation.ValueExprEvaluationException;
 /**
  * Created by angel on 6/12/14.
  */
-public class EvaluationStrategyWrapper implements EvaluationStrategy {
+public class FederatedEvaluationStrategyWrapper implements FederatedEvaluationStrategy {
 
-    private EvaluationStrategy wrappedStrategy;
+    private FederatedEvaluationStrategy wrappedStrategy;
 
-    public EvaluationStrategyWrapper(EvaluationStrategy wrapped) {
+    public FederatedEvaluationStrategyWrapper(FederatedEvaluationStrategy wrapped) {
         assert wrapped != null;
         wrappedStrategy = wrapped;
     }
 
-    protected EvaluationStrategy getWrappedStrategy() {
+    protected FederatedEvaluationStrategy getWrappedStrategy() {
         return wrappedStrategy;
     }
 
@@ -48,4 +50,9 @@ public class EvaluationStrategyWrapper implements EvaluationStrategy {
     }
 
     public void setIncludeProvenance(boolean p) { getWrappedStrategy().setIncludeProvenance(p); }
+
+    public QueryExecutor getQueryExecutor() { return getWrappedStrategy().getQueryExecutor(); }
+
+    public void setQueryExecutor(QueryExecutor executor) { getWrappedStrategy().setQueryExecutor(executor); }
+
 }

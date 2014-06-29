@@ -1,6 +1,7 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation.base;
 
 import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
+import eu.semagrow.stack.modules.api.evaluation.FederatedEvaluationStrategy;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
 import eu.semagrow.stack.modules.api.evaluation.SessionId;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.SessionUUID;
@@ -23,20 +24,20 @@ public abstract class QueryEvaluationSessionImplBase implements QueryEvaluationS
 
     public SessionId getSessionId() { return id; }
 
-    public EvaluationStrategy getEvaluationStrategy() {
-        EvaluationStrategy actualStrategy = getEvaluationStrategyInternal();
+    public FederatedEvaluationStrategy getEvaluationStrategy() {
+        FederatedEvaluationStrategy actualStrategy = getEvaluationStrategyInternal();
         return new SessionAwareEvaluationStrategy(actualStrategy);
     }
 
-    protected abstract EvaluationStrategy getEvaluationStrategyInternal();
+    protected abstract FederatedEvaluationStrategy getEvaluationStrategyInternal();
 
     public void initializeSession() { }
 
     public void closeSession() { }
 
-    protected class SessionAwareEvaluationStrategy extends EvaluationStrategyWrapper {
+    protected class SessionAwareEvaluationStrategy extends FederatedEvaluationStrategyWrapper {
 
-        public SessionAwareEvaluationStrategy(EvaluationStrategy evaluationStrategy) {
+        public SessionAwareEvaluationStrategy(FederatedEvaluationStrategy evaluationStrategy) {
 
             super(evaluationStrategy);
         }

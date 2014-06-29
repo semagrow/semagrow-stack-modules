@@ -3,6 +3,7 @@ package eu.semagrow.stack.modules.sails.semagrow;
 import eu.semagrow.stack.modules.api.decomposer.QueryDecomposer;
 import eu.semagrow.stack.modules.api.decomposer.QueryDecompositionException;
 import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
+import eu.semagrow.stack.modules.api.evaluation.FederatedEvaluationStrategy;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluation;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.EvaluationStrategyImpl;
@@ -164,7 +165,7 @@ public class SemagrowSailConnection extends SailConnectionBase {
 
             EvaluationStrategy evaluationStrategy = session.getEvaluationStrategy();
 
-            evaluationStrategy.setIncludeProvenance(p);
+            //evaluationStrategy.setIncludeProvenance(p);
 
             CloseableIteration<BindingSet,QueryEvaluationException> result =
                     evaluationStrategy.evaluate(tupleExpr, bindings);
