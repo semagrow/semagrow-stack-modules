@@ -1,6 +1,7 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring;
 
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.AbstractEvaluationSessionAwareInterceptor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryEvaluationInterceptor;
 import info.aduna.iteration.CloseableIteration;
 import org.openrdf.query.BindingSet;
@@ -14,7 +15,8 @@ import java.util.Map;
 /**
  * Created by angel on 6/27/14.
  */
-public class MeasuringInterceptor implements QueryEvaluationInterceptor {
+public class MeasuringInterceptor extends AbstractEvaluationSessionAwareInterceptor
+        implements QueryEvaluationInterceptor {
 
     private Map<TupleExpr, MeasurementPoint> measurements = new HashMap<TupleExpr, MeasurementPoint>();
 
