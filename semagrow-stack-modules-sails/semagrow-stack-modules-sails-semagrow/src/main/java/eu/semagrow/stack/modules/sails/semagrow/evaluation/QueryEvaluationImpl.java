@@ -1,12 +1,17 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 
+import java.util.Collection;
+
 import eu.semagrow.stack.modules.api.evaluation.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.FederatedEvaluationStrategyWrapper;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.FederatedQueryEvaluationSessionImplBase;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.QueryEvaluationSessionImplBase;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.InterceptingQueryExecutorWrapper;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryExecutionInterceptor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.MeasuringIteration;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.ObservingInterceptor;
 import info.aduna.iteration.CloseableIteration;
+
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.QueryEvaluationException;
@@ -34,6 +39,13 @@ public class QueryEvaluationImpl implements QueryEvaluation {
 
         protected QueryExecutor getQueryExecutorInternal() {
             return new InterceptingQueryExecutorWrapper(new QueryExecutorImpl());
+        }
+        
+        @Override
+        protected Collection<QueryExecutionInterceptor> getQueryExecutorInterceptors() {
+        	Collection<QueryExecutionInterceptor> interceptors = super.getQueryExecutorInterceptors();
+        	interceptors.add(new ObservingInterceptor());
+        	return interceptors;
         }
 
         @Override

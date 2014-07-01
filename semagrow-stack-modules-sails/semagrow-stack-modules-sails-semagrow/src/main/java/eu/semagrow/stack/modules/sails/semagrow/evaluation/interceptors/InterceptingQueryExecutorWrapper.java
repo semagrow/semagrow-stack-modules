@@ -3,12 +3,14 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors;
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.QueryExecutorWrapper;
 import info.aduna.iteration.CloseableIteration;
+
 import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.TupleExpr;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -17,7 +19,7 @@ import java.util.List;
 public class InterceptingQueryExecutorWrapper extends QueryExecutorWrapper
     implements InterceptingQueryExecutor {
 
-    private List<QueryExecutionInterceptor> interceptors = Collections.emptyList();
+    private List<QueryExecutionInterceptor> interceptors = new LinkedList<QueryExecutionInterceptor>();
 
     public InterceptingQueryExecutorWrapper(QueryExecutor executor) {
         super(executor);
