@@ -22,7 +22,7 @@ import org.slf4j.LoggerFactory;
 /**
  * Created by angel on 6/11/14.
  */
-public class QueryEvaluationImpl implements QueryEvaluation {
+public class QueryEvaluationImpl implements FederatedQueryEvaluation {
 
     protected final Logger logger = LoggerFactory.getLogger(QueryEvaluationImpl.class);
 

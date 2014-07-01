@@ -7,12 +7,12 @@ import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.Iteration;
 import info.aduna.iteration.Iterations;
 
-import org.apache.log4j.Logger;
 import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.TupleExpr;
-import org.openrdf.query.algebra.evaluation.iterator.CollectionIteration;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -99,7 +99,7 @@ public class ObservingInterceptor
     protected class QueryObserver extends ObservingIteration<BindingSet,QueryEvaluationException> {
 
         private QueryMetadata metadata;
-        private Logger logger = Logger.getLogger(QueryObserver.class);
+        private Logger logger = LoggerFactory.getLogger(QueryObserver.class);
 
         public QueryObserver(QueryMetadata metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
             super(iter);

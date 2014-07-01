@@ -1,6 +1,7 @@
 package eu.semagrow.stack.modules.sails.semagrow;
 
 import eu.semagrow.stack.modules.api.decomposer.QueryDecomposer;
+import eu.semagrow.stack.modules.api.evaluation.FederatedQueryEvaluation;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluation;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.api.statistics.Statistics;
@@ -46,7 +47,7 @@ import java.util.Collection;
 public class SemagrowSail extends SailBase implements StackableSail {
 
     private Sail metadataSail;
-    private QueryEvaluation queryEvaluation;
+    private FederatedQueryEvaluation queryEvaluation;
 
     public SemagrowSail() { }
 
@@ -129,7 +130,7 @@ public class SemagrowSail extends SailBase implements StackableSail {
         return new SailRepository(metadataSail);
     }
 
-    public QueryEvaluation getQueryEvaluation() {
+    public FederatedQueryEvaluation getQueryEvaluation() {
 
         if (queryEvaluation == null)
             queryEvaluation = new QueryEvaluationImpl();

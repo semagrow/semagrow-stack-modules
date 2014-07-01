@@ -2,10 +2,7 @@ package eu.semagrow.stack.modules.sails.semagrow;
 
 import eu.semagrow.stack.modules.api.decomposer.QueryDecomposer;
 import eu.semagrow.stack.modules.api.decomposer.QueryDecompositionException;
-import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
-import eu.semagrow.stack.modules.api.evaluation.FederatedEvaluationStrategy;
-import eu.semagrow.stack.modules.api.evaluation.QueryEvaluation;
-import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
+import eu.semagrow.stack.modules.api.evaluation.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.EvaluationStrategyImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryExecutorImpl;
 import info.aduna.iteration.CloseableIteration;
@@ -39,7 +36,7 @@ public class SemagrowSailConnection extends SailConnectionBase {
 
     private SemagrowSail semagrowSail;
 
-    private QueryEvaluation queryEvaluation;
+    private FederatedQueryEvaluation queryEvaluation;
 
     private static final URI METADATA_GRAPH = ValueFactoryImpl.getInstance().createURI("http://www.semagrow.eu/metadata");
 
@@ -161,11 +158,11 @@ public class SemagrowSailConnection extends SailConnectionBase {
         try {
             logger.info("Query evaluation started.");
 
-            QueryEvaluationSession session = queryEvaluation.createSession(tupleExpr, dataset, bindings);
+            FederatedQueryEvaluationSession session = queryEvaluation.createSession(tupleExpr, dataset, bindings);
 
-            EvaluationStrategy evaluationStrategy = session.getEvaluationStrategy();
+            FederatedEvaluationStrategy evaluationStrategy = session.getEvaluationStrategy();
 
-            //evaluationStrategy.setIncludeProvenance(p);
+            evaluationStrategy.setIncludeProvenance(p);
 
             CloseableIteration<BindingSet,QueryEvaluationException> result =
                     evaluationStrategy.evaluate(tupleExpr, bindings);

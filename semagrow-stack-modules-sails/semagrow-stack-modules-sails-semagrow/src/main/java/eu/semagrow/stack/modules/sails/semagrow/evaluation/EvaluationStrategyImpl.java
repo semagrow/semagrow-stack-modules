@@ -1,6 +1,5 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 
-import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
 import eu.semagrow.stack.modules.api.evaluation.FederatedEvaluationStrategy;
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.*;

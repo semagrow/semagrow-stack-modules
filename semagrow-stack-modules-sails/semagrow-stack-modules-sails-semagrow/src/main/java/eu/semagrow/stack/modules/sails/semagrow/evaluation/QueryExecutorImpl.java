@@ -16,7 +16,6 @@ import org.openrdf.query.impl.EmptyBindingSet;
 import org.openrdf.query.parser.ParsedBooleanQuery;
 import org.openrdf.query.parser.ParsedTupleQuery;
 import org.openrdf.queryrender.sparql.SPARQLQueryRenderer;
-import org.openrdf.queryrender.sparql.SparqlTupleExprRenderer;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
