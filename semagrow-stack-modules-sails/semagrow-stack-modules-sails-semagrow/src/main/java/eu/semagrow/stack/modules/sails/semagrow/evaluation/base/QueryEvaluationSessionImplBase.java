@@ -1,22 +1,28 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation.base;
 
+import eu.semagrow.stack.modules.api.evaluation.*;
 import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
-import eu.semagrow.stack.modules.api.evaluation.FederatedEvaluationStrategy;
-import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
-import eu.semagrow.stack.modules.api.evaluation.SessionId;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.SessionUUID;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.AbstractEvaluationSessionAwareInterceptor;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.InterceptingEvaluationStrategy;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryEvaluationInterceptor;
 import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.IterationWrapper;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.TupleExpr;
+import org.openrdf.query.algebra.evaluation.*;
+
+import javax.management.QueryEval;
+import java.util.Collection;
+import java.util.LinkedList;
+import java.util.List;
 
 /**
  * Created by angel on 6/12/14.
  */
-public abstract class QueryEvaluationSessionImplBase implements QueryEvaluationSession {
+public abstract class QueryEvaluationSessionImplBase
+        implements QueryEvaluationSession {
 
     private SessionUUID id;
 
@@ -26,12 +32,32 @@ public abstract class QueryEvaluationSessionImplBase implements QueryEvaluationS
 
     public SessionId getSessionId() { return id; }
 
-    public FederatedEvaluationStrategy getEvaluationStrategy() {
-        FederatedEvaluationStrategy actualStrategy = getEvaluationStrategyInternal();
-        return new SessionAwareEvaluationStrategy(actualStrategy);
+    public EvaluationStrategy getEvaluationStrategy() {
+        EvaluationStrategy actualStrategy = getEvaluationStrategyInternal();
+        attachStrategyInterceptors(actualStrategy);
+        return actualStrategy;
     }
 
-    protected abstract FederatedEvaluationStrategy getEvaluationStrategyInternal();
+    protected abstract EvaluationStrategy getEvaluationStrategyInternal();
+
+    protected void attachStrategyInterceptors(EvaluationStrategy strategy) {
+       if (strategy instanceof InterceptingEvaluationStrategy)
+           attachStrategyInterceptors((InterceptingEvaluationStrategy)strategy);
+    }
+
+    protected void attachStrategyInterceptors(InterceptingEvaluationStrategy strategy) {
+        Collection<QueryEvaluationInterceptor> interceptors =  getStrategyInterceptors();
+        for (QueryEvaluationInterceptor interceptor : interceptors) {
+            interceptor.setQueryEvaluationSession(this);
+            strategy.addEvaluationInterceptor(interceptor);
+        }
+    }
+
+    protected Collection<QueryEvaluationInterceptor> getStrategyInterceptors() {
+        List<QueryEvaluationInterceptor> interceptors = new LinkedList<QueryEvaluationInterceptor>();
+        interceptors.add(new SessionAwareInterceptor());
+        return interceptors;
+    }
 
     public void initializeSession() { }
 
@@ -75,23 +101,4 @@ public abstract class QueryEvaluationSessionImplBase implements QueryEvaluationS
             closeSession();
         }
     }
-
-    protected class SessionAwareEvaluationStrategy extends FederatedEvaluationStrategyWrapper {
-
-        public SessionAwareEvaluationStrategy(FederatedEvaluationStrategy evaluationStrategy) {
-
-            super(evaluationStrategy);
-        }
-
-        @Override
-        public CloseableIteration<BindingSet,QueryEvaluationException>
-            evaluate(TupleExpr expr, BindingSet bindings) throws QueryEvaluationException {
-
-            initializeSession();
-            return new SessionAwareIteration(super.evaluate(expr,bindings));
-        }
-
-
-    }
-
 }

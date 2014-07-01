@@ -10,6 +10,7 @@ import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.TupleExpr;
 
 import java.util.Collections;
+import java.util.LinkedList;
 import java.util.List;
 
 /**
@@ -18,7 +19,7 @@ import java.util.List;
 public class InterceptingEvaluationStrategyImpl extends EvaluationStrategyImpl
     implements InterceptingEvaluationStrategy {
 
-    private List<QueryEvaluationInterceptor> interceptors = Collections.emptyList();
+    private List<QueryEvaluationInterceptor> interceptors = new LinkedList<QueryEvaluationInterceptor>();
 
     public InterceptingEvaluationStrategyImpl(QueryExecutor queryExecutor, ValueFactory vf) {
         super(queryExecutor, vf);

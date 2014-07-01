@@ -2,7 +2,9 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 
 import eu.semagrow.stack.modules.api.evaluation.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.FederatedEvaluationStrategyWrapper;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.FederatedQueryEvaluationSessionImplBase;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.QueryEvaluationSessionImplBase;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.InterceptingQueryExecutorWrapper;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.MeasuringIteration;
 import info.aduna.iteration.CloseableIteration;
 import org.openrdf.query.BindingSet;
@@ -19,56 +21,24 @@ public class QueryEvaluationImpl implements QueryEvaluation {
 
     protected final Logger logger = LoggerFactory.getLogger(QueryEvaluationImpl.class);
 
-    public QueryEvaluationSession
-        createSession(TupleExpr expr, Dataset dataset, BindingSet bindings)
-    {
-        return new QueryEvaluationSessionImpl();
+    public FederatedQueryEvaluationSession
+        createSession(TupleExpr expr, Dataset dataset, BindingSet bindings) {
+        return new FederatedQueryEvaluationSessionImpl();
     }
 
-    protected class QueryEvaluationSessionImpl extends QueryEvaluationSessionImplBase {
-
-        private MeasuringIteration<BindingSet,QueryEvaluationException> measurement;
+    protected class FederatedQueryEvaluationSessionImpl extends FederatedQueryEvaluationSessionImplBase {
 
         protected FederatedEvaluationStrategy getEvaluationStrategyInternal() {
-            QueryExecutor queryExecutor = getQueryExecutor();
-            FederatedEvaluationStrategy evaluationStrategy = new EvaluationStrategyImpl(queryExecutor);
-            evaluationStrategy = new MonitoringEvaluationStrategy(evaluationStrategy);
-            return evaluationStrategy;
+            return new InterceptingEvaluationStrategyImpl(getQueryExecutor());
         }
 
-        protected QueryExecutor getQueryExecutor() {
-            return new QueryExecutorImpl();
+        protected QueryExecutor getQueryExecutorInternal() {
+            return new InterceptingQueryExecutorWrapper(new QueryExecutorImpl());
         }
 
         @Override
         public void closeSession(){
-
-            if (measurement != null) {
-
-                logger.info("Total rows: {}", measurement.getCount());
-                logger.info("Total execution time: {}", measurement.getRunningTime());
-                logger.info("Average consumption rate: {}", measurement.getAverageConsumedRate());
-                logger.info("Average production  rate: {}", measurement.getAverageProducedRate());
-            }
-        }
-
-        protected class MonitoringEvaluationStrategy extends FederatedEvaluationStrategyWrapper {
-
-            public MonitoringEvaluationStrategy(FederatedEvaluationStrategy wrapped) {
-                super(wrapped);
-            }
-
-            @Override
-            public CloseableIteration<BindingSet,QueryEvaluationException>
-                evaluate(TupleExpr expr, BindingSet bindings)
-                    throws QueryEvaluationException {
-
-                CloseableIteration<BindingSet,QueryEvaluationException> result =
-                        super.evaluate(expr,bindings);
-                measurement = new MeasuringIteration<BindingSet,QueryEvaluationException>(result);
-                result = measurement;
-                return result;
-            }
+            logger.debug("Session " + getSessionId() + " closed");
         }
     }
 }
