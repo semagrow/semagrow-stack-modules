@@ -11,8 +11,6 @@ import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.TupleExpr;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.util.*;
 
@@ -22,7 +20,6 @@ import java.util.*;
 public class ObservingInterceptor
         extends AbstractEvaluationSessionAwareInterceptor
         implements QueryExecutionInterceptor {
-
 
     public CloseableIteration<BindingSet, QueryEvaluationException>
         afterExecution(URI endpoint, TupleExpr expr, BindingSet bindings, CloseableIteration<BindingSet, QueryEvaluationException> result) {
@@ -99,22 +96,49 @@ public class ObservingInterceptor
     protected class QueryObserver extends ObservingIteration<BindingSet,QueryEvaluationException> {
 
         private QueryMetadata metadata;
-        private Logger logger = LoggerFactory.getLogger(QueryObserver.class);
-
+        Queue<String> queue;
+        LogWritter logWritter;
+        
+        
         public QueryObserver(QueryMetadata metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
             super(iter);
             this.metadata = metadata;
+            queue = new LinkedList<String>();
+            logWritter = new LogWritter(queue);
+    		Thread logWritterThread = new Thread(logWritter);
+    		logWritterThread.start();
         }
 
         @Override
         public void observe(BindingSet bindings) {
-        	System.out.println(metadata.getEndpoint().stringValue() + " OBSERVE");
+        	synchronized(queue) {
+	        	queue.add(metadata.getSession().getSessionId().toString());
+	        	queue.add(Long.toString(System.currentTimeMillis()));
+	        	queue.add(metadata.getEndpoint().toString());
+	        	queue.add("@");
+	        	queue.add(metadata.getQuery().toString());
+	        	queue.add("@");
+	        	queue.add(Integer.toString(bindings.getBindingNames().size()));
+	        	queue.add(bindings.toString());
+	        	queue.add(metadata.bindingNames.toString());
+	        	for (String name : metadata.bindingNames) {
+	        		queue.add(bindings.getValue(name).stringValue());
+	        	}
+	        	queue.notify();
+        	}
         }
 
         @Override
         public void observeExceptionally(QueryEvaluationException e) {
-
+        	logWritter.finish();
         }
+        
+        @Override
+        public void handleClose() throws QueryEvaluationException {
+        	super.handleClose();
+        	logWritter.finish();
+        }
+        
     }
 
 }
