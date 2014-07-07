@@ -31,37 +31,42 @@ public class LogWritter implements Runnable {
 	
 	@Override
 	public void run() {
+		
 		synchronized (queue) {
-			while ( true ) {
-				if (! queue.isEmpty() ) {
-					try {
+			while (  ! finished  ) {
+				try {
+					if ( ! queue.isEmpty() ) {
 						writer.write(queue.remove());
 						writer.newLine();
-					} catch (IOException e) {
-						e.printStackTrace();
-					}
-				} else {
-					try {
-						try {
-							writer.flush();
-						} catch (IOException e) {
-							e.printStackTrace();
-						}
-						if (finished) {
-							try {
-								writer.close();
-							} catch (IOException e) {
-								e.printStackTrace();
-							}
-							break;
-						}
+					} else {
+						writer.flush(); //flush now that you have time
 						queue.wait();
-					} catch (InterruptedException e) {
-						System.out.println("interapted");
-						e.printStackTrace();
 					}
+				} catch (IOException e) {
+					e.printStackTrace();
+				}  catch (InterruptedException e) {
+					e.printStackTrace();
 				}
 			}
+		}
+		
+		// finishing
+		
+		// empty remaining items in queue if any
+		while (!queue.isEmpty()) {
+			try {
+				writer.write(queue.remove());
+				writer.newLine();
+			} catch (IOException e) {
+				e.printStackTrace();
+			}
+		}
+		
+		// close writer (and flush remains in file)
+		try {
+			writer.close();
+		} catch (IOException e) {
+			e.printStackTrace();
 		}
 	}
 	
