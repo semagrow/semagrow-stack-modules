@@ -16,6 +16,8 @@ import java.util.*;
 
 /**
  * Created by angel on 6/30/14.
+ * @author Angelos Charalampidis
+ * @author Giannis Mouchakis
  */
 public class ObservingInterceptor
         extends AbstractEvaluationSessionAwareInterceptor

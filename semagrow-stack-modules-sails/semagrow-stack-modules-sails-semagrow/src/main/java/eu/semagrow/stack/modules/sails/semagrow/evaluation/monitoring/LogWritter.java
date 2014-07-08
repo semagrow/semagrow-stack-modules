@@ -10,6 +10,11 @@ import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
 import java.util.Queue;
 
+/**
+ * 
+ * @author Giannis Mouchakis
+ *
+ */
 public class LogWritter implements Runnable {
 
 	Queue<String> queue;

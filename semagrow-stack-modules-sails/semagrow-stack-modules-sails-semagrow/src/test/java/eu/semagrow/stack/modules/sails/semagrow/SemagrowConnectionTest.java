@@ -61,6 +61,13 @@ public class SemagrowConnectionTest extends TestCase {
 
 
     public void testEvaluateInternal2() throws Exception {
+    	
+    	String q2 = "SELECT * WHERE {"
+    			+ " ?document <http://purl.org/ontology/bibo/abstract> ?abstract . "
+    			+ " ?document <http://purl.org/dc/terms/title> ?title . "
+    			+ " ?document <http://purl.org/dc/terms/creator> ?creator . "
+    			+ "}" ;
+
 
         String q1 = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                 "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
@@ -80,7 +87,7 @@ public class SemagrowConnectionTest extends TestCase {
         SemagrowSailRepository repo = (SemagrowSailRepository) RepositoryRegistry.getInstance().get(repoConfig.getType()).getRepository(repoConfig);
         repo.initialize();
         SemagrowSailRepositoryConnection conn = repo.getConnection();
-        SemagrowTupleQuery query =  conn.prepareTupleQuery(QueryLanguage.SPARQL, q1);
+        SemagrowTupleQuery query =  conn.prepareTupleQuery(QueryLanguage.SPARQL, q2);
         query.setIncludeInferred(true);
         query.setIncludeProvenanceData(true);
 
