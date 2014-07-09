@@ -62,6 +62,11 @@ public class SemagrowConnectionTest extends TestCase {
 
     public void testEvaluateInternal2() throws Exception {
     	
+    	String q3 = "SELECT * WHERE {"
+    			+ " ?document <http://purl.org/ontology/bibo/abstract> ?abstract . "
+    			+ " ?document <http://purl.org/dc/terms/title> ?title . "
+    			+ "}" ;
+    	
     	String q2 = "SELECT * WHERE {"
     			+ " ?document <http://purl.org/ontology/bibo/abstract> ?abstract . "
     			+ " ?document <http://purl.org/dc/terms/title> ?title . "
@@ -87,7 +92,7 @@ public class SemagrowConnectionTest extends TestCase {
         SemagrowSailRepository repo = (SemagrowSailRepository) RepositoryRegistry.getInstance().get(repoConfig.getType()).getRepository(repoConfig);
         repo.initialize();
         SemagrowSailRepositoryConnection conn = repo.getConnection();
-        SemagrowTupleQuery query =  conn.prepareTupleQuery(QueryLanguage.SPARQL, q2);
+        SemagrowTupleQuery query =  conn.prepareTupleQuery(QueryLanguage.SPARQL, q3);
         query.setIncludeInferred(true);
         query.setIncludeProvenanceData(true);
 

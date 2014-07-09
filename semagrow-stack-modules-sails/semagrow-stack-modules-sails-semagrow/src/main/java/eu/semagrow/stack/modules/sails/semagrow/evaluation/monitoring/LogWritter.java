@@ -8,7 +8,7 @@ import java.nio.file.OpenOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardOpenOption;
-import java.util.Queue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * 
@@ -17,14 +17,14 @@ import java.util.Queue;
  */
 public class LogWritter implements Runnable {
 
-	Queue<String> queue;
+	BlockingQueue<String> queue;
 	private Boolean finished;
 	
 	static final Path path = Paths.get(System.getProperty("user.home"), "semagrow_logs.log");
 	static final OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.APPEND};
 	private BufferedWriter writer;
 
-	public LogWritter(Queue<String> queue) {
+	public LogWritter(BlockingQueue<String> queue) {
 		this.queue = queue;
 		finished = false;
 		try {
@@ -36,26 +36,14 @@ public class LogWritter implements Runnable {
 	
 	@Override
 	public void run() {
-		
-		synchronized (queue) {
-			while (  ! finished  ) {
-				try {
-					if ( ! queue.isEmpty() ) {
-						writer.write(queue.remove());
-						writer.newLine();
-					} else {
-						writer.flush(); //flush now that you have time
-						queue.wait();
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
-				}  catch (InterruptedException e) {
-					e.printStackTrace();
-				}
+		while (  ! finished  ) {
+			try {
+				writer.write(queue.take());
+				writer.newLine();
+			} catch (IOException | InterruptedException e1) {
+				e1.printStackTrace();
 			}
 		}
-		
-		// finishing
 		
 		// empty remaining items in queue if any
 		while (!queue.isEmpty()) {

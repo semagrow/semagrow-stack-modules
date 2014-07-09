@@ -13,6 +13,8 @@ import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.TupleExpr;
 
 import java.util.*;
+import java.util.concurrent.ArrayBlockingQueue;
+import java.util.concurrent.BlockingQueue;
 
 /**
  * Created by angel on 6/30/14.
@@ -98,37 +100,39 @@ public class ObservingInterceptor
     protected class QueryObserver extends ObservingIteration<BindingSet,QueryEvaluationException> {
 
         private QueryMetadata metadata;
-        Queue<String> queue;
+        BlockingQueue<String> queue;
         LogWritter logWritter;
         
         
         public QueryObserver(QueryMetadata metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
             super(iter);
             this.metadata = metadata;
-            queue = new LinkedList<String>();
+            queue = new ArrayBlockingQueue<String>(1000000);
             logWritter = new LogWritter(queue);
     		Thread logWritterThread = new Thread(logWritter);
     		logWritterThread.start();
         }
 
-        @Override
-        public void observe(BindingSet bindings) {
-        	synchronized(queue) {
-	        	queue.add(metadata.getSession().getSessionId().toString());
-	        	queue.add(Long.toString(System.currentTimeMillis()));
-	        	queue.add(metadata.getEndpoint().toString());
-	        	queue.add("@");
-	        	queue.add(metadata.getQuery().toString());
-	        	queue.add("@");
-	        	queue.add(Integer.toString(bindings.getBindingNames().size()));
-	        	queue.add(bindings.toString());
-	        	queue.add(metadata.bindingNames.toString());
-	        	for (String name : metadata.bindingNames) {
-	        		queue.add(bindings.getValue(name).stringValue());
-	        	}
-	        	queue.notify();
-        	}
-        }
+		@Override
+		public void observe(BindingSet bindings) {
+			try {
+				queue.put(metadata.getSession().getSessionId().toString());
+				queue.put(Long.toString(System.currentTimeMillis()));
+				queue.put(metadata.getEndpoint().toString());
+				queue.put("@");
+				queue.put(metadata.getQuery().toString());
+				queue.put("@");
+				queue.put(Integer.toString(bindings.getBindingNames().size()));
+				queue.put(bindings.toString());
+				queue.put(metadata.bindingNames.toString());
+				for (String name : metadata.bindingNames) {
+					queue.put(bindings.getValue(name).stringValue());
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+
+		}
 
         @Override
         public void observeExceptionally(QueryEvaluationException e) {
