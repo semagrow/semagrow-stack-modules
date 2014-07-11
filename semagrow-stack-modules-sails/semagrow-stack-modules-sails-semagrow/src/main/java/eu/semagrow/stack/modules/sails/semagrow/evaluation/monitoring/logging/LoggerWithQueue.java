@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.logging;
 
 import java.io.BufferedWriter;
 import java.io.IOException;
@@ -15,20 +15,23 @@ import java.util.concurrent.BlockingQueue;
  * @author Giannis Mouchakis
  *
  */
-public class LogWritter implements Runnable {
+public class LoggerWithQueue implements Runnable {
 
-	BlockingQueue<String> queue;
+	BlockingQueue<Object> queue;
 	private Boolean finished;
 	
 	static final Path path = Paths.get(System.getProperty("user.home"), "semagrow_logs.log");
 	static final OpenOption[] options = {StandardOpenOption.CREATE, StandardOpenOption.APPEND};
 	private BufferedWriter writer;
 
-	public LogWritter(BlockingQueue<String> queue) {
+	public LoggerWithQueue(BlockingQueue<Object> queue) {
 		this.queue = queue;
 		finished = false;
 		try {
 			writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, options);
+			if (Files.size(path) == 0) {
+				//TODO: write headers
+			}
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
@@ -38,7 +41,14 @@ public class LogWritter implements Runnable {
 	public void run() {
 		while (  ! finished  ) {
 			try {
-				writer.write(queue.take());
+				Object obj = queue.take();
+				if (obj instanceof String) {
+					writer.write((String) obj);
+				} else if (obj instanceof Integer) {
+					writer.write((int) obj);
+				} else {
+					writer.write(obj.toString());
+				}
 				writer.newLine();
 			} catch (IOException | InterruptedException e1) {
 				e1.printStackTrace();
@@ -48,7 +58,14 @@ public class LogWritter implements Runnable {
 		// empty remaining items in queue if any
 		while (!queue.isEmpty()) {
 			try {
-				writer.write(queue.remove());
+				Object obj = queue.remove();
+				if (obj instanceof String) {
+					writer.write((String) obj);
+				} else if (obj instanceof Integer) {
+					writer.write((int) obj);
+				} else {
+					writer.write(obj.toString());
+				}
 				writer.newLine();
 			} catch (IOException e) {
 				e.printStackTrace();

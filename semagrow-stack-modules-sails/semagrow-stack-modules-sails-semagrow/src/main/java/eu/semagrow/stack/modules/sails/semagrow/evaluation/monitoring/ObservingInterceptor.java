@@ -3,6 +3,7 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.AbstractEvaluationSessionAwareInterceptor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryExecutionInterceptor;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.logging.LoggerWithQueue;
 import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.Iteration;
 import info.aduna.iteration.Iterations;
@@ -11,6 +12,8 @@ import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.TupleExpr;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import java.util.concurrent.ArrayBlockingQueue;
@@ -24,6 +27,13 @@ import java.util.concurrent.BlockingQueue;
 public class ObservingInterceptor
         extends AbstractEvaluationSessionAwareInterceptor
         implements QueryExecutionInterceptor {
+	
+	BlockingQueue<Object> queue = new ArrayBlockingQueue<Object>(1000000);
+    LoggerWithQueue logWritter = new LoggerWithQueue(queue);
+    Thread logWritterThread = new Thread(logWritter);
+    
+    final Logger logger = LoggerFactory.getLogger(ObservingInterceptor.class);
+    
 
     public CloseableIteration<BindingSet, QueryEvaluationException>
         afterExecution(URI endpoint, TupleExpr expr, BindingSet bindings, CloseableIteration<BindingSet, QueryEvaluationException> result) {
@@ -100,29 +110,25 @@ public class ObservingInterceptor
     protected class QueryObserver extends ObservingIteration<BindingSet,QueryEvaluationException> {
 
         private QueryMetadata metadata;
-        BlockingQueue<String> queue;
-        LogWritter logWritter;
-        
         
         public QueryObserver(QueryMetadata metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
             super(iter);
             this.metadata = metadata;
-            queue = new ArrayBlockingQueue<String>(1000000);
-            logWritter = new LogWritter(queue);
-    		Thread logWritterThread = new Thread(logWritter);
-    		logWritterThread.start();
+            if ( ! logWritterThread.isAlive()) {
+            	logWritterThread.start();
+            }
         }
 
 		@Override
 		public void observe(BindingSet bindings) {
 			try {
 				queue.put(metadata.getSession().getSessionId().toString());
-				queue.put(Long.toString(System.currentTimeMillis()));
+				queue.put(Long.toString(System.currentTimeMillis()).getBytes());
 				queue.put(metadata.getEndpoint().toString());
 				queue.put("@");
 				queue.put(metadata.getQuery().toString());
 				queue.put("@");
-				queue.put(Integer.toString(bindings.getBindingNames().size()));
+				queue.put(bindings.getBindingNames().size());
 				queue.put(bindings.toString());
 				queue.put(metadata.bindingNames.toString());
 				for (String name : metadata.bindingNames) {
@@ -134,17 +140,20 @@ public class ObservingInterceptor
 
 		}
 
-        @Override
-        public void observeExceptionally(QueryEvaluationException e) {
-        	logWritter.finish();
-        }
-        
+		@Override
+		public void observeExceptionally(QueryEvaluationException x) {
+			//logWritter.finish();//TODO:log this? 
+			
+		}
+		
+        /*
         @Override
         public void handleClose() throws QueryEvaluationException {
         	super.handleClose();
         	logWritter.finish();
         }
-        
+        */
+		
     }
 
 }
