@@ -122,15 +122,15 @@ public class ObservingInterceptor
 		@Override
 		public void observe(BindingSet bindings) {
 			try {
-				queue.put(metadata.getSession().getSessionId().toString());
-				queue.put(Long.toString(System.currentTimeMillis()).getBytes());
-				queue.put(metadata.getEndpoint().toString());
+				queue.put(metadata.getSession().getSessionId());
+				queue.put(Long.toString(System.currentTimeMillis()));
+				queue.put(metadata.getEndpoint());
 				queue.put("@");
-				queue.put(metadata.getQuery().toString());
+				queue.put(metadata.getQuery());
 				queue.put("@");
 				queue.put(bindings.getBindingNames().size());
-				queue.put(bindings.toString());
-				queue.put(metadata.bindingNames.toString());
+				queue.put(bindings);
+				queue.put(metadata.bindingNames);
 				for (String name : metadata.bindingNames) {
 					queue.put(bindings.getValue(name).stringValue());
 				}
@@ -149,8 +149,7 @@ public class ObservingInterceptor
         /*
         @Override
         public void handleClose() throws QueryEvaluationException {
-        	super.handleClose();
-        	logWritter.finish();
+        	
         }
         */
 		

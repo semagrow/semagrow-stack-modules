@@ -23,7 +23,26 @@ public class LogEventHandler implements EventHandler<LogEvent>
 		try {
 			writer = Files.newBufferedWriter(path, StandardCharsets.UTF_8, options);
 			if (Files.size(path) == 0) {
-				//TODO: write headers
+				writer.write("start headers");
+				writer.newLine();
+				writer.write("session-id");
+				writer.newLine();
+				writer.write("start-time");
+				writer.newLine();
+				writer.write("endpoint");
+				writer.newLine();
+				writer.write("query");
+				writer.newLine();
+				writer.write("total bindings");
+				writer.newLine();
+				writer.write("query binding names");
+				writer.newLine();
+				writer.write("result binding names");
+				writer.newLine();
+				writer.write("all binding names");
+				writer.newLine();
+				writer.write("end headers");
+				writer.newLine();
 			}
 		} catch (IOException e) {
 			e.printStackTrace();
@@ -33,10 +52,11 @@ public class LogEventHandler implements EventHandler<LogEvent>
     public void onEvent(LogEvent event, long sequence, boolean endOfBatch)
     {
     	try {
-    		if (event.get() instanceof String) {
-    			writer.write( (String) event.get());
-    		} else if (event.get() instanceof Integer) {
-    			writer.write( (int) event.get());
+    		Object obj = event.get();
+    		if (obj instanceof String) {
+    			writer.write( (String) obj);
+    		} else if (obj instanceof Integer) {
+    			writer.write( (int) obj);
     		} else {
     			writer.write(event.get().toString());
     		}
