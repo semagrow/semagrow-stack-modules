@@ -65,7 +65,9 @@ public class ObservingInterceptor
 
     public CloseableIteration<BindingSet, QueryEvaluationException>
         observe(QueryMetadata metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
-
+    	if ( ! logWritterThread.isAlive()) {
+        	logWritterThread.start();
+        }
         return new QueryObserver(metadata, iter);
     }
 
@@ -114,9 +116,6 @@ public class ObservingInterceptor
         public QueryObserver(QueryMetadata metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
             super(iter);
             this.metadata = metadata;
-            if ( ! logWritterThread.isAlive()) {
-            	logWritterThread.start();
-            }
         }
 
 		@Override
