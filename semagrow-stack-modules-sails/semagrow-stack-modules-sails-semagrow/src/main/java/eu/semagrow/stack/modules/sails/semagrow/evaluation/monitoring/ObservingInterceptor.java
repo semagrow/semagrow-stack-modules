@@ -116,20 +116,24 @@ public class ObservingInterceptor
         public QueryObserver(QueryMetadata metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
             super(iter);
             this.metadata = metadata;
-        }
-
-		@Override
-		public void observe(BindingSet bindings) {
-			try {
+            try {
 				queue.put(metadata.getSession().getSessionId());
 				queue.put(Long.toString(System.currentTimeMillis()));
 				queue.put(metadata.getEndpoint());
 				queue.put("@");
 				queue.put(metadata.getQuery());
 				queue.put("@");
+				queue.put(metadata.bindingNames);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			}
+        }
+
+		@Override
+		public void observe(BindingSet bindings) {
+			try {
 				queue.put(bindings.getBindingNames().size());
 				queue.put(bindings);
-				queue.put(metadata.bindingNames);
 				for (String name : metadata.bindingNames) {
 					queue.put(bindings.getValue(name).stringValue());
 				}
