@@ -21,51 +21,51 @@ import java.util.UUID;
 /**
  * Created by angel on 10/20/14.
  */
-public class RDFQueryRecordLogHandler implements QueryRecordLogHandler {
+public class RDFQueryLogHandler implements QueryLogHandler {
 
     private RDFHandler handler;
     private ValueFactory vf;
 
-    public RDFQueryRecordLogHandler(RDFHandler handler, ValueFactory vf) {
+    public RDFQueryLogHandler(RDFHandler handler, ValueFactory vf) {
         this.handler = handler;
         this.vf = vf;
     }
 
     @Override
-    public void startQueryLog() throws QueryRecordLogException {
+    public void startQueryLog() throws QueryLogException {
         try {
             handler.startRDF();
         } catch (RDFHandlerException e) {
-            throw new QueryRecordLogException(e);
+            throw new QueryLogException(e);
         }
     }
 
 
     @Override
-    public void handleQueryRecord(QueryRecord queryRecord) throws QueryRecordLogException {
+    public void handleQueryRecord(QueryLogRecord queryLogRecord) throws QueryLogException {
         URI qrId = vf.createURI("urn:" + UUID.randomUUID().toString());
-        handleQueryRecord(qrId, queryRecord);
+        handleQueryRecord(qrId, queryLogRecord);
     }
 
     private void createStatement(Resource subject, URI predicate, Value object)
-            throws QueryRecordLogException
+            throws QueryLogException
     {
         try {
             handler.handleStatement(vf.createStatement(subject, predicate, object));
         } catch (RDFHandlerException e) {
-            throw new QueryRecordLogException(e);
+            throw new QueryLogException(e);
         }
     }
 
     private Resource createBNodeStatement(Resource subject, URI predicate)
-            throws QueryRecordLogException
+            throws QueryLogException
     {
         Resource q = vf.createBNode();
         createStatement(subject, predicate, q);
         return q;
     }
 
-    private void handleQueryRecord(Resource record, QueryRecord qr) throws QueryRecordLogException {
+    private void handleQueryRecord(Resource record, QueryLogRecord qr) throws QueryLogException {
 
         createStatement(record, RDF.TYPE, QFR.QUERYRECORD);
         createStatement(record, QFR.SESSION, qr.getSession().getSessionId().toURI());
@@ -81,7 +81,7 @@ public class RDFQueryRecordLogHandler implements QueryRecordLogHandler {
     }
 
     private void handleTupleExpr(Resource r, TupleExpr expr, BindingSet bindings)
-            throws QueryRecordLogException
+            throws QueryLogException
     {
         List<StatementPattern> patterns = StatementPatternCollector.process(expr);
 
@@ -92,29 +92,29 @@ public class RDFQueryRecordLogHandler implements QueryRecordLogHandler {
     }
 
     private void handleStatementPattern(Resource r, StatementPattern pattern)
-            throws QueryRecordLogException
+            throws QueryLogException
     {
         //createStatement(r, pattern.getSubjectVar().getValue());
     }
 
     private void handleBindingSet(Resource r, BindingSet bs)
-            throws QueryRecordLogException
+            throws QueryLogException
     {
 
     }
 
     private void handleBinding(Resource r, Binding binding)
-            throws QueryRecordLogException
+            throws QueryLogException
     {
 
     }
 
     @Override
-    public void endQueryLog() throws QueryRecordLogException {
+    public void endQueryLog() throws QueryLogException {
         try {
             handler.endRDF();
         } catch (RDFHandlerException e) {
-            throw new QueryRecordLogException(e);
+            throw new QueryLogException(e);
         }
     }
 

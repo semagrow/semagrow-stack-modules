@@ -11,7 +11,7 @@ import java.util.List;
 /**
  * Created by angel on 10/20/14.
  */
-public interface QueryRecord {
+public interface QueryLogRecord {
     URI getEndpoint();
 
     TupleExpr getQuery();

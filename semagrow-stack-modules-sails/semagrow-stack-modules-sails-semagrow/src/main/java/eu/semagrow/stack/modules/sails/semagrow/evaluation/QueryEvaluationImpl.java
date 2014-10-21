@@ -7,9 +7,8 @@ import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.FederatedQueryEv
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.ResultMaterializationManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.InterceptingQueryExecutorWrapper;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryExecutionInterceptor;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryObservingInterceptor;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryRecordLogFactory;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryRecordLogHandler;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryLogHandler;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryLogInterceptor;
 
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
@@ -26,20 +25,20 @@ public class QueryEvaluationImpl implements FederatedQueryEvaluation {
 
     private ResultMaterializationManager materializationManager;
 
-    private QueryRecordLogHandler queryRecordLogHandler;
+    private QueryLogHandler queryLogHandler;
 
     public QueryEvaluationImpl(ResultMaterializationManager manager,
-                               QueryRecordLogHandler queryRecordLogHandler) {
+                               QueryLogHandler queryLogHandler) {
         this.materializationManager = manager;
-        this.queryRecordLogHandler = queryRecordLogHandler;
+        this.queryLogHandler = queryLogHandler;
     }
 
     public ResultMaterializationManager getMaterializationManager() {
         return materializationManager;
     }
 
-    public QueryRecordLogHandler getQFRHandler() {
-        return queryRecordLogHandler;
+    public QueryLogHandler getQFRHandler() {
+        return queryLogHandler;
     }
 
 
@@ -68,7 +67,7 @@ public class QueryEvaluationImpl implements FederatedQueryEvaluation {
             return QueryEvaluationImpl.this.getMaterializationManager();
         }
 
-        protected QueryRecordLogHandler getQFRHandler() {
+        protected QueryLogHandler getQFRHandler() {
             return QueryEvaluationImpl.this.getQFRHandler();
         }
         
@@ -76,7 +75,7 @@ public class QueryEvaluationImpl implements FederatedQueryEvaluation {
         protected Collection<QueryExecutionInterceptor> getQueryExecutorInterceptors() {
         	Collection<QueryExecutionInterceptor> interceptors = super.getQueryExecutorInterceptors();
         	//interceptors.add(new ObservingInterceptor());
-            interceptors.add(new QueryObservingInterceptor(getQFRHandler(), this.getMaterializationManager()));
+            interceptors.add(new QueryLogInterceptor(getQFRHandler(), this.getMaterializationManager()));
         	return interceptors;
         }
 

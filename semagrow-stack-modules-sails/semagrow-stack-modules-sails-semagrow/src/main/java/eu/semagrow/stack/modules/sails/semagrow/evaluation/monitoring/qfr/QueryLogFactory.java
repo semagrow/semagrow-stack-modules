@@ -5,8 +5,8 @@ import java.io.OutputStream;
 /**
  * Created by angel on 10/21/14.
  */
-public interface QueryRecordLogFactory {
+public interface QueryLogFactory {
 
-    QueryRecordLogHandler getQueryRecordLogger(OutputStream out);
+    QueryLogHandler getQueryRecordLogger(OutputStream out);
 
 }

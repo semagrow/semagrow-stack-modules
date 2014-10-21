@@ -9,23 +9,23 @@ import java.io.OutputStream;
 /**
  * Created by angel on 10/21/14.
  */
-public class RDFQueryRecordLogFactory implements QueryRecordLogFactory {
+public class RDFQueryLogFactory implements QueryLogFactory {
 
     private RDFWriterFactory writerFactory;
 
-    public RDFQueryRecordLogFactory(RDFWriterFactory writerFactory) {
+    public RDFQueryLogFactory(RDFWriterFactory writerFactory) {
         this.writerFactory = writerFactory;
     }
 
     @Override
-    public QueryRecordLogHandler getQueryRecordLogger(OutputStream out) {
+    public QueryLogHandler getQueryRecordLogger(OutputStream out) {
 
         RDFWriter writer = writerFactory.getWriter(out);
 
-        QueryRecordLogHandler handler = new RDFQueryRecordLogHandler(writer, ValueFactoryImpl.getInstance());
+        QueryLogHandler handler = new RDFQueryLogHandler(writer, ValueFactoryImpl.getInstance());
         try {
             handler.startQueryLog();
-        } catch (QueryRecordLogException e) {
+        } catch (QueryLogException e) {
             e.printStackTrace();
         }
         return handler;

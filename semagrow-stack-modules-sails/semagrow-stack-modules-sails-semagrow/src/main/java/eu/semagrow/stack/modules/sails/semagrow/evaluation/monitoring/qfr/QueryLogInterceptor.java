@@ -22,15 +22,15 @@ import java.util.Set;
 /**
  * Created by angel on 10/20/14.
  */
-public class QueryObservingInterceptor
+public class QueryLogInterceptor
         extends AbstractEvaluationSessionAwareInterceptor
         implements QueryExecutionInterceptor {
 
     private ResultMaterializationManager fileManager;
 
-    private QueryRecordLogHandler qfrHandler;
+    private QueryLogHandler qfrHandler;
 
-    public QueryObservingInterceptor(QueryRecordLogHandler qfrHandler, ResultMaterializationManager fileManager) {
+    public QueryLogInterceptor(QueryLogHandler qfrHandler, ResultMaterializationManager fileManager) {
         this.qfrHandler = qfrHandler;
         this.fileManager = fileManager;
     }
@@ -43,7 +43,7 @@ public class QueryObservingInterceptor
     public CloseableIteration<BindingSet, QueryEvaluationException>
         afterExecution(URI endpoint, TupleExpr expr, BindingSet bindings, CloseableIteration<BindingSet, QueryEvaluationException> result) {
 
-        QueryRecordImpl metadata = createMetadata(endpoint, expr, bindings.getBindingNames());
+        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindings.getBindingNames());
         return observe(metadata, result);
     }
 
@@ -64,24 +64,24 @@ public class QueryObservingInterceptor
 
         Set<String> bindingNames = (bindings.size() == 0) ? new HashSet<String>() : bindings.get(0).getBindingNames();
 
-        QueryRecordImpl metadata = createMetadata(endpoint, expr, bindingNames);
+        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindingNames);
 
         return observe(metadata, result);
     }
 
-    protected QueryRecordImpl createMetadata(URI endpoint, TupleExpr expr, Set<String> bindingNames) {
-        return new QueryRecordImpl(this.getQueryEvaluationSession(), endpoint, expr, bindingNames);
+    protected QueryLogRecordImpl createMetadata(URI endpoint, TupleExpr expr, Set<String> bindingNames) {
+        return new QueryLogRecordImpl(this.getQueryEvaluationSession(), endpoint, expr, bindingNames);
     }
 
     protected CloseableIteration<BindingSet, QueryEvaluationException>
-        observe(QueryRecordImpl metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
+        observe(QueryLogRecordImpl metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
 
         return new QueryObserver(metadata, iter);
     }
 
     protected class QueryObserver extends DelayedIteration<BindingSet, QueryEvaluationException> {
 
-        private QueryRecord queryRecord;
+        private QueryLogRecord queryLogRecord;
 
         private Iteration<BindingSet, QueryEvaluationException> innerIter;
 
@@ -89,8 +89,8 @@ public class QueryObservingInterceptor
 
         private MaterializationHandle handle;
 
-        public QueryObserver(QueryRecordImpl metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
-            queryRecord = metadata;
+        public QueryObserver(QueryLogRecordImpl metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
+            queryLogRecord = metadata;
             innerIter = iter;
         }
 
@@ -126,13 +126,13 @@ public class QueryObservingInterceptor
         public void handleClose() throws QueryEvaluationException {
             super.handleClose();
 
-            queryRecord.setCardinality(measure.getCount());
-            queryRecord.setDuration(measure.getStartTime(), measure.getEndTime());
-            queryRecord.setResults(handle);
+            queryLogRecord.setCardinality(measure.getCount());
+            queryLogRecord.setDuration(measure.getStartTime(), measure.getEndTime());
+            queryLogRecord.setResults(handle);
 
             try {
-                qfrHandler.handleQueryRecord(queryRecord);
-            } catch (QueryRecordLogException e) {
+                qfrHandler.handleQueryRecord(queryLogRecord);
+            } catch (QueryLogException e) {
                 throw new QueryEvaluationException(e);
             }
         }

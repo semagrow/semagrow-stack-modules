@@ -13,7 +13,7 @@ import java.util.List;
 /**
 * Created by angel on 10/20/14.
 */
-public class QueryRecordImpl implements QueryRecord {
+public class QueryLogRecordImpl implements QueryLogRecord {
 
     private QueryEvaluationSession session;
 
@@ -33,14 +33,14 @@ public class QueryRecordImpl implements QueryRecord {
 
     private MaterializationHandle results;
 
-    public QueryRecordImpl(QueryEvaluationSession session, URI endpoint, TupleExpr query) {
+    public QueryLogRecordImpl(QueryEvaluationSession session, URI endpoint, TupleExpr query) {
         this.session = session;
         this.endpoint = endpoint;
         this.query = query;
         this.bindingNames = new LinkedList<String>();
     }
 
-    public QueryRecordImpl(QueryEvaluationSession session, URI endpoint, TupleExpr query, Collection<String> bindingNames) {
+    public QueryLogRecordImpl(QueryEvaluationSession session, URI endpoint, TupleExpr query, Collection<String> bindingNames) {
         this.session = session;
         this.endpoint = endpoint;
         this.query = query;

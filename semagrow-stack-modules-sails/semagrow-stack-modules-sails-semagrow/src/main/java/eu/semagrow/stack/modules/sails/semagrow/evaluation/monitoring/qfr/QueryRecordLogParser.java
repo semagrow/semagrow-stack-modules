@@ -8,8 +8,8 @@ import java.io.InputStream;
  */
 public interface QueryRecordLogParser {
 
-    void setQueryRecordHandler(QueryRecordLogHandler handler);
+    void setQueryRecordHandler(QueryLogHandler handler);
 
-    void parseQueryLog(InputStream in) throws IOException, QueryRecordLogException;
+    void parseQueryLog(InputStream in) throws IOException, QueryLogException;
 
 }

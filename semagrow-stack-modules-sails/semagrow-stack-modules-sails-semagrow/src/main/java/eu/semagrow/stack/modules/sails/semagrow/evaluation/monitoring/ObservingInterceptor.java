@@ -3,8 +3,8 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.AbstractEvaluationSessionAwareInterceptor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryExecutionInterceptor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.logging.LoggerWithQueue;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryRecord;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryRecordImpl;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryLogRecord;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryLogRecordImpl;
 import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.Iteration;
 import info.aduna.iteration.Iterations;
@@ -39,7 +39,7 @@ public class ObservingInterceptor
     public CloseableIteration<BindingSet, QueryEvaluationException>
         afterExecution(URI endpoint, TupleExpr expr, BindingSet bindings, CloseableIteration<BindingSet, QueryEvaluationException> result) {
 
-        QueryRecordImpl metadata = createMetadata(endpoint, expr, bindings.getBindingNames());
+        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindings.getBindingNames());
         return observe(metadata, result);
     }
 
@@ -58,14 +58,14 @@ public class ObservingInterceptor
 
         Set<String> bindingNames = (bindings.size() == 0) ? new HashSet<String>() : bindings.get(0).getBindingNames();
 
-        QueryRecordImpl metadata = createMetadata(endpoint, expr, bindingNames);
+        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindingNames);
 
         return observe(metadata, result);
     }
 
 
     public CloseableIteration<BindingSet, QueryEvaluationException>
-        observe(QueryRecordImpl metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
+        observe(QueryLogRecordImpl metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
     	if ( ! logWritterThread.isAlive()) {
         	logWritterThread.start();
         }
@@ -73,15 +73,15 @@ public class ObservingInterceptor
     }
 
 
-    protected QueryRecordImpl createMetadata(URI endpoint, TupleExpr expr, Set<String> bindingNames) {
-        return new QueryRecordImpl(this.getQueryEvaluationSession(), endpoint, expr, bindingNames);
+    protected QueryLogRecordImpl createMetadata(URI endpoint, TupleExpr expr, Set<String> bindingNames) {
+        return new QueryLogRecordImpl(this.getQueryEvaluationSession(), endpoint, expr, bindingNames);
     }
 
     protected class QueryObserver extends ObservingIteration<BindingSet,QueryEvaluationException> {
 
-        private QueryRecord metadata;
+        private QueryLogRecord metadata;
         
-        public QueryObserver(QueryRecord metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
+        public QueryObserver(QueryLogRecord metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
             super(iter);
             this.metadata = metadata;
             try {

@@ -2,7 +2,6 @@ package eu.semagrow.stack.modules.sails.semagrow;
 
 import eu.semagrow.stack.modules.api.decomposer.QueryDecomposer;
 import eu.semagrow.stack.modules.api.evaluation.FederatedQueryEvaluation;
-import eu.semagrow.stack.modules.api.evaluation.QueryEvaluation;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.api.statistics.Statistics;
 import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
@@ -13,10 +12,9 @@ import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryEvaluationImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.FileManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.ResultMaterializationManager;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryRecordLogException;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryRecordLogFactory;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryRecordLogHandler;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.RDFQueryRecordLogFactory;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.*;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryLogFactory;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.RDFQueryLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.optimizer.DynamicProgrammingDecomposer;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -65,7 +63,7 @@ public class SemagrowSail extends SailBase implements StackableSail {
     private Sail metadataSail;
     private FederatedQueryEvaluation queryEvaluation;
 
-    private QueryRecordLogHandler handler;
+    private QueryLogHandler handler;
 
     public SemagrowSail() { }
 
@@ -170,16 +168,16 @@ public class SemagrowSail extends SailBase implements StackableSail {
         return manager;
     }
 
-    public QueryRecordLogHandler getRecordLog() {
+    public QueryLogHandler getRecordLog() {
 
-        QueryRecordLogHandler handler;
+        QueryLogHandler handler;
 
         File qfrLog  = new File("/var/tmp/qfr.log");
         RDFFormat rdfFF = RDFFormat.NTRIPLES;
 
         RDFWriterRegistry writerRegistry = RDFWriterRegistry.getInstance();
         RDFWriterFactory rdfWriterFactory = writerRegistry.get(rdfFF);
-        QueryRecordLogFactory factory = new RDFQueryRecordLogFactory(rdfWriterFactory);
+        QueryLogFactory factory = new RDFQueryLogFactory(rdfWriterFactory);
         try {
             OutputStream out = new FileOutputStream(qfrLog);
             handler = factory.getQueryRecordLogger(out);
@@ -196,7 +194,7 @@ public class SemagrowSail extends SailBase implements StackableSail {
         if (handler != null) {
             try {
                 handler.endQueryLog();
-            } catch (QueryRecordLogException e) {
+            } catch (QueryLogException e) {
                 throw new SailException(e);
             }
         }
