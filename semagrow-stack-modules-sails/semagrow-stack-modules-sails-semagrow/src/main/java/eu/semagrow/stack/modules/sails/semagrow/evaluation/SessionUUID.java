@@ -1,6 +1,8 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 
 import eu.semagrow.stack.modules.api.evaluation.SessionId;
+import org.openrdf.model.URI;
+import org.openrdf.model.impl.ValueFactoryImpl;
 
 import java.util.UUID;
 
@@ -28,4 +30,7 @@ public class SessionUUID implements SessionId {
 
     @Override
     public String toString() { return id.toString(); }
+
+
+    public URI toURI() { return ValueFactoryImpl.getInstance().createURI("urn:"+toString()); }
 }

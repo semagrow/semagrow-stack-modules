@@ -54,6 +54,10 @@ public class MeasuringIteration<E,X extends Exception> extends IterationWrapper<
             return System.currentTimeMillis() - startTime;
     }
 
+    public long getStartTime() { return startTime; }
+
+    public long getEndTime() { return endTime; }
+
     private void init() { startTime = System.currentTimeMillis(); }
 
     @Override

@@ -9,7 +9,6 @@ import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.TupleExpr;
 
-import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
 

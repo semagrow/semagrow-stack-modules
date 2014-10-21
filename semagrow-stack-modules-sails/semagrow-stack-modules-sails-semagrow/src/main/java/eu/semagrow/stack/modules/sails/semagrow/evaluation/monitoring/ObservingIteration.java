@@ -12,7 +12,7 @@ public abstract class ObservingIteration<E,X extends Exception> extends Iteratio
         super(iter);
     }
 
-    public abstract void observe(final E e);
+    public abstract void observe(final E e) throws X;
 
     public abstract void observeExceptionally(final X x);
 

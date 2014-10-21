@@ -11,6 +11,12 @@ import eu.semagrow.stack.modules.querydecomp.selector.*;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CardinalityEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryEvaluationImpl;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.FileManager;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.ResultMaterializationManager;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryRecordLogException;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryRecordLogFactory;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryRecordLogHandler;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.RDFQueryRecordLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.optimizer.DynamicProgrammingDecomposer;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -20,14 +26,24 @@ import org.openrdf.query.algebra.evaluation.impl.CompareOptimizer;
 import org.openrdf.query.algebra.evaluation.impl.ConjunctiveConstraintSplitter;
 import org.openrdf.query.algebra.evaluation.impl.SameTermFilterOptimizer;
 import org.openrdf.query.algebra.evaluation.util.QueryOptimizerList;
+import org.openrdf.query.resultio.TupleQueryResultFormat;
+import org.openrdf.query.resultio.TupleQueryResultWriterFactory;
+import org.openrdf.query.resultio.TupleQueryResultWriterRegistry;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.sail.SailRepository;
+import org.openrdf.rio.RDFFormat;
+import org.openrdf.rio.RDFWriterFactory;
+import org.openrdf.rio.RDFWriterRegistry;
 import org.openrdf.sail.Sail;
 import org.openrdf.sail.SailConnection;
 import org.openrdf.sail.SailException;
 import org.openrdf.sail.StackableSail;
 import org.openrdf.sail.helpers.SailBase;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.OutputStream;
 import java.util.Collection;
 
 /**
@@ -48,6 +64,8 @@ public class SemagrowSail extends SailBase implements StackableSail {
 
     private Sail metadataSail;
     private FederatedQueryEvaluation queryEvaluation;
+
+    private QueryRecordLogHandler handler;
 
     public SemagrowSail() { }
 
@@ -132,9 +150,56 @@ public class SemagrowSail extends SailBase implements StackableSail {
 
     public FederatedQueryEvaluation getQueryEvaluation() {
 
-        if (queryEvaluation == null)
-            queryEvaluation = new QueryEvaluationImpl();
+        if (queryEvaluation == null) {
+            ResultMaterializationManager manager = getManager();
+            handler = getRecordLog();
+            queryEvaluation = new QueryEvaluationImpl(manager, handler);
+        }
 
         return queryEvaluation;
     }
+
+    public ResultMaterializationManager getManager() {
+        File baseDir = new File("/var/tmp/");
+        TupleQueryResultFormat resultFF = TupleQueryResultFormat.BINARY;
+
+        TupleQueryResultWriterRegistry  registry = TupleQueryResultWriterRegistry.getInstance();
+        TupleQueryResultWriterFactory writerFactory = registry.get(resultFF);
+        ResultMaterializationManager manager = new FileManager(baseDir, writerFactory);
+
+        return manager;
+    }
+
+    public QueryRecordLogHandler getRecordLog() {
+
+        QueryRecordLogHandler handler;
+
+        File qfrLog  = new File("/var/tmp/qfr.log");
+        RDFFormat rdfFF = RDFFormat.NTRIPLES;
+
+        RDFWriterRegistry writerRegistry = RDFWriterRegistry.getInstance();
+        RDFWriterFactory rdfWriterFactory = writerRegistry.get(rdfFF);
+        QueryRecordLogFactory factory = new RDFQueryRecordLogFactory(rdfWriterFactory);
+        try {
+            OutputStream out = new FileOutputStream(qfrLog);
+            handler = factory.getQueryRecordLogger(out);
+            return handler;
+        } catch (FileNotFoundException e) {
+
+        }
+        return null;
+    }
+
+    @Override
+    public void shutDown() throws SailException {
+        super.shutDown();
+        if (handler != null) {
+            try {
+                handler.endQueryLog();
+            } catch (QueryRecordLogException e) {
+                throw new SailException(e);
+            }
+        }
+    }
+
 }
