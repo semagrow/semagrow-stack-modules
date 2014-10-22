@@ -8,7 +8,7 @@ import org.openrdf.query.QueryEvaluationException;
 /**
  * Created by angel on 10/20/14.
  */
-public interface ResultMaterializationManager {
+public interface MaterializationManager {
 
     CloseableIteration<BindingSet,QueryEvaluationException>
         getResult(URI handle) throws QueryEvaluationException;

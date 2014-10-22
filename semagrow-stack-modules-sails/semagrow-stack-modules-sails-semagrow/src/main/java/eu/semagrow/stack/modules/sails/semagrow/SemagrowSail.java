@@ -11,10 +11,10 @@ import eu.semagrow.stack.modules.sails.semagrow.estimator.CardinalityEstimatorIm
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryEvaluationImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.FileManager;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.ResultMaterializationManager;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.*;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.QueryLogFactory;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr.RDFQueryLogFactory;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.*;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogFactory;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.RDFQueryLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.optimizer.DynamicProgrammingDecomposer;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -149,7 +149,7 @@ public class SemagrowSail extends SailBase implements StackableSail {
     public FederatedQueryEvaluation getQueryEvaluation() {
 
         if (queryEvaluation == null) {
-            ResultMaterializationManager manager = getManager();
+            MaterializationManager manager = getManager();
             handler = getRecordLog();
             queryEvaluation = new QueryEvaluationImpl(manager, handler);
         }
@@ -157,13 +157,13 @@ public class SemagrowSail extends SailBase implements StackableSail {
         return queryEvaluation;
     }
 
-    public ResultMaterializationManager getManager() {
+    public MaterializationManager getManager() {
         File baseDir = new File("/var/tmp/");
         TupleQueryResultFormat resultFF = TupleQueryResultFormat.BINARY;
 
         TupleQueryResultWriterRegistry  registry = TupleQueryResultWriterRegistry.getInstance();
         TupleQueryResultWriterFactory writerFactory = registry.get(resultFF);
-        ResultMaterializationManager manager = new FileManager(baseDir, writerFactory);
+        MaterializationManager manager = new FileManager(baseDir, writerFactory);
 
         return manager;
     }
@@ -180,7 +180,7 @@ public class SemagrowSail extends SailBase implements StackableSail {
         QueryLogFactory factory = new RDFQueryLogFactory(rdfWriterFactory);
         try {
             OutputStream out = new FileOutputStream(qfrLog);
-            handler = factory.getQueryRecordLogger(out);
+            handler = factory.getQueryLogger(out);
             return handler;
         } catch (FileNotFoundException e) {
 

@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -6,7 +6,7 @@ import java.io.InputStream;
 /**
  * Created by angel on 10/21/14.
  */
-public interface QueryRecordLogParser {
+public interface QueryLogParser {
 
     void setQueryRecordHandler(QueryLogHandler handler);
 

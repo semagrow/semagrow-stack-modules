@@ -1,7 +1,7 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog;
 
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationHandle;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.ResultMaterializationManager;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.AbstractEvaluationSessionAwareInterceptor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryExecutionInterceptor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.MeasuringIteration;
@@ -26,16 +26,21 @@ public class QueryLogInterceptor
         extends AbstractEvaluationSessionAwareInterceptor
         implements QueryExecutionInterceptor {
 
-    private ResultMaterializationManager fileManager;
+    private MaterializationManager fileManager;
 
     private QueryLogHandler qfrHandler;
 
-    public QueryLogInterceptor(QueryLogHandler qfrHandler, ResultMaterializationManager fileManager) {
+    private QueryLogRecordFactory qlrf;
+
+    public QueryLogInterceptor(QueryLogRecordFactory queryLogRecordFactory,
+                               QueryLogHandler qfrHandler,
+                               MaterializationManager fileManager) {
         this.qfrHandler = qfrHandler;
         this.fileManager = fileManager;
+        this.qlrf = queryLogRecordFactory;
     }
 
-    public ResultMaterializationManager getFileManager() {
+    public MaterializationManager getFileManager() {
         return fileManager;
     }
 
@@ -43,7 +48,7 @@ public class QueryLogInterceptor
     public CloseableIteration<BindingSet, QueryEvaluationException>
         afterExecution(URI endpoint, TupleExpr expr, BindingSet bindings, CloseableIteration<BindingSet, QueryEvaluationException> result) {
 
-        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindings.getBindingNames());
+        QueryLogRecord metadata = createMetadata(endpoint, expr, bindings.getBindingNames());
         return observe(metadata, result);
     }
 
@@ -64,17 +69,19 @@ public class QueryLogInterceptor
 
         Set<String> bindingNames = (bindings.size() == 0) ? new HashSet<String>() : bindings.get(0).getBindingNames();
 
-        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindingNames);
+        QueryLogRecord metadata = createMetadata(endpoint, expr, bindingNames);
 
         return observe(metadata, result);
     }
 
-    protected QueryLogRecordImpl createMetadata(URI endpoint, TupleExpr expr, Set<String> bindingNames) {
-        return new QueryLogRecordImpl(this.getQueryEvaluationSession(), endpoint, expr, bindingNames);
+    protected QueryLogRecord createMetadata(URI endpoint, TupleExpr expr, Set<String> bindingNames) {
+
+        return qlrf.createQueryLogRecord(endpoint, expr, bindingNames);
+        //return new QueryLogRecordImpl(this.getQueryEvaluationSession(), endpoint, expr, bindingNames);
     }
 
     protected CloseableIteration<BindingSet, QueryEvaluationException>
-        observe(QueryLogRecordImpl metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
+        observe(QueryLogRecord metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
 
         return new QueryObserver(metadata, iter);
     }
@@ -89,7 +96,7 @@ public class QueryLogInterceptor
 
         private MaterializationHandle handle;
 
-        public QueryObserver(QueryLogRecordImpl metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
+        public QueryObserver(QueryLogRecord metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
             queryLogRecord = metadata;
             innerIter = iter;
         }
@@ -98,7 +105,7 @@ public class QueryLogInterceptor
         protected Iteration<? extends BindingSet, ? extends QueryEvaluationException>
             createIteration() throws QueryEvaluationException {
 
-            ResultMaterializationManager manager = getFileManager();
+            MaterializationManager manager = getFileManager();
 
             handle = manager.saveResult();
 

@@ -1,6 +1,5 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog;
 
-import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.rio.RDFWriter;
 import org.openrdf.rio.RDFWriterFactory;
 
@@ -18,11 +17,11 @@ public class RDFQueryLogFactory implements QueryLogFactory {
     }
 
     @Override
-    public QueryLogHandler getQueryRecordLogger(OutputStream out) {
+    public QueryLogHandler getQueryLogger(OutputStream out) {
 
         RDFWriter writer = writerFactory.getWriter(out);
 
-        QueryLogHandler handler = new RDFQueryLogHandler(writer, ValueFactoryImpl.getInstance());
+        QueryLogHandler handler = new RDFQueryLogHandler(writer);
         try {
             handler.startQueryLog();
         } catch (QueryLogException e) {

@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog;
 
 /**
  * Created by angel on 10/20/14.

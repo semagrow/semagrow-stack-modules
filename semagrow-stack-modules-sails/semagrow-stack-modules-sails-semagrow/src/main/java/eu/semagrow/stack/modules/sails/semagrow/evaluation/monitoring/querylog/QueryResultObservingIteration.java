@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.qfr;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog;
 
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.ObservingIteration;
 import info.aduna.iteration.Iteration;
@@ -47,7 +47,8 @@ public class QueryResultObservingIteration extends ObservingIteration<BindingSet
         super.handleClose();
 
         try {
-            handler.endQueryResult();
+            if (initialized)
+                handler.endQueryResult();
         } catch (TupleQueryResultHandlerException e) {
             throw new QueryEvaluationException(e);
         }

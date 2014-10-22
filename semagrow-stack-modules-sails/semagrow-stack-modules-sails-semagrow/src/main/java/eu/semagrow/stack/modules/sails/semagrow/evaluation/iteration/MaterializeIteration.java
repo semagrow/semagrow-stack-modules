@@ -1,7 +1,7 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration;
 
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationHandle;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.ResultMaterializationManager;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;
 import info.aduna.iteration.DelayedIteration;
 import info.aduna.iteration.Iteration;
 import org.openrdf.query.BindingSet;
@@ -17,8 +17,8 @@ import java.util.ArrayList;
 public class MaterializeIteration extends DelayedIteration<BindingSet, QueryEvaluationException> {
 
     private Iteration<BindingSet, QueryEvaluationException> innerIter;
-    private ResultMaterializationManager manager;
-    public MaterializeIteration(ResultMaterializationManager manager,
+    private MaterializationManager manager;
+    public MaterializeIteration(MaterializationManager manager,
                                 Iteration<BindingSet,QueryEvaluationException> iter) {
         this.innerIter = iter;
         this.manager = manager;

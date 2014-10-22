@@ -1,6 +1,5 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation.file;
 
-import eu.semagrow.stack.modules.api.evaluation.QueryEvaluation;
 import info.aduna.iteration.CloseableIteration;
 import org.openrdf.http.client.BackgroundTupleResult;
 import org.openrdf.model.URI;
@@ -16,7 +15,7 @@ import java.net.URISyntaxException;
 /**
  * Created by angel on 10/20/14.
  */
-public class FileManager implements ResultMaterializationManager {
+public class FileManager implements MaterializationManager {
 
     private TupleQueryResultWriterFactory writerFactory;
 
