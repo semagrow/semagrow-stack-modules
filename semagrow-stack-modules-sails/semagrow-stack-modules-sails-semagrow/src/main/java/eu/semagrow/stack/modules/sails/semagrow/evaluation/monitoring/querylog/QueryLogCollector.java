@@ -15,14 +15,8 @@ public class QueryLogCollector implements QueryLogHandler {
     }
 
     @Override
-    public void startQueryLog() throws QueryLogException { }
-
-    @Override
     public void handleQueryRecord(QueryLogRecord queryLogRecord) throws QueryLogException {
         collection.add(queryLogRecord);
     }
-
-    @Override
-    public void endQueryLog() throws QueryLogException { }
 
 }

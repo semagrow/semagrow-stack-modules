@@ -1,5 +1,8 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.rdf;
 
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogException;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogRecord;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogWriter;
 import eu.semagrow.stack.modules.vocabulary.QFR;
 import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
@@ -17,6 +20,7 @@ import org.openrdf.query.parser.ParsedTupleQuery;
 import org.openrdf.queryrender.sparql.SPARQLQueryRenderer;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
+import org.openrdf.rio.RDFWriter;
 
 import java.util.List;
 import java.util.UUID;
@@ -24,12 +28,12 @@ import java.util.UUID;
 /**
  * Created by angel on 10/20/14.
  */
-public class RDFQueryLogHandler implements QueryLogHandler {
+public class RDFQueryLogWriter implements QueryLogWriter {
 
-    private RDFHandler handler;
+    private RDFWriter handler;
     private ValueFactory vf = ValueFactoryImpl.getInstance();
 
-    public RDFQueryLogHandler(RDFHandler handler) {
+    public RDFQueryLogWriter(RDFWriter handler) {
         this.handler = handler;
     }
 

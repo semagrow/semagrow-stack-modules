@@ -1,7 +1,8 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.impl;
 
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationHandle;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogRecord;
 import org.openrdf.model.URI;
 import org.openrdf.query.algebra.TupleExpr;
 

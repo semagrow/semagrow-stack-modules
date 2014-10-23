@@ -14,7 +14,7 @@ import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.FileManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogFactory;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.RDFQueryLogFactory;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.rdf.RDFQueryLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.optimizer.DynamicProgrammingDecomposer;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -63,7 +63,7 @@ public class SemagrowSail extends SailBase implements StackableSail {
     private Sail metadataSail;
     private FederatedQueryEvaluation queryEvaluation;
 
-    private QueryLogHandler handler;
+    private QueryLogWriter handler;
 
     public SemagrowSail() { }
 
@@ -168,9 +168,9 @@ public class SemagrowSail extends SailBase implements StackableSail {
         return manager;
     }
 
-    public QueryLogHandler getRecordLog() {
+    public QueryLogWriter getRecordLog() {
 
-        QueryLogHandler handler;
+        QueryLogWriter handler;
 
         File qfrLog  = new File("/var/tmp/qfr.log");
         RDFFormat rdfFF = RDFFormat.NTRIPLES;

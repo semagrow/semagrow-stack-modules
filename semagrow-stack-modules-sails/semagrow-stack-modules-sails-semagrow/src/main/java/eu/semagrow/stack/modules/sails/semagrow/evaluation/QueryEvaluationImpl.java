@@ -10,7 +10,7 @@ import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryExe
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogHandler;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogInterceptor;
 
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogRecordFactoryImpl;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.impl.QueryLogRecordFactoryImpl;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.algebra.TupleExpr;

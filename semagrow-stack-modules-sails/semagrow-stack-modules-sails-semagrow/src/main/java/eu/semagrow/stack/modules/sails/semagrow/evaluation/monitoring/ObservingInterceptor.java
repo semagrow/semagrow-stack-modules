@@ -4,7 +4,7 @@ import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.Abstract
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryExecutionInterceptor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.logging.LoggerWithQueue;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogRecord;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogRecordImpl;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.impl.QueryLogRecordImpl;
 import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.Iteration;
 import info.aduna.iteration.Iterations;
