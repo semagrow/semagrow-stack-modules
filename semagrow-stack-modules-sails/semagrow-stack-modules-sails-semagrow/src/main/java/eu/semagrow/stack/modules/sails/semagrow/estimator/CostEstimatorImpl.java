@@ -4,7 +4,9 @@ import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
 import eu.semagrow.stack.modules.api.estimator.CostEstimator;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.BindJoin;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.HashJoin;
+import eu.semagrow.stack.modules.sails.semagrow.algebra.MergeJoin;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.SourceQuery;
+import eu.semagrow.stack.modules.sails.semagrow.optimizer.Plan;
 import org.openrdf.model.URI;
 import org.openrdf.query.algebra.*;
 
@@ -33,6 +35,10 @@ public class CostEstimatorImpl implements CostEstimator {
             return getCost((SourceQuery)expr);
         else if (expr instanceof Join)
             return getCost((Join)expr);
+        else if (expr instanceof Order)
+            return getCost((Order)expr);
+        else if (expr instanceof Plan)
+            return ((Plan)expr).getCost();
         else
             return 1;
     }
@@ -65,14 +71,21 @@ public class CostEstimatorImpl implements CostEstimator {
         long leftCard = cardinalityEstimator.getCardinality(join.getLeftArg());
         long joinCard = cardinalityEstimator.getCardinality(join);
 
-        return leftCard * (C_TRANSFER_QUERY + C_TRANSFER_TUPLE) + joinCard * C_TRANSFER_TUPLE;
+        return getCost(join.getLeftArg()) + leftCard * (C_TRANSFER_QUERY + C_TRANSFER_TUPLE) + joinCard * C_TRANSFER_TUPLE;
     }
 
     public double getCost(HashJoin join) {
         long leftCard = cardinalityEstimator.getCardinality(join.getLeftArg());
         long rightCard = cardinalityEstimator.getCardinality(join.getRightArg());
 
-        return (leftCard + rightCard) * C_TRANSFER_TUPLE + 2 * C_TRANSFER_QUERY;
+        //return (leftCard + rightCard) * C_TRANSFER_TUPLE + 2 * C_TRANSFER_QUERY;
+        return getCost(join.getLeftArg()) + getCost(join.getRightArg()) + leftCard + rightCard;
+    }
+
+    public double getCost(MergeJoin join) {
+        double cost1 = getCost(join.getLeftArg());
+        double cost2 = getCost(join.getRightArg());
+        return cost1 + cost2;
     }
 
     public double getCost(Join join) {
@@ -80,11 +93,18 @@ public class CostEstimatorImpl implements CostEstimator {
             return getCost((BindJoin)join);
         else if (join instanceof HashJoin)
             return getCost((HashJoin)join);
+        else if (join instanceof MergeJoin)
+            return getCost((MergeJoin)join);
 
         long leftCard = cardinalityEstimator.getCardinality(join.getLeftArg());
         long rightCard = cardinalityEstimator.getCardinality(join.getRightArg());
 
         return (leftCard + rightCard) * C_TRANSFER_TUPLE + 2 * C_TRANSFER_QUERY;
+    }
+
+    public double getCost(Order order){
+        long card = cardinalityEstimator.getCardinality(order.getArg());
+        return getCost(order.getArg()) + card * Math.log(card);
     }
 
     public double getCost(UnaryTupleOperator expr) {
