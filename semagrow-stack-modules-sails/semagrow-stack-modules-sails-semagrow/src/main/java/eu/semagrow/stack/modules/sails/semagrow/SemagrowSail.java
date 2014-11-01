@@ -49,48 +49,27 @@ import java.util.Collection;
  * @author acharal@iit.demokritos.gr
  *
  * TODO list and other suggestions from the plenary meeting in Wageningen
- * TODO: lineage of evaluation (track the sources of the produced tuples)
  * TODO: define clean interfaces for sourceselector
  * TODO: rethink voID descriptions
  * TODO: estimate processing cost of subqueries to the sources (some sources may contain indexes etc
- * TODO: order-by and sort-merge-join
  * TODO: voID and configuration as sailbase and able to be SPARQL queried.
  * TODO: do transformation
  * TODO: geosparql
  */
-public class SemagrowSail extends SailBase implements StackableSail {
+public class SemagrowSail extends SailBase {
 
-    private Sail metadataSail;
     private FederatedQueryEvaluation queryEvaluation;
 
     private QueryLogWriter handler;
 
-    public SemagrowSail() { }
+    private SourceSelector sourceSelector;
+    private CostEstimator costEstimator;
+    private CardinalityEstimator cardinalityEstimator;
 
-    public SemagrowSail(Sail metadataSail) { setBaseSail(metadataSail); }
+    public SemagrowSail() { }
 
     public boolean isWritable() throws SailException {
         return false;
-    }
-
-    @Override
-    protected void initializeInternal() throws SailException {
-        // TODO: uncomment initialization to work properly!
-        //if (metadataSail != null && metadataSail.)
-        //   metadataSail.initialize();
-    }
-
-    @Override
-    protected void shutDownInternal() throws SailException {
-        metadataSail.shutDown();
-    }
-
-    public void setBaseSail(Sail sail) {
-        metadataSail = sail;
-    }
-
-    public Sail getBaseSail() {
-        return metadataSail;
     }
 
     public ValueFactory getValueFactory() {
@@ -98,7 +77,7 @@ public class SemagrowSail extends SailBase implements StackableSail {
     }
 
     public SailConnection getConnectionInternal() throws SailException {
-        return new SemagrowSailConnection(this, this.getBaseSail().getConnection());
+        return new SemagrowSailConnection(this);
     }
 
     public QueryOptimizer getOptimizer() {
@@ -122,29 +101,24 @@ public class SemagrowSail extends SailBase implements StackableSail {
         return new DynamicProgrammingDecomposer(costEstimator, cardinalityEstimator, selector);
     }
 
-    private SourceSelector getSourceSelector() {
-        //VOIDResourceSelector resourceSelector = new VOIDResourceSelector();
-        //resourceSelector.setRepository(getMetadataAsRepository());
-        //return new SourceSelectorAdapter(resourceSelector);
-        return new VOIDSourceSelector(getMetadataAsRepository());
+    public SourceSelector getSourceSelector() {
+        return sourceSelector;
     }
 
-    private CostEstimator getCostEstimator() {
-        CardinalityEstimator cardinalityEstimator = getCardinalityEstimator();
-        return new CostEstimatorImpl(cardinalityEstimator);
+    public void setSourceSelector(SourceSelector selector) {
+        sourceSelector = selector;
     }
+
+    private CostEstimator getCostEstimator() { return costEstimator; }
+
+    public void setCostEstimator(CostEstimator costEstimator) { this.costEstimator = costEstimator; }
 
     private CardinalityEstimator getCardinalityEstimator() {
-        return new CardinalityEstimatorImpl(getStatistics());
+        return this.cardinalityEstimator;
     }
 
-    private Statistics getStatistics() {
-        return new VOIDStatistics(getMetadataAsRepository());
-    }
-
-    private Repository getMetadataAsRepository() {
-        assert metadataSail != null;
-        return new SailRepository(metadataSail);
+    public void setCardinalityEstimator(CardinalityEstimator cardinalityEstimator) {
+        this.cardinalityEstimator = cardinalityEstimator;
     }
 
     public FederatedQueryEvaluation getQueryEvaluation() {
@@ -156,6 +130,10 @@ public class SemagrowSail extends SailBase implements StackableSail {
         }
 
         return queryEvaluation;
+    }
+
+    public void setQueryEvaluation(FederatedQueryEvaluation queryEvaluation) {
+        this.queryEvaluation = queryEvaluation;
     }
 
     public MaterializationManager getManager() {
@@ -190,8 +168,7 @@ public class SemagrowSail extends SailBase implements StackableSail {
     }
 
     @Override
-    public void shutDown() throws SailException {
-        super.shutDown();
+    protected void shutDownInternal() throws SailException {
         if (handler != null) {
             try {
                 handler.endQueryLog();
@@ -200,5 +177,6 @@ public class SemagrowSail extends SailBase implements StackableSail {
             }
         }
     }
+
 
 }
