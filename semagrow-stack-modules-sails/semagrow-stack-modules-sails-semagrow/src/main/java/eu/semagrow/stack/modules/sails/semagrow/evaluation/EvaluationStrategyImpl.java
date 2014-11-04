@@ -1,6 +1,6 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 
-import eu.semagrow.stack.modules.api.evaluation.EvaluationStrategy;
+import eu.semagrow.stack.modules.api.evaluation.FederatedEvaluationStrategy;
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.*;
@@ -16,7 +16,6 @@ import org.openrdf.query.algebra.evaluation.federation.JoinExecutorBase;
 import org.openrdf.query.algebra.evaluation.iterator.CollectionIteration;
 import org.openrdf.query.impl.EmptyBindingSet;
 
-import javax.management.QueryEval;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
@@ -26,8 +25,9 @@ import java.util.List;
  * Functionality will be added for (potential) custom operators of the execution plan.
  * @author acharal@iit.demokritos.gr
  */
-public class EvaluationStrategyImpl extends org.openrdf.query.algebra.evaluation.impl.EvaluationStrategyImpl
-    implements EvaluationStrategy {
+public class EvaluationStrategyImpl
+    extends  org.openrdf.query.algebra.evaluation.impl.EvaluationStrategyImpl
+    implements FederatedEvaluationStrategy {
 
     private int batchSize = 10;
 
@@ -48,18 +48,23 @@ public class EvaluationStrategyImpl extends org.openrdf.query.algebra.evaluation
                 return vf;
             }
         });
-        this.queryExecutor = queryExecutor;
+        setQueryExecutor(queryExecutor);
     }
 
-    public EvaluationStrategyImpl(QueryExecutor queryExecutor)
-    {
-
+    public EvaluationStrategyImpl(QueryExecutor queryExecutor) {
         this(queryExecutor,ValueFactoryImpl.getInstance());
     }
 
     public void setIncludeProvenance(boolean includeProvenance) { this.includeProvenance = includeProvenance; }
 
     public boolean getIncludeProvenance() { return this.includeProvenance; }
+
+    public void setQueryExecutor(QueryExecutor executor) {
+        assert executor != null;
+        queryExecutor = executor;
+    }
+
+    public QueryExecutor getQueryExecutor() { return queryExecutor; }
 
     @Override
     public CloseableIteration<BindingSet, QueryEvaluationException>

@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring;
 
 import info.aduna.iteration.Iteration;
 import info.aduna.iteration.IterationWrapper;
@@ -12,7 +12,7 @@ public abstract class ObservingIteration<E,X extends Exception> extends Iteratio
         super(iter);
     }
 
-    public abstract void observe(final E e);
+    public abstract void observe(final E e) throws X;
 
     public abstract void observeExceptionally(final X x);
 

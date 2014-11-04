@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.base;
 
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
 import info.aduna.iteration.CloseableIteration;
