@@ -1,8 +1,6 @@
 package eu.semagrow.stack.modules.api.transformation;
 
-import java.io.IOException;
-import java.sql.SQLException;
-import java.util.List;
+import java.util.Collection;
 
 import org.openrdf.model.URI;
 
@@ -17,7 +15,9 @@ public interface QueryTranformation {
 	/**
 	 * @return A list of equivalent URIs aligned with a certain confidence with the initial URI and belonging to a specific schema
 	 */
-	public List<EquivalentURI> retrieveEquivalentPatterns(URI schema)
-			throws IOException, ClassNotFoundException, SQLException;
+	public Collection<EquivalentURI> retrieveEquivalentURIs(URI uri);
 
+    public URI getURI(URI source, int transformationID);
+
+    public URI getInvURI(URI target, int transformationID);
 }

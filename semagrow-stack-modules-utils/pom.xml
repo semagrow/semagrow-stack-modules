@@ -12,7 +12,6 @@
   <name>semagrow-stack-modules-utils</name>
   <packaging>pom</packaging>
   <modules>
-    <module>semagrow-stack-modules-architectureutils</module>
     <module>semagrow-stack-modules-sparqlutils</module>
     <module>semagrow-stack-modules-rioutils</module>
     <module>semagrow-stack-modules-fileutils</module>
