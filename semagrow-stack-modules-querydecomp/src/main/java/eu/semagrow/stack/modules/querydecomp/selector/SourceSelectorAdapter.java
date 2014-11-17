@@ -26,7 +26,6 @@ public class SourceSelectorAdapter implements SourceSelector {
         this.resourceSelector = resourceSelector;
     }
 
-
     public List<SourceMetadata> getSources(StatementPattern pattern, Dataset dataset, BindingSet bindings) {
         List<SourceMetadata> list = new LinkedList<SourceMetadata>();
         for (SelectedResource r : resourceSelector.getSelectedResources(pattern,0)) {
