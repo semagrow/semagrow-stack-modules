@@ -10,7 +10,7 @@ import org.openrdf.model.URI;
  * @author Antonis Kukurikos
  */
 
-public interface QueryTranformation {
+public interface QueryTransformation {
 
 	/**
 	 * @return A list of equivalent URIs aligned with a certain confidence with the initial URI and belonging to a specific schema

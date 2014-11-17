@@ -5,7 +5,7 @@
 package eu.semagrow.stack.modules.alignment;
 
 import eu.semagrow.stack.modules.api.transformation.EquivalentURI;
-import eu.semagrow.stack.modules.api.transformation.QueryTranformation;
+import eu.semagrow.stack.modules.api.transformation.QueryTransformation;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -24,7 +24,7 @@ import java.util.*;
  * @author akukurik
  * @author acharal
  */
-public class QueryTransformationImpl implements QueryTranformation {
+public class QueryTransformationImpl implements QueryTransformation {
 
     private ValueFactory vf;
 
