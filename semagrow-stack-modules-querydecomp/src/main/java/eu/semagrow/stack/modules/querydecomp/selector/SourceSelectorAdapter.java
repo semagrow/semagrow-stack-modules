@@ -35,8 +35,12 @@ public class SourceSelectorAdapter implements SourceSelector {
         return list;
     }
 
-    public List<SourceMetadata> getSources(Iterable<StatementPattern> patterns, Dataset dataset, BindingSet bindings){
-        return null;
+    public List<SourceMetadata> getSources(Iterable<StatementPattern> patterns, Dataset dataset, BindingSet bindings) {
+        List<SourceMetadata> sourceMetadata = new LinkedList<SourceMetadata>();
+        for (StatementPattern p : patterns) {
+            sourceMetadata.addAll(getSources(p, dataset, bindings));
+        }
+        return sourceMetadata;
     }
 
     public List<SourceMetadata> getSources(TupleExpr expr, Dataset dataset, BindingSet bindings) {
