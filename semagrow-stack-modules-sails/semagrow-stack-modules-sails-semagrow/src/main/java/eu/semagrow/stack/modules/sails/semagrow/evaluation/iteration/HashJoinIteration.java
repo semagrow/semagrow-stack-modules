@@ -58,18 +58,9 @@ public class HashJoinIteration extends LookAheadIteration<BindingSet, QueryEvalu
     public HashJoinIteration(EvaluationStrategy strategy, Join join, BindingSet bindings)
             throws QueryEvaluationException
     {
-
         evaluator = new ParallelEvaluatorBase(strategy, bindings, join);
-        CompletableFuture cfLeft = evaluator.getLeftArgCompletableFuture();
-        CompletableFuture cfRight = evaluator.getRightArgCompletableFuture();
-        CompletableFuture.allOf(cfLeft,cfRight).thenRun(()->{
-            joinAttributes = join.getLeftArg().getBindingNames();
-            joinAttributes.retainAll(join.getRightArg().getBindingNames());
-            try {
-                leftIter = (CloseableIteration<BindingSet, QueryEvaluationException>) cfLeft.get();
-                rightIter = (CloseableIteration<BindingSet, QueryEvaluationException>) cfRight.get();                
-            } catch ( InterruptedException | ExecutionException ex) {}
-        });
+        joinAttributes = join.getLeftArg().getBindingNames();
+        joinAttributes.retainAll(join.getRightArg().getBindingNames());        
         hashTable = null;
     }
 
@@ -93,6 +84,11 @@ public class HashJoinIteration extends LookAheadIteration<BindingSet, QueryEvalu
             throws QueryEvaluationException
     {
         if (hashTable == null) {
+            
+            try {
+                leftIter = (CloseableIteration<BindingSet, QueryEvaluationException>) evaluator.getLeftArg();
+                rightIter = (CloseableIteration<BindingSet, QueryEvaluationException>) evaluator.getRightArg();                
+            } catch ( InterruptedException | ExecutionException ex) {}                        
             setupHashTable();
         }
 
