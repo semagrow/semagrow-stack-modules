@@ -148,10 +148,12 @@ public class QueryExecutorImpl implements QueryExecutor {
                 throw new QueryEvaluationException(e);
         }*/
         catch (QueryEvaluationException e) {
-            Iterations.closeCloseable(result);
+            if (result != null)
+                Iterations.closeCloseable(result);
             throw e;
         } catch (Exception e) {
-            Iterations.closeCloseable(result);
+            if (result != null)
+                Iterations.closeCloseable(result);
             throw new QueryEvaluationException(e);
         }
     }

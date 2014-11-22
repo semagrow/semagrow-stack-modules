@@ -84,11 +84,14 @@ public class HashJoinIteration extends LookAheadIteration<BindingSet, QueryEvalu
             throws QueryEvaluationException
     {
         if (hashTable == null) {
-            
-            try {
-                leftIter = (CloseableIteration<BindingSet, QueryEvaluationException>) evaluator.getLeftArg();
-                rightIter = (CloseableIteration<BindingSet, QueryEvaluationException>) evaluator.getRightArg();                
-            } catch ( InterruptedException | ExecutionException ex) {}                        
+
+            if (leftIter == null || rightIter == null) {
+                try {
+                    leftIter = (CloseableIteration<BindingSet, QueryEvaluationException>) evaluator.getLeftArg();
+                    rightIter = (CloseableIteration<BindingSet, QueryEvaluationException>) evaluator.getRightArg();
+                } catch (InterruptedException | ExecutionException ex) {
+                }
+            }
             setupHashTable();
         }
 
