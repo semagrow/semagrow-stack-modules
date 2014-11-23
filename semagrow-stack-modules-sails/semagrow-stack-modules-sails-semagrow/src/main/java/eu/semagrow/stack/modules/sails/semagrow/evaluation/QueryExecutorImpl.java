@@ -132,7 +132,7 @@ public class QueryExecutorImpl implements QueryExecutor {
                 return result;
             }
 
-
+            /*
             try {
                 result = evaluateInternal(endpoint, expr, bindings);
                 return result;
@@ -140,8 +140,8 @@ public class QueryExecutorImpl implements QueryExecutor {
                 logger.debug("Failover to sequential iteration", e);
                 return new SequentialQueryIteration(endpoint, expr, bindings);
             }
-
-            //return new SequentialQueryIteration(endpoint, expr, bindings);
+            */
+            return new SequentialQueryIteration(endpoint, expr, bindings);
 
         } /*catch (MalformedQueryException e) {
                 // this exception must not be silenced, bug in our code

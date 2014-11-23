@@ -20,6 +20,8 @@ import javax.management.QueryEval;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executor;
+import java.util.concurrent.ExecutorService;
 
 /**
  * Overrides the behavior of the default evaluation strategy implementation.
@@ -37,7 +39,9 @@ public class EvaluationStrategyImpl extends org.openrdf.query.algebra.evaluation
 
     private QueryExecutor queryExecutor;
 
-    public EvaluationStrategyImpl(QueryExecutor queryExecutor, final ValueFactory vf) {
+    private ExecutorService executor;
+
+    public EvaluationStrategyImpl(QueryExecutor queryExecutor, final ExecutorService executor, final ValueFactory vf) {
         super(new TripleSource() {
             public CloseableIteration<? extends Statement, QueryEvaluationException>
             getStatements(Resource resource, URI uri, Value value, Resource... resources) throws QueryEvaluationException {
@@ -49,12 +53,12 @@ public class EvaluationStrategyImpl extends org.openrdf.query.algebra.evaluation
             }
         });
         this.queryExecutor = queryExecutor;
+        this.executor = executor;
     }
 
-    public EvaluationStrategyImpl(QueryExecutor queryExecutor)
+    public EvaluationStrategyImpl(QueryExecutor queryExecutor, final ExecutorService executor)
     {
-
-        this(queryExecutor,ValueFactoryImpl.getInstance());
+        this(queryExecutor, executor, ValueFactoryImpl.getInstance());
     }
 
     public void setIncludeProvenance(boolean includeProvenance) { this.includeProvenance = includeProvenance; }
@@ -102,7 +106,7 @@ public class EvaluationStrategyImpl extends org.openrdf.query.algebra.evaluation
 
         for (URI endpoint : expr.getSources()) {
             CloseableIteration<BindingSet,QueryEvaluationException> iter =
-                    evaluateSourceDelayed(endpoint, innerExpr, bindings);
+                    evaluateSourceAsync(endpoint, innerExpr, bindings);
              results.add(iter);
         }
 
@@ -116,6 +120,20 @@ public class EvaluationStrategyImpl extends org.openrdf.query.algebra.evaluation
         return new DelayedIteration<BindingSet, QueryEvaluationException>() {
             @Override
             protected Iteration<? extends BindingSet, ? extends QueryEvaluationException> createIteration()
+                    throws QueryEvaluationException {
+                return evaluateSource(endpoint, expr, bindings);
+            }
+        };
+    }
+
+
+    private CloseableIteration<BindingSet,QueryEvaluationException>
+        evaluateSourceAsync(final URI endpoint, final TupleExpr expr, final BindingSet bindings)
+            throws QueryEvaluationException {
+
+        return new AsyncCursor<BindingSet, QueryEvaluationException>(executor) {
+            @Override
+            protected Iteration<BindingSet, QueryEvaluationException> createIteration()
                     throws QueryEvaluationException {
                 return evaluateSource(endpoint, expr, bindings);
             }

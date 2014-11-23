@@ -14,6 +14,9 @@ import org.openrdf.query.algebra.TupleExpr;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 /**
  * Created by angel on 6/11/14.
  */
@@ -27,9 +30,11 @@ public class QueryEvaluationImpl implements QueryEvaluation {
 
     protected class QueryEvaluationSessionImpl extends QueryEvaluationSessionImplBase {
 
+        ExecutorService executorService = Executors.newCachedThreadPool();
+
         protected EvaluationStrategy getEvaluationStrategyInternal() {
             QueryExecutor queryExecutor = getQueryExecutor();
-            EvaluationStrategy evaluationStrategy = new EvaluationStrategyImpl(queryExecutor);
+            EvaluationStrategy evaluationStrategy = new EvaluationStrategyImpl(queryExecutor, executorService);
             evaluationStrategy = new MonitoringEvaluationStrategy(evaluationStrategy);
             return evaluationStrategy;
         }
