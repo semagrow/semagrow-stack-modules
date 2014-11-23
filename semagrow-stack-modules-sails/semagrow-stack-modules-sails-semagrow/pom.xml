@@ -34,5 +34,10 @@
             <artifactId>semagrow-stack-modules-sails-void</artifactId>
             <version>1.0.0</version>
         </dependency>
+        <dependency>
+            <groupId>io.reactivex</groupId>
+            <artifactId>rxjava</artifactId>
+            <version>1.0.0</version>
+        </dependency>
     </dependencies>
 </project>
