@@ -1,6 +1,7 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
 
 import eu.semagrow.stack.modules.api.evaluation.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.FederatedQueryEvaluationSessionImplBase;
@@ -28,10 +29,14 @@ public class QueryEvaluationImpl implements FederatedQueryEvaluation {
 
     private QueryLogHandler queryLogHandler;
 
+    private ExecutorService executorService;
+
     public QueryEvaluationImpl(MaterializationManager manager,
-                               QueryLogHandler queryLogHandler) {
+                               QueryLogHandler queryLogHandler,
+                               ExecutorService executor) {
         this.materializationManager = manager;
         this.queryLogHandler = queryLogHandler;
+        this.executorService = executor;
     }
 
     public MaterializationManager getMaterializationManager() {
@@ -46,7 +51,7 @@ public class QueryEvaluationImpl implements FederatedQueryEvaluation {
     public FederatedQueryEvaluationSession
         createSession(TupleExpr expr, Dataset dataset, BindingSet bindings)
     {
-        return new FederatedQueryEvaluationSessionImpl();
+        return new FederatedQueryEvaluationSessionImpl(executorService);
     }
 
     /**
@@ -56,13 +61,22 @@ public class QueryEvaluationImpl implements FederatedQueryEvaluation {
     protected class FederatedQueryEvaluationSessionImpl
             extends FederatedQueryEvaluationSessionImplBase {
 
+
+        private ExecutorService executor;
+
+        public FederatedQueryEvaluationSessionImpl(ExecutorService executor) {
+            this.executor = executor;
+        }
+
         protected FederatedEvaluationStrategy getEvaluationStrategyInternal() {
-            return new InterceptingEvaluationStrategyImpl(getQueryExecutor());
+            return new InterceptingEvaluationStrategyImpl(getQueryExecutor(), getExecutor());
         }
 
         protected QueryExecutor getQueryExecutorInternal() {
             return new InterceptingQueryExecutorWrapper(new QueryExecutorImpl());
         }
+
+        protected ExecutorService getExecutor() { return executor; }
 
         protected MaterializationManager getMaterializationManager() {
             return QueryEvaluationImpl.this.getMaterializationManager();

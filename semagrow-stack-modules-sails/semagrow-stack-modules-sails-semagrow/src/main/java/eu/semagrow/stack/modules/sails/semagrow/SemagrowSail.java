@@ -43,6 +43,8 @@ import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.OutputStream;
 import java.util.Collection;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
 
 /**
  * Semagrow Sail implementation.
@@ -65,6 +67,8 @@ public class SemagrowSail extends SailBase {
     private SourceSelector sourceSelector;
     private CostEstimator costEstimator;
     private CardinalityEstimator cardinalityEstimator;
+
+    private ExecutorService executor = Executors.newCachedThreadPool();
 
     public SemagrowSail() { }
 
@@ -126,7 +130,7 @@ public class SemagrowSail extends SailBase {
         if (queryEvaluation == null) {
             MaterializationManager manager = getManager();
             handler = getRecordLog();
-            queryEvaluation = new QueryEvaluationImpl(manager, handler);
+            queryEvaluation = new QueryEvaluationImpl(manager, handler, executor);
         }
 
         return queryEvaluation;
