@@ -15,6 +15,7 @@ import org.openrdf.repository.sail.SailQuery;
 import org.openrdf.repository.sail.SailRepositoryConnection;
 import org.openrdf.repository.sail.SailTupleQuery;
 import org.openrdf.sail.SailException;
+import rx.Observable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -57,8 +58,29 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
     public void evaluate(TupleQueryResultHandler handler)
             throws QueryEvaluationException, TupleQueryResultHandlerException
     {
+        /*
         TupleQueryResult queryResult = evaluate();
         QueryResults.report(queryResult, handler);
+        */
+        TupleExpr tupleExpr = getParsedQuery().getTupleExpr();
+
+        try {
+            Observable<? extends BindingSet> result;
+
+            SemagrowSailConnection sailCon = (SemagrowSailConnection) getConnection().getSailConnection();
+
+            result = sailCon.evaluateReactive(tupleExpr, getActiveDataset(), getBindings(),
+                    getIncludeInferred(), getIncludeProvenanceData());
+
+            //result = enforceMaxQueryTime(bindingsIter);
+
+            result.subscribe(b -> { try { handler.handleSolution(b); } catch(Exception e) { } },
+                    t -> t.printStackTrace());
+            //return new TupleQueryResultImpl(new ArrayList<String>(tupleExpr.getBindingNames()), bindingsIter);
+        }
+        catch (SailException e) {
+            throw new QueryEvaluationException(e.getMessage(), e);
+        }
     }
 
     public void setIncludeProvenanceData(boolean includeProvenance) {

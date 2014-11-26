@@ -189,7 +189,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         return result;
     }
 
-    private BindingSet filterRelevant(BindingSet bindings, List<String> relevant) {
+    protected BindingSet filterRelevant(BindingSet bindings, List<String> relevant) {
         QueryBindingSet newBindings = new QueryBindingSet();
         for (Binding b : bindings) {
             if (relevant.contains(b.getName())) {
@@ -199,12 +199,12 @@ public class QueryExecutorImpl implements QueryExecutor {
         return newBindings;
     }
 
-    private List<String> getRelevantBindingNames(List<BindingSet> bindings, Set<String> exprVars) {
+    protected List<String> getRelevantBindingNames(List<BindingSet> bindings, Set<String> exprVars) {
 
         return getRelevantBindingNames(bindings.get(0), exprVars);
     }
 
-    private List<String> getRelevantBindingNames(BindingSet bindings, Set<String> exprVars){
+    protected List<String> getRelevantBindingNames(BindingSet bindings, Set<String> exprVars){
         List<String> relevantBindingNames = new ArrayList<String>(5);
         for (String bName : bindings.getBindingNames()) {
             if (exprVars.contains(bName))
@@ -220,7 +220,7 @@ public class QueryExecutorImpl implements QueryExecutor {
      *
      * @return the set of variable names in the given service expression
      */
-    private Set<String> computeVars(TupleExpr serviceExpression) {
+    protected Set<String> computeVars(TupleExpr serviceExpression) {
         final Set<String> res = new HashSet<String>();
         serviceExpression.visit(new QueryModelVisitorBase<RuntimeException>() {
 
@@ -278,7 +278,7 @@ public class QueryExecutorImpl implements QueryExecutor {
      *         input bindings
      * @throws QueryEvaluationException
      */
-    private String buildVALUESClause(List<BindingSet> bindings, List<String> relevantBindingNames)
+    private String buildVALUESClause(List<BindingSet> bindings, Collection<String> relevantBindingNames)
             throws QueryEvaluationException
     {
 
@@ -315,7 +315,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         return sb.toString();
     }
 
-    private String buildSPARQLQuery(TupleExpr expr, Collection<String> projection) throws Exception {
+    protected String buildSPARQLQuery(TupleExpr expr, Collection<String> projection) throws Exception {
         if (projection != null && projection.isEmpty())
             return buildAskSPARQLQuery(expr);
         else
@@ -352,7 +352,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         return new SPARQLQueryRenderer().render(query);
     }
 
-    private String buildSPARQLQueryVALUES(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+    protected String buildSPARQLQueryVALUES(TupleExpr expr, List<BindingSet> bindings, Collection<String> relevantBindingNames)
             throws Exception {
 
         Set<String> freeVars = computeVars(expr);
@@ -365,7 +365,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         return buildSPARQLQuery(expr,freeVars) + buildVALUESClause(bindings,relevantBindingNames);
     }
 
-    private String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+    private String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, Collection<String> relevantBindingNames)
             throws Exception {
 
         return null;
