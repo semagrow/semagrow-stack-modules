@@ -15,6 +15,8 @@ import org.openrdf.repository.sail.SailQuery;
 import org.openrdf.repository.sail.SailRepositoryConnection;
 import org.openrdf.repository.sail.SailTupleQuery;
 import org.openrdf.sail.SailException;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import rx.Observable;
 
 import java.util.ArrayList;
@@ -28,6 +30,8 @@ import java.util.Set;
 public class SemagrowSailTupleQuery extends SemagrowSailQuery implements SemagrowTupleQuery {
 
     private boolean includeProvenanceData = false;
+
+    private Logger logger = LoggerFactory.getLogger(this.getClass());
 
     public SemagrowSailTupleQuery(ParsedTupleQuery query, SailRepositoryConnection connection) {
         super(query,connection);
@@ -62,6 +66,7 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
         TupleQueryResult queryResult = evaluate();
         QueryResults.report(queryResult, handler);
         */
+        logger.info("SemaGrow query evaluate with handler");
         TupleExpr tupleExpr = getParsedQuery().getTupleExpr();
 
         try {
@@ -75,7 +80,8 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
             //result = enforceMaxQueryTime(bindingsIter);
 
             result.subscribe(b -> { try { handler.handleSolution(b); } catch(Exception e) { } },
-                    t -> t.printStackTrace());
+                    t -> logger.error("Evaluation error",t),
+                    () -> { try { handler.endQueryResult(); } catch (Exception e) { } });
             //return new TupleQueryResultImpl(new ArrayList<String>(tupleExpr.getBindingNames()), bindingsIter);
         }
         catch (SailException e) {

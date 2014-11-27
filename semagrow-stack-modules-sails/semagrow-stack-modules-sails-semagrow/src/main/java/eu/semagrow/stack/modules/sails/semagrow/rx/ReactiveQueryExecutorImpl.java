@@ -97,9 +97,10 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
              Observable<BindingSet> bindingIter)
             throws QueryEvaluationException {
 
-        Observable<BindingSet> result = null;
+        //Observable<BindingSet> result = null;
 
-        try {
+        //try {
+            /*
             List<BindingSet> bindings = bindingIter.toList().toBlocking().first();
 
             if (bindings.isEmpty()) {
@@ -109,7 +110,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
             if (bindings.size() == 1) {
                 return evaluateReactive(endpoint, expr, bindings.get(0));
             }
-
+            */
 
             /*
             try {
@@ -129,7 +130,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
             }
             */
 
-            return Observable.from(bindings).flatMap( b -> {
+            return bindingIter.flatMap( b -> {
                 try {
                     return evaluateReactive(endpoint, expr, b);
                 }catch(QueryEvaluationException e2)
@@ -139,15 +140,15 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
             });
             //return new SequentialQueryIteration(endpoint, expr, bindings);
 
-        } /*catch (MalformedQueryException e) {
+        /*} catch (MalformedQueryException e) {
                 // this exception must not be silenced, bug in our code
                 throw new QueryEvaluationException(e);
-        }*/
+        }
         catch (QueryEvaluationException e) {
             throw e;
         } catch (Exception e) {
             throw new QueryEvaluationException(e);
-        }
+        }*/
     }
 
 
@@ -210,14 +211,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
         for (Binding b : bindings)
             query.setBinding(b.getName(), b.getValue());
 
-        logger.debug("Sending to " + endpoint.stringValue() + " query " + sparqlQuery.replace('\n', ' '));
-        OnSubscribeTupleResults handler = new OnSubscribeTupleResults();
-        try {
-            query.evaluate(handler);
-        } catch (TupleQueryResultHandlerException e) {
-            return Observable.error(e);
-        }
-        return Observable.create(handler);
+        return Observable.create(new OnSubscribeTupleResults(query));
     }
 
     protected boolean

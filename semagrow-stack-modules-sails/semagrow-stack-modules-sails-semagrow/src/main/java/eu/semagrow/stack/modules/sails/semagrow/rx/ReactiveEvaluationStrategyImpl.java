@@ -2,6 +2,7 @@ package eu.semagrow.stack.modules.sails.semagrow.rx;
 
 import info.aduna.iteration.Iteration;
 import org.openrdf.model.Value;
+import org.openrdf.query.Binding;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.QueryEvaluationException;
@@ -16,10 +17,7 @@ import org.openrdf.query.algebra.evaluation.util.ValueComparator;
 import org.openrdf.util.iterators.Iterators;
 import rx.Observable;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by angel on 11/22/14.
@@ -254,6 +252,23 @@ public class ReactiveEvaluationStrategyImpl extends EvaluationStrategyImpl {
                         } catch (Exception e) { return Observable.error(e); } });
     }
 
+    public Observable<BindingSet> evaluateReactive(LeftJoin expr, BindingSet bindings)
+            throws QueryEvaluationException
+    {
+        Observable<BindingSet> r = evaluateReactive(expr.getRightArg(), bindings);
+
+        Set<String> joinAttributes = expr.getLeftArg().getBindingNames();
+        joinAttributes.retainAll(expr.getRightArg().getBindingNames());
+
+        return evaluateReactive(expr.getLeftArg(), bindings)
+                .concatMap( (b) -> {
+                    try {
+                        return this.evaluateReactive(expr.getRightArg(), b).defaultIfEmpty(b);
+                    } catch (Exception e) {
+                        return Observable.error(e); }
+                });
+    }
+
     public Observable<BindingSet> evaluateReactive(Group expr, BindingSet bindings)
             throws QueryEvaluationException
     {
@@ -368,5 +383,33 @@ public class ReactiveEvaluationStrategyImpl extends EvaluationStrategyImpl {
         }
 
         return targetBindings;
+    }
+
+    public static BindingSet joinBindings(BindingSet b1, BindingSet b2) {
+        QueryBindingSet result = new QueryBindingSet();
+
+        for (Binding b : b1) {
+            if (!result.hasBinding(b.getName()))
+                result.addBinding(b);
+        }
+
+        for (String name : b2.getBindingNames()) {
+            Binding b = b2.getBinding(name);
+            if (!result.hasBinding(name)) {
+                result.addBinding(b);
+            }
+        }
+        return result;
+    }
+
+    public static BindingSet calcKey(BindingSet bindings, Set<String> commonVars) {
+        QueryBindingSet q = new QueryBindingSet();
+        for (String varName : commonVars) {
+            Binding b = bindings.getBinding(varName);
+            if (b != null) {
+                q.addBinding(b);
+            }
+        }
+        return q;
     }
 }

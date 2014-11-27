@@ -12,6 +12,7 @@ import org.openrdf.query.algebra.*;
 import org.openrdf.query.algebra.evaluation.QueryBindingSet;
 import org.openrdf.query.algebra.evaluation.TripleSource;
 import rx.Observable;
+import rx.schedulers.Schedulers;
 
 import java.util.List;
 import java.util.Set;
@@ -99,7 +100,7 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
                         if (!probe.containsKey(calcKey(b, joinAttributes)))
                             return Observable.empty();
                         else
-                            return Observable.from(probe.get(b))
+                            return Observable.from(probe.get(calcKey(b, joinAttributes)))
                                              .join(Observable.just(b),
                                                      b1 -> Observable.never(),
                                                      b1 -> Observable.never(),
@@ -108,33 +109,6 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
                 );
     }
 
-    public static BindingSet joinBindings(BindingSet b1, BindingSet b2) {
-        QueryBindingSet result = new QueryBindingSet();
-
-        for (Binding b : b1) {
-            if (!result.hasBinding(b.getName()))
-                result.addBinding(b);
-        }
-
-        for (String name : b2.getBindingNames()) {
-            Binding b = b2.getBinding(name);
-            if (!result.hasBinding(name)) {
-                result.addBinding(b);
-            }
-        }
-        return result;
-    }
-
-    public static BindingSet calcKey(BindingSet bindings, Set<String> commonVars) {
-        QueryBindingSet q = new QueryBindingSet();
-        for (String varName : commonVars) {
-            Binding b = bindings.getBinding(varName);
-            if (b != null) {
-                q.addBinding(b);
-            }
-        }
-        return q;
-    }
 
     public Observable<BindingSet> evaluateReactive(BindJoin expr, BindingSet bindings)
         throws QueryEvaluationException
@@ -170,13 +144,13 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
     public Observable<BindingSet> evaluateSourceReactive(URI source, TupleExpr expr, BindingSet bindings)
         throws QueryEvaluationException
     {
-        return queryExecutor.evaluateReactive(source, expr, bindings);
+        return queryExecutor.evaluateReactive(source, expr, bindings).subscribeOn(Schedulers.io());
     }
 
     public Observable<BindingSet> evaluateSourceReactive(URI source, TupleExpr expr, List<BindingSet> bindings)
             throws QueryEvaluationException
     {
-        return queryExecutor.evaluateReactive(source, expr, Observable.from(bindings));
+        return queryExecutor.evaluateReactive(source, expr, Observable.from(bindings)).subscribeOn(Schedulers.io());
     }
 
     public Observable<BindingSet> evaluateReactive(Transform expr, BindingSet bindings)
