@@ -99,56 +99,39 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
 
         //Observable<BindingSet> result = null;
 
-        //try {
+        try {
+
+
+            return bindingIter.buffer(15).concatMap(
+                     bl ->  { try {
+                         return evaluateReactiveInternal(endpoint, expr, bl);
+                     } /*catch (QueryEvaluationException e) {
+                         logger.debug("Failover to sequential iteration", e);
+                         return bindingIter.flatMap( b -> {
+                              try {
+                                  return evaluateReactive(endpoint, expr, b);
+                              }catch(QueryEvaluationException e2) {
+                                 return Observable.error(e2);
+                              }
+                            });
+                     }*/ catch (Exception e) {
+                            return Observable.error(e);
+                     } });
+
+
             /*
-            List<BindingSet> bindings = bindingIter.toList().toBlocking().first();
-
-            if (bindings.isEmpty()) {
-                return Observable.empty();
-            }
-
-            if (bindings.size() == 1) {
-                return evaluateReactive(endpoint, expr, bindings.get(0));
-            }
-            */
-
-            /*
-            try {
-                result = evaluateReactiveInternal(endpoint, expr, bindings);
-                return result;
-            } catch(QueryEvaluationException e) {
-                logger.debug("Failover to sequential iteration", e);
-
-                return Observable.from(bindings).flatMap( b -> {
-                    try {
-                        return evaluateReactive(endpoint, expr, b);
-                    }catch(QueryEvaluationException e2)
-                    {
-                        return Observable.error(e2);
-                    }
-                });
-            }
-            */
-
-            return bindingIter.flatMap( b -> {
+            return bindingIter.flatMap(b -> {
                 try {
                     return evaluateReactive(endpoint, expr, b);
-                }catch(QueryEvaluationException e2)
-                {
+                } catch (QueryEvaluationException e2) {
                     return Observable.error(e2);
                 }
             });
-            //return new SequentialQueryIteration(endpoint, expr, bindings);
+            */
 
-        /*} catch (MalformedQueryException e) {
-                // this exception must not be silenced, bug in our code
-                throw new QueryEvaluationException(e);
-        }
-        catch (QueryEvaluationException e) {
-            throw e;
         } catch (Exception e) {
             throw new QueryEvaluationException(e);
-        }*/
+        }
     }
 
 
@@ -156,6 +139,9 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
         evaluateReactiveInternal(URI endpoint, TupleExpr expr, List<BindingSet> bindings)
             throws Exception
     {
+
+        if (bindings.size() == 1)
+            return evaluateReactive(endpoint, expr, bindings.get(0));
 
         Observable<BindingSet> result = null;
 
@@ -224,7 +210,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
         for (Binding b : bindings)
             query.setBinding(b.getName(), b.getValue());
 
-        logger.debug("Sending to " + endpoint.stringValue() + " query " + sparqlQuery.replace('\n', ' '));
+        logger.debug("Sending to " + endpoint.stringValue() + " query " + sparqlQuery.replace('\n', ' ') + " with " + query.getBindings());
         return query.evaluate();
     }
 

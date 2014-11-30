@@ -109,12 +109,27 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
                 );
     }
 
+    public static Observable<BindingSet> hashJoin(Observable<BindingSet> left, Observable<BindingSet> right, Set<String> joinAttributes) {
+        return left.toMultimap(b -> calcKey(b, joinAttributes), b1 -> b1)
+                .flatMap((probe) -> right.concatMap(b -> {
+                            if (!probe.containsKey(calcKey(b, joinAttributes)))
+                                return Observable.empty();
+                            else
+                                return Observable.from(probe.get(calcKey(b, joinAttributes)))
+                                        .join(Observable.just(b),
+                                                b1 -> Observable.never(),
+                                                b1 -> Observable.never(),
+                                                ReactiveFederatedEvaluationStrategyImpl::joinBindings);
+                        })
+                );
+    }
+
 
     public Observable<BindingSet> evaluateReactive(BindJoin expr, BindingSet bindings)
         throws QueryEvaluationException
     {
         return this.evaluateReactive(expr.getLeftArg(), bindings)
-                .buffer(10)
+                .buffer(15)
                 .flatMap((b) -> {
                     try {
                         return evaluateReactive(expr.getRightArg(), b);

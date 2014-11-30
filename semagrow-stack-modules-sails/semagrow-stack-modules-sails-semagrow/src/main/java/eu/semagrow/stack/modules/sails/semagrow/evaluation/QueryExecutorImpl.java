@@ -361,8 +361,10 @@ public class QueryExecutorImpl implements QueryExecutor {
             freeVars.add(InsertValuesBindingsIteration.INDEX_BINDING_NAME);
 
         //freeVars.removeAll(relevantBindingNames);
-
-        return buildSPARQLQuery(expr,freeVars) + buildVALUESClause(bindings,relevantBindingNames);
+        String q = buildSPARQLQuery(expr,freeVars);
+        q = q.replace("where {", "where { " + buildVALUESClause(bindings,relevantBindingNames) + ". ");
+        return q;
+        //return buildSPARQLQuery(expr,freeVars) + buildVALUESClause(bindings,relevantBindingNames);
     }
 
     private String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, Collection<String> relevantBindingNames)
