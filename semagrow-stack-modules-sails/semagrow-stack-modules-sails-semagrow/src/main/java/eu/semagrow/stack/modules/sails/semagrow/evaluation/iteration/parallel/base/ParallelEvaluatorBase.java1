@@ -22,7 +22,7 @@ public class ParallelEvaluatorBase<T extends BinaryTupleOperator> implements Par
     public ParallelEvaluatorBase(EvaluationStrategy strategy, BindingSet bindings, T expr) throws QueryEvaluationException{ 
         long s = System.currentTimeMillis();
         System.out.println("ParallelEvaluatorBase left start at " + s);
-        cfLeft = CompletableFuture.supplyAsync(() ->  {  
+        cfLeft = CompletableFuture.supplyAsync(() ->  {
             try {
                 return strategy.evaluate(expr.getLeftArg(), bindings);
             } catch(QueryEvaluationException e){ 
