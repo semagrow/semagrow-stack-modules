@@ -3,6 +3,7 @@ package eu.semagrow.stack.modules.api.source;
 import org.openrdf.model.URI;
 import org.openrdf.query.algebra.StatementPattern;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -29,6 +30,8 @@ public interface SourceMetadata {
     StatementPattern original();
 
     StatementPattern target();
+
+    Collection<URI> getSchema(String var);
 
     /**
      *
