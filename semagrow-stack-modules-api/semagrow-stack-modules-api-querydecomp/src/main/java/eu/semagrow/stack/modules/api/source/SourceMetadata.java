@@ -26,14 +26,16 @@ public interface SourceMetadata {
      * Gets the pattern which the datasource contain triples
      * @return
      */
-    StatementPattern originalPattern();
+    StatementPattern original();
+
+    StatementPattern target();
 
     /**
      *
      * @return true if the pattern must be transformed
      * TODO: must return the kind of transformation (target vocabulary)
      */
-    boolean requiresTransform();
+    boolean isTransformed();
 
     /**
      * Returns an estimation of how close are the transformed results to the initial pattern

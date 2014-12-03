@@ -115,16 +115,18 @@ public class VOIDSourceSelector extends VOIDBase
                 return endpoints;
             }
 
-            public StatementPattern originalPattern() {
+            public StatementPattern original() {
                 return pattern;
             }
 
-            public boolean requiresTransform() {
+            public StatementPattern target() { return pattern; }
+
+            public boolean isTransformed() {
                 return false;
             }
 
             public double getSemanticProximity() {
-                return 0;
+                return 1.0;
             }
         };
     }
