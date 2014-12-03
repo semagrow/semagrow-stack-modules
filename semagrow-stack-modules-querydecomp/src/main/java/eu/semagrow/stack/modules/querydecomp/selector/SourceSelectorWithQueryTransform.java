@@ -36,7 +36,7 @@ public class SourceSelectorWithQueryTransform extends SourceSelectorWrapper {
         for (FuzzyEntry<StatementPattern> fep : transformed) {
             List<SourceMetadata> lt = super.getSources(fep.getElem(), dataset, bindings);
             for (SourceMetadata m : lt) {
-                lst.add(new FuzzySourceMetadata(m.getEndpoints(), pattern, fep));
+                lst.add(new FuzzySourceMetadata(pattern, m, fep));
             }
         }
 
@@ -122,26 +122,27 @@ public class SourceSelectorWithQueryTransform extends SourceSelectorWrapper {
         private FuzzyEntry<StatementPattern> entry;
         private StatementPattern original;
         private List<URI> endpoints;
+        private SourceMetadata metadata;
 
-        public FuzzySourceMetadata(List<URI> endpoints, StatementPattern original, FuzzyEntry<StatementPattern> entry) {
+        public FuzzySourceMetadata(StatementPattern original,
+                                   SourceMetadata metadata,
+                                   FuzzyEntry<StatementPattern> entry)
+        {
             this.entry = entry;
-            this.endpoints = endpoints;
             this.original = original;
         }
 
-        @Override
-        public List<URI> getEndpoints() { return endpoints; }
 
-        @Override
+        public List<URI> getEndpoints() { return metadata.getEndpoints(); }
+
         public StatementPattern original() { return original; }
 
-        @Override
         public StatementPattern target() { return entry.getElem(); }
 
-        @Override
+        public Collection<URI> getSchema(String var) { return metadata.getSchema(var); }
+
         public boolean isTransformed() { return true; }
 
-        @Override
         public double getSemanticProximity() { return entry.getProximity(); }
     }
 }

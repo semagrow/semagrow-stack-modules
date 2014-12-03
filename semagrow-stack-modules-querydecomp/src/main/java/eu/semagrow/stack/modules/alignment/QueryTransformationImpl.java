@@ -128,6 +128,12 @@ public class QueryTransformationImpl implements QueryTransformation {
         logger.debug(sql);
 
         try {
+            try {
+                Class.forName("org.postgresql.Driver");
+            } catch (ClassNotFoundException e) {
+                e.printStackTrace();
+            }
+
             connection = DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
             stmt = connection.createStatement();
             ResultSet rs = stmt.executeQuery(sql);
