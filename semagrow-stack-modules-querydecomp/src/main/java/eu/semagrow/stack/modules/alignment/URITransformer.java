@@ -23,27 +23,28 @@ public class URITransformer implements Transformer<URI,URI> {
         this.targetSchema = targetSchema;
     }
 
-    @Override
+
     public int getId() { return id; }
 
-    @Override
+
     public URI getSourceSchema() { return this.sourceSchema; }
 
-    @Override
+
     public URI getTargetSchema() { return this.targetSchema; }
 
-    @Override
+
     public double getProximity() { return proximity; }
 
     public void setProximity(double proximity) { this.proximity = proximity; }
 
-    @Override
+
     public URI transform(URI source) {
         return transformationService.getURI(source, getId());
     }
 
-    @Override
+
     public URI transformBack(URI target) {
         return transformationService.getInvURI(target, getId());
     }
+
 }

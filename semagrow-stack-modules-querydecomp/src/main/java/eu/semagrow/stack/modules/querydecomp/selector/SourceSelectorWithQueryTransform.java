@@ -58,7 +58,7 @@ public class SourceSelectorWithQueryTransform extends SourceSelectorWrapper {
             for (FuzzyEntry<Var> pVar1 : transformVar(pVar)) {
                 for (FuzzyEntry<Var> oVar1 : transformVar(oVar)) {
                     StatementPattern p = new StatementPattern(sVar1.getElem(), pVar1.getElem(), oVar1.getElem());
-                    if (p.equals(pattern)) {
+                    if (!p.equals(pattern)) {
                         double prox = Math.min(Math.min(sVar1.getProximity(), pVar1.getProximity()), oVar1.getProximity());
                         transformedPatterns.add(new FuzzyEntry<StatementPattern>(p, prox));
                     }
@@ -89,7 +89,7 @@ public class SourceSelectorWithQueryTransform extends SourceSelectorWrapper {
     private Collection<EquivalentURI> getEquivalentURI(Var v) {
         Value val = v.getValue();
 
-        if (val != null && v instanceof URI) {
+        if (val != null && val instanceof URI) {
             URI uri = (URI)val;
             return queryTransformation.retrieveEquivalentURIs(uri);
         }
@@ -98,11 +98,11 @@ public class SourceSelectorWithQueryTransform extends SourceSelectorWrapper {
     }
 
     private Var transformVar(Var v, EquivalentURI uri) {
-        if (v.hasValue())
+        if (!v.hasValue())
             return v;
         else {
-            Var v1 = v.clone();
-            v1.setValue(uri.getTargetURI());
+            Var v1 = new Var("const-" + uri.getTargetURI().toString(), uri.getTargetURI());
+            v1.setConstant(true);
             return v1;
         }
     }
@@ -121,7 +121,6 @@ public class SourceSelectorWithQueryTransform extends SourceSelectorWrapper {
 
         private FuzzyEntry<StatementPattern> entry;
         private StatementPattern original;
-        private List<URI> endpoints;
         private SourceMetadata metadata;
 
         public FuzzySourceMetadata(StatementPattern original,
@@ -130,6 +129,7 @@ public class SourceSelectorWithQueryTransform extends SourceSelectorWrapper {
         {
             this.entry = entry;
             this.original = original;
+            this.metadata = metadata;
         }
 
 

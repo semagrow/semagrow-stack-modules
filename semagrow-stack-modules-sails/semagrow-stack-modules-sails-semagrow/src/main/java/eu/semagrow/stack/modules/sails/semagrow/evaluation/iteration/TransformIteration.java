@@ -38,8 +38,10 @@ public class TransformIteration extends
                 Transformer<URI, URI> t = getTransformer(bindingName);
                 if (t != null) {
                     URI transformed = t.transform((URI) v);
-                    bindingSet.setBinding(bindingName, transformed);
-                    continue;
+                    if (transformed != null) {
+                        bindingSet.setBinding(bindingName, transformed);
+                        continue;
+                    }
                 }
             }
 
