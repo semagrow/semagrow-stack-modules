@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration;
+package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring;
 
 import info.aduna.iteration.Iteration;
 import info.aduna.iteration.IterationWrapper;
@@ -6,7 +6,7 @@ import info.aduna.iteration.IterationWrapper;
 /**
  * Created by angel on 6/14/14.
  */
-public class RateIteration <E,X extends Exception> extends IterationWrapper<E,X> {
+public class MeasuringIteration<E,X extends Exception> extends IterationWrapper<E,X> {
 
     // rate = rows / time in millis
     private double currentConsumedRate = 0;
@@ -25,7 +25,7 @@ public class RateIteration <E,X extends Exception> extends IterationWrapper<E,X>
 
     private long producedTotalTime = 0;
 
-    public RateIteration(Iteration<E,X> iter) { super(iter); init(); }
+    public MeasuringIteration(Iteration<E, X> iter) { super(iter); init(); }
 
     public double getCurrentProducedRate() { return currentProducedRate; }
 
@@ -45,7 +45,7 @@ public class RateIteration <E,X extends Exception> extends IterationWrapper<E,X>
             return currentRows / consumedTotalTime;
     }
 
-    public int getCount() { return currentRows; }
+    public long getCount() { return currentRows; }
 
     public long getRunningTime() {
         if (isClosed())
@@ -53,6 +53,10 @@ public class RateIteration <E,X extends Exception> extends IterationWrapper<E,X>
         else
             return System.currentTimeMillis() - startTime;
     }
+
+    public long getStartTime() { return startTime; }
+
+    public long getEndTime() { return endTime; }
 
     private void init() { startTime = System.currentTimeMillis(); }
 

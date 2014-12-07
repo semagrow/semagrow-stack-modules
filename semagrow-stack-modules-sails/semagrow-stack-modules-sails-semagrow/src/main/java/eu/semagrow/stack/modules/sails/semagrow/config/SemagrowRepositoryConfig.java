@@ -7,8 +7,11 @@ import org.openrdf.repository.config.RepositoryImplConfigBase;
  */
 public class SemagrowRepositoryConfig extends RepositoryImplConfigBase {
 
-    @Override
-    public String getType() { return SemagrowRepositoryFactory.REPOSITORY_TYPE; }
+    private SemagrowSailConfig sailConfig  = new SemagrowSailConfig();
 
-    public SemagrowConfig getSemagrowSailConfig() { return new SemagrowConfig(); }
+    public SemagrowRepositoryConfig() { super(SemagrowRepositoryFactory.REPOSITORY_TYPE); }
+
+    public SemagrowSailConfig getSemagrowSailConfig() { return sailConfig; }
+
+    public void setSemagrowSailConfig(SemagrowSailConfig config) { sailConfig = config; }
 }
