@@ -55,7 +55,8 @@ public class SemagrowSailFactory implements SailFactory, RepositoryResolverClien
 
             Repository metadata = createMetadataRepository(config.getMetadataConfig());
 
-            for (String file : config.getInitialFiles()) {
+            List<String> files = config.getInitialFiles();
+            for (String file : files) {
                 initializeMetadata(metadata, file);
             }
 
