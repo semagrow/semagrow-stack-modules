@@ -1,11 +1,13 @@
 package eu.semagrow.stack.modules.sails.semagrow;
 
+import eu.semagrow.stack.modules.alignment.QueryTransformationImpl;
 import eu.semagrow.stack.modules.api.decomposer.QueryDecomposer;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluation;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.api.statistics.Statistics;
 import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
 import eu.semagrow.stack.modules.api.estimator.CostEstimator;
+import eu.semagrow.stack.modules.api.transformation.QueryTransformation;
 import eu.semagrow.stack.modules.querydecomp.selector.*;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CardinalityEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimatorImpl;
@@ -109,7 +111,10 @@ public class SemagrowSail extends SailBase implements StackableSail {
         //VOIDResourceSelector resourceSelector = new VOIDResourceSelector();
         //resourceSelector.setRepository(getMetadataAsRepository());
         //return new SourceSelectorAdapter(resourceSelector);
-        return new VOIDSourceSelector(getMetadataAsRepository());
+        QueryTransformation transformation = new QueryTransformationImpl("jdbc:postgresql://143.233.226.25:5432/alignmentDB", "postgres", "postgres");
+
+        //return new VOIDSourceSelector(getMetadataAsRepository());
+        return new SourceSelectorWithQueryTransform(new VOIDSourceSelector(getMetadataAsRepository()), transformation);
     }
 
     private CostEstimator getCostEstimator() {
