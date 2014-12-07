@@ -63,7 +63,7 @@ public class SemagrowSailFactory implements SailFactory, RepositoryResolverClien
                 initializeMetadata(metadata, file);
             }
 
-            SourceSelector selector = getSourceSelector(metadata, config.getSourceSelectorConfig());
+            SourceSelector selector = getSourceSelector(metadata, config, config.getSourceSelectorConfig());
 
             sail.setSourceSelector(selector);
 
@@ -98,7 +98,7 @@ public class SemagrowSailFactory implements SailFactory, RepositoryResolverClien
         }
     }
 
-    public SourceSelector getSourceSelector(Repository metadata, SourceSelectorImplConfig sourceSelectorImplConfig)
+    public SourceSelector getSourceSelector(Repository metadata, SemagrowSailConfig sailConfig, SourceSelectorImplConfig sourceSelectorImplConfig)
             throws SourceSelectorConfigException
     {
 
@@ -106,15 +106,31 @@ public class SemagrowSailFactory implements SailFactory, RepositoryResolverClien
 
             RepositorySourceSelectorConfig config = (RepositorySourceSelectorConfig) sourceSelectorImplConfig;
 
-            QueryTransformation transformation = new QueryTransformationImpl("jdbc:postgresql://143.233.226.25:5432/alignmentDB", "postgres", "postgres");
+            QueryTransformation transformation;
 
-            //return new VOIDSourceSelector(getMetadataAsRepository());
-            return new SourceSelectorWithQueryTransform(new VOIDSourceSelector(metadata), transformation);
+            SourceSelector selector = new VOIDSourceSelector(metadata);
 
-            //return new VOIDSourceSelector(metadata);
+            transformation = getQueryTransformation(sailConfig);
+
+            if (transformation != null)
+                selector = new SourceSelectorWithQueryTransform(selector, transformation);
+
+            return selector;
         }
         else
             throw new SourceSelectorConfigException();
+    }
+
+    private QueryTransformation getQueryTransformation(SemagrowSailConfig sailConfig) {
+
+        String queryTransformationDB = sailConfig.getQueryTransformationDB();
+        String queryTransformationUsername = sailConfig.getQueryTransformationUser();
+        String queryTransformationPassword = sailConfig.getQueryTransformationPassword();
+
+        if (queryTransformationDB != null)
+            return new QueryTransformationImpl(queryTransformationDB, queryTransformationUsername, queryTransformationPassword);
+        else
+            return null;
     }
 
     private CardinalityEstimator getCardinalityEstimator(Repository metadata, SemagrowSailConfig config) {

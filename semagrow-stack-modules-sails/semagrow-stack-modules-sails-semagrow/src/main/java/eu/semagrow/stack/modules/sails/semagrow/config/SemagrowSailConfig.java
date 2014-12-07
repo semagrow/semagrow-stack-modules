@@ -29,6 +29,10 @@ public class SemagrowSailConfig extends SailImplConfigBase {
 
     private List<String> filenames = new LinkedList<String>();
 
+    private String queryTransformationUser;
+    private String queryTransformationPassword;
+    private String queryTransformationDBString;
+
     public SemagrowSailConfig() { super(SemagrowSailFactory.SAIL_TYPE); }
 
     public SourceSelectorImplConfig getSourceSelectorConfig() {
@@ -84,5 +88,20 @@ public class SemagrowSailConfig extends SailImplConfigBase {
         }
 
         super.parse(graph, node);
+    }
+
+    public String getQueryTransformationDB() {
+        return this.queryTransformationDBString;
+    }
+
+    public void setQueryTransformationDB(String dbString) { this.queryTransformationDBString = dbString; }
+
+    public String getQueryTransformationUser() { return this.queryTransformationUser; }
+
+    public String getQueryTransformationPassword() { return this.queryTransformationPassword; }
+
+    public void setQueryTransformationAuth(String username, String password) {
+        this.queryTransformationUser = username;
+        this.queryTransformationPassword = password;
     }
 }
