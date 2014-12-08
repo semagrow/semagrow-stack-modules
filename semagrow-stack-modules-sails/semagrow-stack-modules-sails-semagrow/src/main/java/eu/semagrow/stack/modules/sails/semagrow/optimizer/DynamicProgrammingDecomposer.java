@@ -83,7 +83,7 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
                 //URI source = sourceMetadata.getEndpoints().get(0);
                 //Plan p1 = createPlan(exprLabel, sourceMetadata.target(), source, ctx);
                 // FIXME: Don't use always the first source.
-                Plan p1 = createPlan(exprLabel, sourceMetadata.target(), sourceMetadata, ctx);
+                Plan p1 = createPlan(exprLabel, sourceMetadata.target().clone(), sourceMetadata, ctx);
                 sourcePlans.add(p1);
             }
 
