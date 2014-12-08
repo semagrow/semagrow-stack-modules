@@ -10,9 +10,7 @@ import org.openrdf.query.Dataset;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
 
-import java.util.ArrayList;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by angel on 5/27/14.
@@ -58,17 +56,23 @@ public class SourceSelectorAdapter implements SourceSelector {
                 return endpoints;
             }
 
-            public StatementPattern originalPattern() {
+            public StatementPattern original() {
                 return pattern;
             }
 
-            public boolean requiresTransform() {
+            public StatementPattern target() {
+                return pattern;
+            }
+
+            public boolean isTransformed() {
                 return false;
             }
 
             public double getSemanticProximity() {
                 return 1;
             }
+
+            public Collection<URI> getSchema(String var) { return Collections.emptySet(); }
         };
 
         return metadata;

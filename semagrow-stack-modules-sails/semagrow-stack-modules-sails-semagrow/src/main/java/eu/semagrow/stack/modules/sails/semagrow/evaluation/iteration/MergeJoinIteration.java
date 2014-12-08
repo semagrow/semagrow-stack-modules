@@ -2,8 +2,8 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration;
 
 import eu.semagrow.stack.modules.sails.semagrow.algebra.ProvenanceValue;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.EvaluationStrategyImpl;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.parallel.ParallelEvaluator;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.parallel.base.ParallelEvaluatorBase;
+//import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.parallel.ParallelEvaluator;
+//import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.parallel.base.ParallelEvaluatorBase;
 import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.EmptyIteration;
 import info.aduna.iteration.LookAheadIteration;
@@ -41,7 +41,7 @@ public class MergeJoinIteration extends LookAheadIteration<BindingSet, QueryEval
 
     private CloseableIteration<BindingSet,QueryEvaluationException> bufIter;
 
-    private ParallelEvaluator evaluator = null;
+    //private ParallelEvaluator evaluator = null;
     
     public MergeJoinIteration(Comparator<BindingSet> comparator,
                               EvaluationStrategy evaluationStrategy,
@@ -49,6 +49,7 @@ public class MergeJoinIteration extends LookAheadIteration<BindingSet, QueryEval
             throws QueryEvaluationException {
 
         this.comparator = comparator;
+        /*
         evaluator = new ParallelEvaluatorBase(evaluationStrategy, bindings, join);        
         CompletableFuture cfLeft = evaluator.getLeftArgCompletableFuture();
         CompletableFuture cfRight = evaluator.getRightArgCompletableFuture();
@@ -60,6 +61,9 @@ public class MergeJoinIteration extends LookAheadIteration<BindingSet, QueryEval
                 rightIter = (CloseableIteration<BindingSet, QueryEvaluationException>) cfRight.get();                
             } catch ( InterruptedException | ExecutionException ex) {}
         });
+        */
+        leftIter = evaluationStrategy.evaluate(join.getLeftArg(), bindings);
+        rightIter = evaluationStrategy.evaluate(join.getRightArg(), bindings);
         bufIter = new EmptyIteration<BindingSet, QueryEvaluationException>();
 
         leftBuf = new LinkedList<BindingSet>();
