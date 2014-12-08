@@ -59,6 +59,7 @@ public class QueryTransformationImpl implements QueryTransformation {
         Statement stmt = null;
 
         try {
+            Class.forName("org.postgresql.Driver");
             connection = DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
 
             stmt = connection.createStatement();
@@ -85,7 +86,9 @@ public class QueryTransformationImpl implements QueryTransformation {
                 list.add(equri);
             }
         } catch(SQLException e) {
-
+            e.printStackTrace();
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         } finally {
             try {
                 if (stmt != null)
@@ -194,7 +197,7 @@ public class QueryTransformationImpl implements QueryTransformation {
         Statement stmt = null;
 
         try {
-
+            Class.forName("org.postgresql.Driver");
             connection = DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
             stmt = connection.createStatement();
 
@@ -207,6 +210,8 @@ public class QueryTransformationImpl implements QueryTransformation {
             }
         } catch (SQLException e) {
             logger.warn("Cannot execute SQL query " + sql, e);
+        } catch (ClassNotFoundException e) {
+            e.printStackTrace();
         } finally {
             try {
                 if (stmt != null)

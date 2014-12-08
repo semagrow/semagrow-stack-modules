@@ -93,8 +93,6 @@ public class SemagrowSailConfig extends SailImplConfigBase {
             filenames.add(o.stringValue());
         }
 
-        Set<Value> dbVals = GraphUtil.getObjects(graph, node, SemagrowSchema.QUERYTRANSFORMDB);
-
         try {
             Literal dbLit = GraphUtil.getOptionalObjectLiteral(graph, node, SemagrowSchema.QUERYTRANSFORMDB);
             Literal dbUser = GraphUtil.getOptionalObjectLiteral(graph, node, SemagrowSchema.QUERYTRANSFORMUSER);
@@ -103,7 +101,7 @@ public class SemagrowSailConfig extends SailImplConfigBase {
             setQueryTransformationDB(dbLit.stringValue());
             setQueryTransformationAuth(dbUser.stringValue(), dbPass.stringValue());
         } catch (GraphUtilException e) {
-
+            e.printStackTrace();
         }
 
         super.parse(graph, node);
