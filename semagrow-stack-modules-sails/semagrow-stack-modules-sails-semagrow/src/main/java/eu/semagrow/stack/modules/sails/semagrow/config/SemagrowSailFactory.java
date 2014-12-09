@@ -63,6 +63,8 @@ public class SemagrowSailFactory implements SailFactory, RepositoryResolverClien
                 initializeMetadata(metadata, file);
             }
 
+            sail.setMetadataRepository(metadata);
+
             SourceSelector selector = getSourceSelector(metadata, config, config.getSourceSelectorConfig());
 
             sail.setSourceSelector(selector);

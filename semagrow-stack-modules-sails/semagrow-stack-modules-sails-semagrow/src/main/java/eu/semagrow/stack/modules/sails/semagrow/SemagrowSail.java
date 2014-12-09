@@ -71,6 +71,7 @@ public class SemagrowSail extends SailBase {
     private CardinalityEstimator cardinalityEstimator;
 
     private ExecutorService executor = Executors.newCachedThreadPool();
+    private Repository metadataRepository;
 
     public SemagrowSail() { }
 
@@ -182,5 +183,11 @@ public class SemagrowSail extends SailBase {
         }
     }
 
+
+    public Repository getMetadataRepository() {
+        return metadataRepository;
+    }
+
+    public void setMetadataRepository(Repository metadataRepository) { this.metadataRepository = metadataRepository; }
 
 }
