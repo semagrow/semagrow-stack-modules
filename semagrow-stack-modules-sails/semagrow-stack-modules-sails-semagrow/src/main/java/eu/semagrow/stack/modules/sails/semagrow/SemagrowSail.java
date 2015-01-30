@@ -9,15 +9,19 @@ import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
 import eu.semagrow.stack.modules.api.estimator.CostEstimator;
 import eu.semagrow.stack.modules.api.transformation.QueryTransformation;
 import eu.semagrow.stack.modules.querydecomp.selector.*;
-import eu.semagrow.stack.modules.sails.semagrow.estimator.CardinalityEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryEvaluationImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.FileManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.*;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.rdf.RDFQueryLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.optimizer.DynamicProgrammingDecomposer;
+
+
+
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogFactory;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.rdf.RDFQueryLogFactory;
+//import eu.semagrow.stack.modules.sails.semagrow.optimizer.DynamicProgrammingDecomposer;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -102,6 +106,7 @@ public class SemagrowSail extends SailBase {
     public QueryDecomposer getDecomposer(Collection<URI> includeOnly, Collection<URI> exclude) {
         SourceSelector selector = getSourceSelector();
         selector = new RestrictiveSourceSelector(selector, includeOnly, exclude);
+        selector = new AskSourceSelector(selector);
         CostEstimator costEstimator = getCostEstimator();
         CardinalityEstimator cardinalityEstimator = getCardinalityEstimator();
         return new DynamicProgrammingDecomposer(costEstimator, cardinalityEstimator, selector);
