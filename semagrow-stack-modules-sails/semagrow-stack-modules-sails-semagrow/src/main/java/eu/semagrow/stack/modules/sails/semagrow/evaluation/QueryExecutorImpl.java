@@ -3,6 +3,7 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.HashJoinIteration;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.InsertValuesBindingsIteration;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.UnionJoinIteration;
 import info.aduna.iteration.*;
 
 import org.openrdf.model.Literal;
@@ -190,28 +191,33 @@ public class QueryExecutorImpl implements QueryExecutor {
         
         List<String> relevant = getRelevantBindingNames(bindings, exprVars);
 
-        //String sparqlQuery1 = buildSPARQLQueryVALUES(expr, bindings, relevant);
+        System.out.println("start = " + expr);
+        System.out.println(bindings);
+        System.out.println(relevant);
+        //String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
         String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
-        //System.out.println("valuesQuery = " + sparqlQuery1);
         System.out.println("unionQuery = " + sparqlQuery);
         
         result = sendTupleQuery(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
         
-        System.out.println("bindings = " + bindings);
-        
         if (!relevant.isEmpty()) {
+        	//result = new ServiceCrossProductIterationUNION(result, bindings);
+        	
             if (rowIdOpt)
                 result = new InsertValuesBindingsIteration(result, bindings);
             else {
-                result = new HashJoinIteration(
+                result = new UnionJoinIteration(
                                 new CollectionIteration<BindingSet, QueryEvaluationException>(bindings),
                                 result,
                                 new HashSet<String>(relevant));
             }
+            
         }
-        else
-            result = new ServiceCrossProductIterationUNION(result, bindings);
+        else {
+        	
+        	result = new ServiceCrossProductIteration(result, bindings);
 
+        }
         return result;
     }
 
@@ -413,6 +419,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         int i = 1;
         
         for (BindingSet b : bindings) {
+        	
         	// for each binding set create a subquery
         	
         	String tmpStr = new String(queryStr);
@@ -425,7 +432,7 @@ public class QueryExecutorImpl implements QueryExecutor {
             }
         	for (String name : subVars) {
         		// and rename all unbinded vars with the suffix _i
-            	tmpStr = tmpStr.replace(name, name + "_" + i);
+            	tmpStr = tmpStr.replace("?" + name, "?" + name + "_" + i);
             }
 
             sb.append(tmpStr);            
@@ -538,46 +545,4 @@ public class QueryExecutorImpl implements QueryExecutor {
             }
         }
     }
-    private class ServiceCrossProductIterationUNION extends ServiceCrossProductIteration {
-
-    	protected final List<BindingSet> inputBindings;
-    	protected final CloseableIteration<BindingSet, QueryEvaluationException> resultIteration;
-
-    	protected Iterator<BindingSet> inputBindingsIterator = null;
-    	protected BindingSet currentInputBinding = null;
-    	
-    	public ServiceCrossProductIterationUNION(
-    			CloseableIteration<BindingSet, QueryEvaluationException> resultIteration,
-    			List<BindingSet> inputBindings) {
-    		super(resultIteration, inputBindings);
-    		this.resultIteration = resultIteration;
-    		this.inputBindings = inputBindings;
-    	}
-    	
-    	@Override
-    	protected BindingSet getNextElement() throws QueryEvaluationException {
-    		
-    		if (currentInputBinding==null) {
-    			inputBindingsIterator = inputBindings.iterator();
-    			if (resultIteration.hasNext())
-    				currentInputBinding = resultIteration.next();
-    			else
-    				return null;  // no more results
-    		}	
-    		
-    		if (inputBindingsIterator.hasNext()) {
-    			BindingSet next = inputBindingsIterator.next();
-    			QueryBindingSet res = new QueryBindingSet(next.size() + currentInputBinding.size() );
-    			res.addAll(next);
-    			res.addAll(currentInputBinding);
-    			if (!inputBindingsIterator.hasNext())
-    				currentInputBinding = null;
-    			return res;
-    		}
-    		
-    		return null;
-    	}	
-    }
-
-
 }
