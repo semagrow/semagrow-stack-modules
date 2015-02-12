@@ -154,11 +154,10 @@ public class QueryExecutorImpl implements QueryExecutor {
                 return result;
             }
 
-            
             try {
                 result = evaluateInternal(endpoint, expr, bindings);
                 return result;
-            } catch(QueryEvaluationException e) {
+            } catch(Exception e) {
                 logger.debug("Failover to sequential iteration", e);
                 return new SequentialQueryIteration(endpoint, expr, bindings);
             }
@@ -191,17 +190,12 @@ public class QueryExecutorImpl implements QueryExecutor {
         
         List<String> relevant = getRelevantBindingNames(bindings, exprVars);
 
-        System.out.println("start = " + expr);
-        System.out.println(bindings);
-        System.out.println(relevant);
         //String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
         String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
-        System.out.println("unionQuery = " + sparqlQuery);
         
         result = sendTupleQuery(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
         
         if (!relevant.isEmpty()) {
-        	//result = new ServiceCrossProductIterationUNION(result, bindings);
         	
             if (rowIdOpt)
                 result = new InsertValuesBindingsIteration(result, bindings);
@@ -233,6 +227,8 @@ public class QueryExecutorImpl implements QueryExecutor {
 
     private List<String> getRelevantBindingNames(List<BindingSet> bindings, Set<String> exprVars) {
 
+    	if (bindings.isEmpty())
+    		return new ArrayList<String>();
         return getRelevantBindingNames(bindings.get(0), exprVars);
     }
 
@@ -397,8 +393,8 @@ public class QueryExecutorImpl implements QueryExecutor {
         return buildSPARQLQuery(expr,freeVars) + buildVALUESClause(bindings,relevantBindingNames);
     }
     
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////
     
     private String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
             throws Exception {
@@ -410,6 +406,10 @@ public class QueryExecutorImpl implements QueryExecutor {
         /*if (rowIdOpt)
             freeVars.add(InsertValuesBindingsIteration.INDEX_BINDING_NAME);*/
 
+    	if (subVars != null && subVars.isEmpty()) {
+    		return buildSPARQLQueryUNIONFILTER(expr, bindings, relevantBindingNames);
+    	}
+    	
     	// main part of the query to be sent
     	// original query
         StringBuilder sb = new StringBuilder();
@@ -443,36 +443,91 @@ public class QueryExecutorImpl implements QueryExecutor {
         sb.append("{}  }");
         
         // prefix of the query to be sent
-        
-        String pr = "";
-        
-        if (subVars != null && subVars.isEmpty())
-        	pr = "ask \nwhere {  ";
-        else {
-        	pr = "select ";
-        	for (int j=1; j<i; j++) {
-        		for (String name : subVars) {
-        			pr = pr + "?" + name + "_" +j + " "; 
-        		}
-        	}
-        	pr = pr + "\nwhere {  ";
-        }
-        
-        
-        //System.out.println("sb = " + pr + sb.toString());
-        //freeVars.removeAll(relevantBindingNames);
-        //return buildSPARQLQuery(expr,freeVars) + buildVALUESClause(bindings,relevantBindingNames);
+        String pr = "select ";
+    	for (int j=1; j<i; j++) {
+    		for (String name : subVars) {
+    			pr = pr + "?" + name + "_" +j + " "; 
+    		}
+    	}
+    	pr = pr + "\nwhere {  ";
         
         return (pr + sb.toString());
     }
     
-////////////////////////////////////////////////////////////////////////////////////
-////////////////////////////////////////////////////////////////////////////////////
+    private String buildSPARQLQueryUNIONFILTER(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+            throws Exception {
+
+    	//Set<String> freeVars = computeVars(expr);
+    	//Set<String> subVars = new HashSet<String>(freeVars);
+    	//subVars.removeAll(relevantBindingNames);
+    	
+        /*if (rowIdOpt)
+            freeVars.add(InsertValuesBindingsIteration.INDEX_BINDING_NAME);*/
+
+    	// it must hold (subVars != null && subVars.isEmpty()))
+    	//	throw new Exception();
+    	
+    	// main part of the query to be sent
+    	// original query
+        StringBuilder sb = new StringBuilder();
+        ParsedBooleanQuery query = new ParsedBooleanQuery(expr);
+        String queryStr = new SPARQLQueryRenderer().render(query).substring(4);
+        
+        int i = 1;
+        
+        for (BindingSet b : bindings) {
+        	
+        	// for each binding set create a subquery
+        	
+        	String tmpStr = new String(queryStr);
+        	
+            for (String name : relevantBindingNames) {
+            	// for the ith binding substitute the suffix _i
+            	tmpStr = tmpStr.replace("?" + name, "?" + name + "_" + i);
+            }
+            tmpStr = tmpStr.substring(1,tmpStr.lastIndexOf('}'));
+            sb.append(tmpStr);
+            
+            sb.append("  FILTER (");
+            boolean flag = false;
+            
+            for (String name : relevantBindingNames) {
+            	// for the ith binding substitute the value
+            	sb.append("?"+name + "_" + i +"=");
+            	appendValueAsString(sb, b.getValue(name));
+            	if (flag) {
+            		sb.append(" and ");
+            	}
+            	flag = true;
+            }
+            sb.append(") ");
+            
+            sb.append("} UNION {");
+            
+            i++;
+        }
+        sb.append("}  }");
+        
+        // prefix of the query to be sent
+        String pr = "select ";
+        for (int j=1; j<i; j++) {
+            for (String name : relevantBindingNames) {
+            	// for the ith binding substitute the suffix _i
+            	pr = pr + "?" + name + "_" + j;
+            }
+		}
+    	pr = pr + "\nwhere { { ";
+        
+        return (pr + sb.toString());
+    }
+    
+	////////////////////////////////////////////////////////////////////////////////////
+	////////////////////////////////////////////////////////////////////////////////////
 
     protected StringBuilder appendValueAsString(StringBuilder sb, Value value) {
 
         // TODO check if there is some convenient method in Sesame!
-
+    	
         if (value == null)
             return sb.append("UNDEF"); // see grammar for BINDINGs def
 
