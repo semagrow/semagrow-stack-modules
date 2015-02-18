@@ -70,7 +70,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         try {
             Set<String> freeVars = computeVars(expr);
 
-            List<String> relevant = getRelevantBindingNames(bindings, freeVars);
+            Set<String> relevant = getRelevantBindingNames(bindings, freeVars);
             final BindingSet relevantBindings = filterRelevant(bindings, relevant);
 
             freeVars.removeAll(bindings.getBindingNames());
@@ -161,7 +161,7 @@ public class QueryExecutorImpl implements QueryExecutor {
                 logger.debug("Failover to sequential iteration", e);
                 return new SequentialQueryIteration(endpoint, expr, bindings);
             }
-            
+
             //return new SequentialQueryIteration(endpoint, expr, bindings);
 
         } /*catch (MalformedQueryException e) {
@@ -188,11 +188,11 @@ public class QueryExecutorImpl implements QueryExecutor {
 
         Set<String> exprVars = computeVars(expr);
 
-        List<String> relevant = getRelevantBindingNames(bindings, exprVars);
+        Set<String> relevant = getRelevantBindingNames(bindings, exprVars);
 
         //String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
         String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
-        
+
         result = sendTupleQuery(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
 
         if (!relevant.isEmpty()) {
@@ -204,17 +204,17 @@ public class QueryExecutorImpl implements QueryExecutor {
                                 result,
                                 new HashSet<String>(relevant));
             }
-            
+
         }
         else {
-        	
+
         	result = new ServiceCrossProductIteration(result, bindings);
 
         }
         return result;
     }
 
-    private BindingSet filterRelevant(BindingSet bindings, List<String> relevant) {
+    protected BindingSet filterRelevant(BindingSet bindings, Collection<String> relevant) {
         QueryBindingSet newBindings = new QueryBindingSet();
         for (Binding b : bindings) {
             if (relevant.contains(b.getName())) {
@@ -224,15 +224,16 @@ public class QueryExecutorImpl implements QueryExecutor {
         return newBindings;
     }
 
-    private List<String> getRelevantBindingNames(List<BindingSet> bindings, Set<String> exprVars) {
+    protected Set<String> getRelevantBindingNames(List<BindingSet> bindings, Set<String> exprVars) {
 
     	if (bindings.isEmpty())
-    		return new ArrayList<String>();
+    		return Collections.emptySet();
+
         return getRelevantBindingNames(bindings.get(0), exprVars);
     }
 
-    private List<String> getRelevantBindingNames(BindingSet bindings, Set<String> exprVars){
-        List<String> relevantBindingNames = new ArrayList<String>(5);
+    protected Set<String> getRelevantBindingNames(BindingSet bindings, Set<String> exprVars){
+        Set<String> relevantBindingNames = new HashSet<String>(5);
         for (String bName : bindings.getBindingNames()) {
             if (exprVars.contains(bName))
                 relevantBindingNames.add(bName);
@@ -247,7 +248,7 @@ public class QueryExecutorImpl implements QueryExecutor {
      *
      * @return the set of variable names in the given service expression
      */
-    private Set<String> computeVars(TupleExpr serviceExpression) {
+    protected Set<String> computeVars(TupleExpr serviceExpression) {
         final Set<String> res = new HashSet<String>();
         serviceExpression.visit(new QueryModelVisitorBase<RuntimeException>() {
 
@@ -305,7 +306,7 @@ public class QueryExecutorImpl implements QueryExecutor {
      *         input bindings
      * @throws QueryEvaluationException
      */
-    private String buildVALUESClause(List<BindingSet> bindings, List<String> relevantBindingNames)
+    private String buildVALUESClause(List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws QueryEvaluationException
     {
 
@@ -342,7 +343,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         return sb.toString();
     }
 
-    private String buildSPARQLQuery(TupleExpr expr, Collection<String> projection) throws Exception {
+    protected String buildSPARQLQuery(TupleExpr expr, Collection<String> projection) throws Exception {
         if (projection != null && projection.isEmpty())
             return buildAskSPARQLQuery(expr);
         else
@@ -379,7 +380,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         return new SPARQLQueryRenderer().render(query);
     }
 
-    private String buildSPARQLQueryVALUES(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+    protected String buildSPARQLQueryVALUES(TupleExpr expr, List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws Exception {
 
         Set<String> freeVars = computeVars(expr);
@@ -391,38 +392,38 @@ public class QueryExecutorImpl implements QueryExecutor {
 
         return buildSPARQLQuery(expr,freeVars) + buildVALUESClause(bindings,relevantBindingNames);
     }
-    
+
 	////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////
-    
-    private String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+
+    protected String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws Exception {
 
     	Set<String> freeVars = computeVars(expr);
     	Set<String> subVars = new HashSet<String>(freeVars);
     	subVars.removeAll(relevantBindingNames);
-    	
+
         /*if (rowIdOpt)
             freeVars.add(InsertValuesBindingsIteration.INDEX_BINDING_NAME);*/
 
     	if (subVars != null && subVars.isEmpty()) {
     		return buildSPARQLQueryUNIONFILTER(expr, bindings, relevantBindingNames);
     	}
-    	
+
     	// main part of the query to be sent
     	// original query
         StringBuilder sb = new StringBuilder();
         ParsedBooleanQuery query = new ParsedBooleanQuery(expr);
         String queryStr = new SPARQLQueryRenderer().render(query).substring(4);
-        
+
         int i = 1;
-        
+
         for (BindingSet b : bindings) {
-        	
+
         	// for each binding set create a subquery
-        	
+
         	String tmpStr = new String(queryStr);
-        	
+
             for (String name : relevantBindingNames) {
             	// for the ith binding substitute the value
             	StringBuilder val = new StringBuilder();
@@ -434,62 +435,62 @@ public class QueryExecutorImpl implements QueryExecutor {
             	tmpStr = tmpStr.replace("?" + name, "?" + name + "_" + i);
             }
 
-            sb.append(tmpStr);            
+            sb.append(tmpStr);
             sb.append(" UNION ");
-            
+
             i++;
         }
         sb.append("{}  }");
-        
+
         // prefix of the query to be sent
         String pr = "select ";
     	for (int j=1; j<i; j++) {
     		for (String name : subVars) {
-    			pr = pr + "?" + name + "_" +j + " "; 
+    			pr = pr + "?" + name + "_" +j + " ";
     		}
     	}
     	pr = pr + "\nwhere {  ";
-        
+
         return (pr + sb.toString());
     }
-    
-    private String buildSPARQLQueryUNIONFILTER(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+
+    private String buildSPARQLQueryUNIONFILTER(TupleExpr expr, List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws Exception {
 
     	//Set<String> freeVars = computeVars(expr);
     	//Set<String> subVars = new HashSet<String>(freeVars);
     	//subVars.removeAll(relevantBindingNames);
-    	
+
         /*if (rowIdOpt)
             freeVars.add(InsertValuesBindingsIteration.INDEX_BINDING_NAME);*/
 
     	// it must hold (subVars != null && subVars.isEmpty()))
     	//	throw new Exception();
-    	
+
     	// main part of the query to be sent
     	// original query
         StringBuilder sb = new StringBuilder();
         ParsedBooleanQuery query = new ParsedBooleanQuery(expr);
         String queryStr = new SPARQLQueryRenderer().render(query).substring(4);
-        
+
         int i = 1;
-        
+
         for (BindingSet b : bindings) {
-        	
+
         	// for each binding set create a subquery
-        	
+
         	String tmpStr = new String(queryStr);
-        	
+
             for (String name : relevantBindingNames) {
             	// for the ith binding substitute the suffix _i
             	tmpStr = tmpStr.replace("?" + name, "?" + name + "_" + i);
             }
             tmpStr = tmpStr.substring(1,tmpStr.lastIndexOf('}'));
             sb.append(tmpStr);
-            
+
             sb.append("  FILTER (");
             boolean flag = false;
-            
+
             for (String name : relevantBindingNames) {
             	// for the ith binding substitute the value
             	sb.append("?"+name + "_" + i +"=");
@@ -500,13 +501,13 @@ public class QueryExecutorImpl implements QueryExecutor {
             	flag = true;
             }
             sb.append(") ");
-            
+
             sb.append("} UNION {");
-            
+
             i++;
         }
         sb.append("}  }");
-        
+
         // prefix of the query to be sent
         String pr = "select ";
         for (int j=1; j<i; j++) {
@@ -516,10 +517,10 @@ public class QueryExecutorImpl implements QueryExecutor {
             }
 		}
     	pr = pr + "\nwhere { { ";
-        
+
         return (pr + sb.toString());
     }
-    
+
 	////////////////////////////////////////////////////////////////////////////////////
 	////////////////////////////////////////////////////////////////////////////////////
 

@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import rx.Observable;
+import rx.functions.Func2;
 
 /**
  * Created by angel on 11/25/14.
@@ -34,7 +35,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
         try {
             Set<String> freeVars = computeVars(expr);
 
-            List<String> relevant = getRelevantBindingNames(bindings, freeVars);
+            Set<String> relevant = getRelevantBindingNames(bindings, freeVars);
             final BindingSet relevantBindings = filterRelevant(bindings, relevant);
 
             freeVars.removeAll(bindings.getBindingNames());
@@ -149,14 +150,21 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
 
         Set<String> relevant = new HashSet<String>(getRelevantBindingNames(bindings, exprVars));
 
+
+        String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
+
+        result = sendTupleQueryReactive(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
+
+
+        result = result.map(b -> convertUnionBindings(b, bindings, ReactiveFederatedEvaluationStrategyImpl::joinBindings));
+
+
+        /*
         String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
 
         result = sendTupleQueryReactive(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
 
         if (!relevant.isEmpty()) {
-            /*if (rowIdOpt)
-                result = new InsertValuesBindingsIteration(result, bindings);
-            else {*/
 
             final Observable<BindingSet> r = result;
 
@@ -183,8 +191,35 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
                         (b) -> Observable.never(),
                         ReactiveFederatedEvaluationStrategyImpl::joinBindings);
         }
+        */
 
         return result;
+    }
+
+    private BindingSet convertUnionBindings(BindingSet rightBindings,
+                                            List<BindingSet> leftBindings,
+                                            Func2<? extends BindingSet, ? extends BindingSet, BindingSet> f) {
+
+        QueryBindingSet joinBindings = new QueryBindingSet();
+
+        int i = -1;
+
+        for (Binding b : rightBindings) {
+                // get the relevant left binding
+                String bName = b.getName();
+                int splitPoint = bName.lastIndexOf("_");
+                i = Integer.parseInt(bName.substring(splitPoint+1)) - 1;
+
+                // create new Binding
+                joinBindings.addBinding(bName.substring(0,splitPoint),b.getValue());
+        }
+
+        for (Binding b : leftBindings.get(i)) {
+                joinBindings.addBinding(b);
+        }
+
+        return joinBindings;
+
     }
 
     protected Observable<BindingSet>
