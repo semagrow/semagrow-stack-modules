@@ -103,21 +103,14 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
         try {
 
 
-            return bindingIter.buffer(15).concatMap(
+
+            return bindingIter.buffer(10).concatMap(
                      bl ->  { try {
                          return evaluateReactiveInternal(endpoint, expr, bl);
-                     } /*catch (QueryEvaluationException e) {
-                         logger.debug("Failover to sequential iteration", e);
-                         return bindingIter.flatMap( b -> {
-                              try {
-                                  return evaluateReactive(endpoint, expr, b);
-                              }catch(QueryEvaluationException e2) {
-                                 return Observable.error(e2);
-                              }
-                            });
-                     }*/ catch (Exception e) {
+                     } catch (Exception e) {
                             return Observable.error(e);
                      } });
+
 
 
             /*

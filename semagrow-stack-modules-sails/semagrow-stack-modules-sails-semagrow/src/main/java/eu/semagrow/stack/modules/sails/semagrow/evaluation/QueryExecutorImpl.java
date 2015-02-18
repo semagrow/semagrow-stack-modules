@@ -570,9 +570,11 @@ public class QueryExecutorImpl implements QueryExecutor {
         //    sb.append(lit.getLanguage());
        // }
         //else {
+        if (lit.getDatatype() != null) {
             sb.append("^^<");
             sb.append(lit.getDatatype().stringValue());
             sb.append('>');
+        }
         //}
         return sb;
     }
