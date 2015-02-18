@@ -73,7 +73,7 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
 
             Set<TupleExpr> exprLabel =  new HashSet<TupleExpr>();
             exprLabel.add(e);
-
+            
             if (sources.isEmpty())
                 throw new QueryDecompositionException("No suitable sources found for statement pattern " + pattern.toString());
 
@@ -83,7 +83,7 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
                 //URI source = sourceMetadata.getEndpoints().get(0);
                 //Plan p1 = createPlan(exprLabel, sourceMetadata.target(), source, ctx);
                 // FIXME: Don't use always the first source.
-                Plan p1 = createPlan(exprLabel, sourceMetadata.target(), sourceMetadata, ctx);
+                Plan p1 = createPlan(exprLabel, sourceMetadata.target().clone(), sourceMetadata, ctx);
                 sourcePlans.add(p1);
             }
 
@@ -225,6 +225,7 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
         }
 
 
+        /// TODO HashJoin to BindJoin for lifeScience q4
         expr = new HashJoin(enforceLocalSite(e1, ctx), enforceLocalSite(e2, ctx));
         plans.add(expr);
 
@@ -261,7 +262,6 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
         // update cardinality and cost properties
         plan.setCost(costEstimator.getCost(e, plan.getSite()));
         plan.setCardinality(cardinalityEstimator.getCardinality(e, plan.getSite()));
-
         // update site
 
         // update ordering
