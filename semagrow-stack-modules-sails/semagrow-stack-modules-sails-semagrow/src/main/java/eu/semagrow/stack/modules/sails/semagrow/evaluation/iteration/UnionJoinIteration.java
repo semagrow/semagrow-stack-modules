@@ -65,4 +65,3 @@ public class UnionJoinIteration extends LookAheadIteration<BindingSet, QueryEval
 
 		    
 }
-
