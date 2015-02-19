@@ -29,12 +29,11 @@ import eu.semagrow.stack.modules.api.source.SourceSelector;
 public class AskSourceSelector extends SourceSelectorWrapper implements SourceSelector {
 
 	public AskSourceSelector(SourceSelector selector) {
-		super(selector);
+        super(selector);
 	}
 	
 	public AskSourceSelector(SourceSelector selector, int cacheSize) {
 		super(selector);
-		// TODO Cache init size
 	}
 	
 	@Override
