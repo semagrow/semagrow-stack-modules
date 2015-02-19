@@ -39,10 +39,9 @@ public class UnionJoinIteration extends LookAheadIteration<BindingSet, QueryEval
 	@Override
 	protected BindingSet getNextElement() throws QueryEvaluationException {
 		
-		int i=-1;
-		QueryBindingSet joinBindings = new QueryBindingSet();
-		
 		while (rightIter.hasNext()) {
+            int i=-1;
+            QueryBindingSet joinBindings = new QueryBindingSet();
 			BindingSet rightBindings = rightIter.next();
 			
 			for (Binding b : rightBindings) {
@@ -50,12 +49,14 @@ public class UnionJoinIteration extends LookAheadIteration<BindingSet, QueryEval
 				String bName = b.getName();
 				int splitPoint = bName.lastIndexOf("_");
 				i = Integer.parseInt(bName.substring(splitPoint+1)) - 1;
-				
-				// create new Binding
+
+                // create new Binding
 				joinBindings.addBinding(bName.substring(0,splitPoint),b.getValue()); 
 			}
+
 			for (Binding b : leftList.get(i)) {
-				joinBindings.addBinding(b);
+                if (!joinBindings.hasBinding(b.getName()))
+     				joinBindings.addBinding(b);
 			}
 			return joinBindings;
 		}
