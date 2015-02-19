@@ -9,6 +9,7 @@ import info.aduna.iteration.LookAheadIteration;
 import org.openrdf.query.Binding;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryEvaluationException;
+import org.openrdf.query.algebra.evaluation.QueryBindingSet;
 import org.openrdf.query.impl.MapBindingSet;
 
 /**
@@ -39,7 +40,7 @@ public class UnionJoinIteration extends LookAheadIteration<BindingSet, QueryEval
 	protected BindingSet getNextElement() throws QueryEvaluationException {
 		
 		int i=-1;
-		MapBindingSet joinBindings = new MapBindingSet();
+		QueryBindingSet joinBindings = new QueryBindingSet();
 		
 		while (rightIter.hasNext()) {
 			BindingSet rightBindings = rightIter.next();
