@@ -193,6 +193,9 @@ public class QueryExecutorImpl implements QueryExecutor {
 
         //String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
         String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
+
+        System.out.println(sparqlQuery);
+
         result = sendTupleQuery(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
 
         if (!relevant.isEmpty()) {
@@ -420,7 +423,7 @@ public class QueryExecutorImpl implements QueryExecutor {
                 String pattern = "[\\?\\$]" + name + "(?=\\W)";
             	StringBuilder val = new StringBuilder();
             	appendValueAsString(val, b.getValue(name));
-                String replacement = b.getValue(name).toString();
+                String replacement = val.toString();
                 tmpStr = tmpStr.replaceAll(pattern, Matcher.quoteReplacement(replacement));
             }
         	for (String name : freeVars) {
