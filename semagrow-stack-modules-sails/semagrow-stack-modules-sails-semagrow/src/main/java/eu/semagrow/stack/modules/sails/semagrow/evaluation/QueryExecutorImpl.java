@@ -195,8 +195,6 @@ public class QueryExecutorImpl implements QueryExecutor {
         String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
         result = sendTupleQuery(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
 
-        System.out.println(sparqlQuery);
-
         if (!relevant.isEmpty()) {
         	
             if (rowIdOpt)
