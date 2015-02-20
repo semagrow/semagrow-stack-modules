@@ -474,12 +474,12 @@ public class QueryExecutorImpl implements QueryExecutor {
             boolean flag = false;
             
             for (String name : relevantBindingNames) {
-            	sb.append("?"+name + "_" + i +"=");
-            	appendValueAsString(sb, b.getValue(name));
             	if (flag) {
             		sb.append(" and ");
             	}
             	flag = true;
+            	sb.append("?"+name + "_" + i +"=");
+            	appendValueAsString(sb, b.getValue(name));
             }
             sb.append(") } UNION {");
             i++;
