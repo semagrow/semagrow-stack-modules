@@ -74,8 +74,12 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
             Set<TupleExpr> exprLabel =  new HashSet<TupleExpr>();
             exprLabel.add(e);
             
-            if (sources.isEmpty())
-                throw new QueryDecompositionException("No suitable sources found for statement pattern " + pattern.toString());
+            if (sources.isEmpty()) {
+                //throw new QueryDecompositionException("No suitable sources found for statement pattern " + pattern.toString());
+                Plan p = createPlan(exprLabel, new EmptySet(), ctx);
+                plans.add(p);
+                return plans;
+            }
 
             List<Plan> sourcePlans = new LinkedList<Plan>();
 

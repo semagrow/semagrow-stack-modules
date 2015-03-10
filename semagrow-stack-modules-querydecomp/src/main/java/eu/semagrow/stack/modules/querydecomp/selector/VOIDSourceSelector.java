@@ -91,6 +91,10 @@ public class VOIDSourceSelector extends VOIDBase
             }
         }
 
+        if (endpoints.isEmpty()) {
+            endpoints = getEndpoints();
+        }
+
         Collection<SourceMetadata> metadata = new LinkedList<SourceMetadata>();
         for (URI endpoint : endpoints) {
             metadata.add(createSourceMetadata(pattern, endpoint));
