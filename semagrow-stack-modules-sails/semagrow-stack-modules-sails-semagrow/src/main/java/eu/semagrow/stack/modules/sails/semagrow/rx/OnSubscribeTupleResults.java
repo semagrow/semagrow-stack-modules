@@ -1,6 +1,9 @@
 package eu.semagrow.stack.modules.sails.semagrow.rx;
 
 import org.openrdf.query.*;
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
@@ -20,13 +23,16 @@ public class OnSubscribeTupleResults implements Observable.OnSubscribe<BindingSe
 
     private TupleQuery query;
 
-    public OnSubscribeTupleResults(TupleQuery query) {
+    final private RepositoryConnection conn;
+
+    public OnSubscribeTupleResults(TupleQuery query, RepositoryConnection conn) {
         this.query = query;
+        this.conn = conn;
     }
 
     @Override
     public void call(Subscriber<? super BindingSet> subscriber) {
-        subscriber.setProducer(new TupleQueryResultProducer(subscriber, query));
+        subscriber.setProducer(new TupleQueryResultProducer(subscriber, query, conn));
     }
 
     public static final class TupleQueryResultProducer implements Producer, TupleQueryResultHandler {
@@ -35,14 +41,17 @@ public class OnSubscribeTupleResults implements Observable.OnSubscribe<BindingSe
 
         private TupleQuery query;
 
+        private RepositoryConnection conn;
+
         private volatile long requested = 0;
 
         @SuppressWarnings("rawtypes")
         private static final AtomicLongFieldUpdater<TupleQueryResultProducer> REQUESTED_UPDATER = AtomicLongFieldUpdater.newUpdater(TupleQueryResultProducer.class, "requested");
 
-        public TupleQueryResultProducer(Subscriber<? super BindingSet> o, TupleQuery query) {
+        public TupleQueryResultProducer(Subscriber<? super BindingSet> o, TupleQuery query, RepositoryConnection conn) {
             this.subscriber = o;
             this.query = query;
+            this.conn = conn;
         }
 
         @Override
@@ -86,6 +95,18 @@ public class OnSubscribeTupleResults implements Observable.OnSubscribe<BindingSe
         public void endQueryResult() throws TupleQueryResultHandlerException {
             if (subscriber.isUnsubscribed())
                 return;
+
+            if (conn != null) {
+                try {
+                    if (conn.isOpen()) {
+                        conn.close();
+                        logger.debug("Connection " + conn.toString() + " closed");
+                    }
+                } catch (RepositoryException e) {
+                    logger.debug("Connection cannot be closed", e);
+                }
+            }
+
 
             subscriber.onCompleted();
         }

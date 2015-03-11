@@ -197,7 +197,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
         for (Binding b : bindings)
             query.setBinding(b.getName(), b.getValue());
 
-        return Observable.create(new OnSubscribeTupleResults(query));
+        return Observable.create(new OnSubscribeTupleResults(query, conn));
     }
 
     protected boolean
