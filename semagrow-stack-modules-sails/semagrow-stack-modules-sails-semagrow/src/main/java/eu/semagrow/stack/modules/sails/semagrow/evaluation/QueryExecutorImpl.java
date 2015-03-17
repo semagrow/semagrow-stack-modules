@@ -162,7 +162,7 @@ public class QueryExecutorImpl implements QueryExecutor {
                 logger.debug("Failover to sequential iteration", e);
                 return new SequentialQueryIteration(endpoint, expr, bindings);
             }
-            
+
             //return new SequentialQueryIteration(endpoint, expr, bindings);
 
         } /*catch (MalformedQueryException e) {
@@ -191,8 +191,12 @@ public class QueryExecutorImpl implements QueryExecutor {
         
         List<String> relevant = getRelevantBindingNames(bindings, exprVars);
 
-        //String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
-        String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
+        String sparqlQuery = "";
+
+        if (relevant.isEmpty())
+            sparqlQuery = buildSelectSPARQLQuery(expr, null);
+        else
+            sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
 
         System.out.println(sparqlQuery);
 
@@ -416,7 +420,12 @@ public class QueryExecutorImpl implements QueryExecutor {
         String where = query.substring(query.indexOf('{'));
         StringBuilder sb = new StringBuilder();
         int i = 1;
+        boolean flag = false;
         for (BindingSet b : bindings) {
+            if (flag) {
+                sb.append(" UNION ");
+            }
+            flag = true;
             String tmpStr = where;
             for (String name : relevantBindingNames) {
                 String pattern = "[\\?\\$]" + name + "(?=\\W)";
@@ -431,10 +440,9 @@ public class QueryExecutorImpl implements QueryExecutor {
                 tmpStr = tmpStr.replaceAll(pattern, Matcher.quoteReplacement(replacement));
             }
             sb.append(tmpStr);
-            sb.append(" UNION ");
             i++;
         }
-        sb.append("{} }");
+        sb.append(" }");
         String pr = "SELECT ";
         for (int j=1; j<i; j++) {
             for (String name : freeVars) {

@@ -34,6 +34,7 @@ public class UnionJoinIteration extends LookAheadIteration<BindingSet, QueryEval
 		leftList = new ArrayList<BindingSet>();
 		while (leftIter.hasNext())
 			leftList.add(leftIter.next());
+        leftIter.close();
 	}
     
 	@Override
@@ -60,6 +61,7 @@ public class UnionJoinIteration extends LookAheadIteration<BindingSet, QueryEval
 			}
 			return joinBindings;
 		}
+        rightIter.close();
 		return null;
 	}
 
