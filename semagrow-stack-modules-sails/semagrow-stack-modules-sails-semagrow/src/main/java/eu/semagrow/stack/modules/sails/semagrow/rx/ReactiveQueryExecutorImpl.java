@@ -104,7 +104,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
 
 
 
-            return bindingIter.buffer(10).concatMap(
+            return bindingIter.buffer(10).flatMap(
                      bl ->  { try {
                          return evaluateReactiveInternal(endpoint, expr, bl);
                      } catch (Exception e) {
@@ -143,11 +143,11 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
 
         Set<String> relevant = new HashSet<String>(getRelevantBindingNames(bindings, exprVars));
 
-
         String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
 
-        result = sendTupleQueryReactive(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
+        System.out.println(sparqlQuery);
 
+        result = sendTupleQueryReactive(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
 
         result = result.map(b -> convertUnionBindings(b, bindings, ReactiveFederatedEvaluationStrategyImpl::joinBindings));
 
@@ -198,16 +198,17 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
         int i = -1;
 
         for (Binding b : rightBindings) {
-                // get the relevant left binding
-                String bName = b.getName();
-                int splitPoint = bName.lastIndexOf("_");
-                i = Integer.parseInt(bName.substring(splitPoint+1)) - 1;
-
-                // create new Binding
-                joinBindings.addBinding(bName.substring(0,splitPoint),b.getValue());
+            // get the relevant left binding
+            String bName = b.getName();
+            int splitPoint = bName.lastIndexOf("_");
+            i = Integer.parseInt(bName.substring(splitPoint+1)) - 1;
+            int y = i;
+            // create new Binding
+            joinBindings.addBinding(bName.substring(0,splitPoint),b.getValue());
         }
 
         for (Binding b : leftBindings.get(i)) {
+            if (!joinBindings.hasBinding(b.getName()))
                 joinBindings.addBinding(b);
         }
 

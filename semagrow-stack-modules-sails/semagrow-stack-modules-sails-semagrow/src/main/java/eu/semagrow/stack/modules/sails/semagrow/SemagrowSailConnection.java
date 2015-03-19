@@ -5,6 +5,7 @@ import eu.semagrow.stack.modules.api.decomposer.QueryDecompositionException;
 import eu.semagrow.stack.modules.api.evaluation.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.EvaluationStrategyImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryExecutorImpl;
+import eu.semagrow.stack.modules.sails.semagrow.optimizer.StaticOptimizer;
 import eu.semagrow.stack.modules.sails.semagrow.rx.ReactiveFederatedEvaluationStrategyImpl;
 import eu.semagrow.stack.modules.sails.semagrow.rx.ReactiveQueryExecutorImpl;
 import info.aduna.iteration.CloseableIteration;
@@ -12,6 +13,7 @@ import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
+import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.QueryRoot;
 import org.openrdf.query.algebra.TupleExpr;
@@ -166,6 +168,20 @@ public class SemagrowSailConnection extends SailConnectionBase {
         logger.debug("Starting decomposition of " + tupleExpr.toString());
 
         TupleExpr decomposed = null;
+        //////////////////////////////////////////////////
+        // NA VGEI!!!
+        try {
+            decomposed = new StaticOptimizer().decompose(tupleExpr);
+        } catch (MalformedQueryException e) {
+            e.printStackTrace();
+        }
+        if (decomposed != null) {
+            logger.debug("Query decomposed to " + decomposed.toString());
+            logger.info("Decomposed query: " + decomposed.toString());
+            System.out.println(decomposed.toString());
+            return evaluateOnlyReactive(decomposed, dataset, bindings, b, p);
+        }
+        /////////////////////////////////////////////////
         try {
             decomposed = decompose(tupleExpr, dataset, bindings, includeOnlySources, excludeSources);
         } catch (QueryDecompositionException e) {

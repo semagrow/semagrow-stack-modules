@@ -39,6 +39,8 @@ public class QueryExecutorImpl implements QueryExecutor {
 
     private final Logger logger = LoggerFactory.getLogger(QueryExecutorImpl.class);
 
+    private int countconn = 0;
+
     private Map<URI,Repository> repoMap = new HashMap<URI,Repository>();
 
     private boolean rowIdOpt = false;
@@ -60,7 +62,10 @@ public class QueryExecutorImpl implements QueryExecutor {
         if (!repo.isInitialized())
             repo.initialize();
 
-        return repo.getConnection();
+        RepositoryConnection conn = repo.getConnection();
+        logger.debug("Connection " + conn.toString() +" started, currently open " + countconn);
+        countconn++;
+        return conn;
     }
 
     public CloseableIteration<BindingSet, QueryEvaluationException>
@@ -351,7 +356,7 @@ public class QueryExecutorImpl implements QueryExecutor {
             return buildSelectSPARQLQuery(expr, projection);
     }
 
-    private String buildSelectSPARQLQuery(TupleExpr expr, Collection<String> projection)
+    protected String buildSelectSPARQLQuery(TupleExpr expr, Collection<String> projection)
             throws Exception {
 
 
@@ -409,7 +414,12 @@ public class QueryExecutorImpl implements QueryExecutor {
         String where = query.substring(query.indexOf('{'));
         StringBuilder sb = new StringBuilder();
         int i = 1;
+        boolean flag = false;
         for (BindingSet b : bindings) {
+            if (flag) {
+                sb.append(" UNION ");
+            }
+            flag = true;
             String tmpStr = where;
             for (String name : relevantBindingNames) {
                 String pattern = "[\\?\\$]" + name + "(?=\\W)";
@@ -424,10 +434,9 @@ public class QueryExecutorImpl implements QueryExecutor {
                 tmpStr = tmpStr.replaceAll(pattern, Matcher.quoteReplacement(replacement));
             }
             sb.append(tmpStr);
-            sb.append(" UNION ");
             i++;
         }
-        sb.append("{} }");
+        sb.append(" }");
         String pr = "SELECT ";
         for (int j=1; j<i; j++) {
             for (String name : freeVars) {
