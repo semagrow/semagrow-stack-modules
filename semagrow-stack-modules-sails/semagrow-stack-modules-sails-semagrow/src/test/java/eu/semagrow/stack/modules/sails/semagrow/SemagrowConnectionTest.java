@@ -9,6 +9,7 @@ import info.aduna.iteration.Iterations;
 import junit.framework.TestCase;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.query.*;
+import org.openrdf.query.algebra.TupleExpr;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.config.RepositoryImplConfig;
@@ -20,6 +21,8 @@ import org.openrdf.sail.inferencer.fc.config.ForwardChainingRDFSInferencerConfig
 import org.openrdf.sail.memory.config.MemoryStoreConfig;
 
 import java.io.File;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class SemagrowConnectionTest extends TestCase {
 
@@ -86,19 +89,120 @@ public class SemagrowConnectionTest extends TestCase {
                 "SELECT *  { <htt://localhost/sub> <http://localhost/my> ?z. " +
                 "?z <http://rdf.iit.demokritos.gr/2014/my#pred2> \"R\" . } " ;
 
+        String dlo_q = "PREFIX  qb:   <http://purl.org/linked-data/cube#>\n" +
+                "SELECT DISTINCT  ?property ?codeList ?var_struct ?shortName ?dimensionSize ?dataType\n" +
+                "WHERE\n" +
+                "  { <http://semagrow.eu/rdf/data/epic_hadgem2-es_rcp2p6_ssp2_co2_firr_yield_whe_annual_2005_2099_yield> qb:structure ?dstruct .\n" +
+                "    ?dstruct qb:component ?var_struct .\n" +
+                "    ?var_struct <http://semagrow.eu/rdf/struct/shortName> ?shortName .\n" +
+                "    ?var_struct <http://semagrow.eu/rdf/struct/dimensionSize> ?dimensionSize .\n" +
+                "    ?var_struct <http://semagrow.eu/rdf/struct/dataType> ?dataType .\n" +
+                "    ?var_struct qb:componentProperty ?property .\n" +
+                "    ?var_struct qb:codeList ?codeList .\n" +
+                "    ?property <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> qb:DimensionProperty\n" +
+                "  }";
+
+        String dlo_q2 = "PREFIX  sgstruct: <http://semagrow.eu/rdf/struct/>\n" +
+                "PREFIX  qb:   <http://purl.org/linked-data/cube#>\n" +
+                "\n" +
+                "SELECT DISTINCT  ?short_name ?attr\n" +
+                "WHERE\n" +
+                "  { sgstruct:epic_hadgem2-es_rcp2p6_ssp2_co2_firr_yield_whe_annual_2005_2099_struct_time qb:component ?var_attribute_struct .\n" +
+                "    ?var_attribute_struct qb:componentProperty ?var_attr_name .\n" +
+                "    ?var_attribute_struct sgstruct:shortName ?short_name .\n" +
+                "sgstruct:epic_hadgem2-es_rcp2p6_ssp2_co2_firr_yield_whe_annual_2005_2099_struct_time ?var_attr_name ?attr\n" +
+                "  }";
+
+        String agris = "SELECT ?s WHERE {<http://agris.fao.org/aos/records/AU7500003> <http://purl.org/dc/terms/subject> ?o.\n" +
+                " ?s <http://purl.org/dc/terms/subject> ?o.\n" +
+                " ?s <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://rdf.iit.demokritos.gr/2015/crawler#doc>}";
+
+        String lifeScience1 = "SELECT ?predicate ?object WHERE {\n" +
+                "  { <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00201> ?predicate ?object . }\n" +
+                "  UNION\n" +
+                "  { <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugs/DB00201> <http://www.w3.org/2002/07/owl#sameAs> ?caff .\n" +
+                "    ?caff ?predicate ?object . }\n" +
+                "}\n";
+
+        String dlo2 = "PREFIX  xsd:  <http://www.w3.org/2001/XMLSchema#>\n" +
+                "PREFIX  rdf:  <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX  qb:   <http://purl.org/linked-data/cube#>\n" +
+                "\n" +
+                "SELECT  ?meas_val ?pos_lon ?pos_lat ?pos_time\n" +
+                "WHERE\n" +
+                "  { ?observation qb:dataSet <http://semagrow.eu/rdf/data/epic_hadgem2-es_rcp2p6_ssp2_co2_firr_yield_whe_annual_2005_2099_yield> .\n" +
+                "    ?observation <http://rdf.iit.demokritos.gr/2014/cfconventions#longitude> ?pos_lon .\n" +
+                "    ?pos_lon rdf:value ?value_lon\n" +
+                "    FILTER ( ( ?value_lon >= \"108.0\"^^xsd:float ) && ( ?value_lon <= \"180.0\"^^xsd:float ) )\n" +
+                "    ?observation <http://rdf.iit.demokritos.gr/2014/cfconventions#latitude> ?pos_lat .\n" +
+                "    ?pos_lat rdf:value ?value_lat\n" +
+                "    FILTER ( ( ?value_lat >= \"-54.0\"^^xsd:float ) && ( ?value_lat <= \"-18.0\"^^xsd:float ) )\n" +
+                "    ?observation <http://rdf.iit.demokritos.gr/2014/cfconventions#time> ?pos_time .\n" +
+                "    ?pos_time rdf:value ?value_time\n" +
+                "    FILTER ( ( ?value_time >= \"120.0\"^^xsd:double ) && ( ?value_time <= \"149.0\"^^xsd:double ) )\n" +
+                "    ?observation <http://rdf.iit.demokritos.gr/2014/cfconventions#yield> ?meas_val\n" +
+                "  }";
+
+        String lifeScience7 = "SELECT $drug $transform $mass WHERE {  \n" +
+                "  { $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/affectedOrganism>  'Humans and other mammals'.\n" +
+                "    $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/casRegistryNumber> $cas .\n" +
+                "    $keggDrug <http://bio2rdf.org/ns/bio2rdf#xRef> $cas .\n" +
+                "    $keggDrug <http://bio2rdf.org/ns/bio2rdf#mass> $mass\n" +
+                "      FILTER ( $mass > '5' )\n" +
+                "  } \n" +
+                "  OPTIONAL { $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/biotransformation> $transform . } \n" +
+                "}\n";
+
+        //Thread.sleep(10000);
+
         SailImplConfig config = new SemagrowSailConfig();
 
         SemagrowRepositoryConfig repoConfig = new SemagrowRepositoryConfig();
         SemagrowSailRepository repo = (SemagrowSailRepository) RepositoryRegistry.getInstance().get(repoConfig.getType()).getRepository(repoConfig);
         repo.initialize();
         SemagrowSailRepositoryConnection conn = repo.getConnection();
-        SemagrowTupleQuery query =  conn.prepareTupleQuery(QueryLanguage.SPARQL, q3);
+        SemagrowTupleQuery query =  conn.prepareTupleQuery(QueryLanguage.SPARQL, lifeScience7);
         query.setIncludeInferred(true);
         query.setIncludeProvenanceData(true);
+        //TupleQueryResult result = query.evaluate();
+        //System.out.println(Iterations.toString(result, "\n"));
+        //Iterations.closeCloseable(result);
 
-        TupleQueryResult result = query.evaluate();
-        System.out.println(Iterations.toString(result, "\n"));
-        Iterations.closeCloseable(result);
+        //System.out.println(query.getDecomposedQuery());
+
+        final CountDownLatch latch = new CountDownLatch(1);
+
+
+
+        query.evaluate(new TupleQueryResultHandler() {
+            @Override
+            public void handleBoolean(boolean b) throws QueryResultHandlerException {
+
+            }
+
+            @Override
+            public void handleLinks(List<String> list) throws QueryResultHandlerException {
+
+            }
+
+            @Override
+            public void startQueryResult(List<String> list) throws TupleQueryResultHandlerException {
+
+            }
+
+            @Override
+            public void endQueryResult() throws TupleQueryResultHandlerException {
+                latch.countDown();
+            }
+
+            @Override
+            public void handleSolution(BindingSet bindingSet) throws TupleQueryResultHandlerException {
+                System.out.println(bindingSet);
+            }
+        });
+
+        latch.await();
+
     }
 
     public void testCrossProduct() throws Exception {
