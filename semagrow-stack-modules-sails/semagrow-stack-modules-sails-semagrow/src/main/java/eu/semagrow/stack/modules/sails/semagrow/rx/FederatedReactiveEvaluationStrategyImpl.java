@@ -5,13 +5,13 @@ import eu.semagrow.stack.modules.sails.semagrow.optimizer.Plan;
 import info.aduna.iteration.CloseableIteration;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
-import org.openrdf.query.Binding;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.*;
-import org.openrdf.query.algebra.evaluation.QueryBindingSet;
 import org.openrdf.query.algebra.evaluation.TripleSource;
+import org.reactivestreams.Publisher;
 import rx.Observable;
+import rx.RxReactiveStreams;
 import rx.schedulers.Schedulers;
 
 import java.util.List;
@@ -20,12 +20,11 @@ import java.util.Set;
 /**
  * Created by angel on 11/26/14.
  */
-public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationStrategyImpl {
+public class FederatedReactiveEvaluationStrategyImpl extends ReactiveEvaluationStrategyImpl {
 
-    public ReactiveQueryExecutorImpl queryExecutor;
+    public ReactiveQueryExecutor queryExecutor;
 
-
-    public ReactiveFederatedEvaluationStrategyImpl(ReactiveQueryExecutorImpl queryExecutor, final ValueFactory vf) {
+    public FederatedReactiveEvaluationStrategyImpl(ReactiveQueryExecutor queryExecutor, final ValueFactory vf) {
         super(new TripleSource() {
             public CloseableIteration<? extends Statement, QueryEvaluationException>
             getStatements(Resource resource, URI uri, Value value, Resource... resources) throws QueryEvaluationException {
@@ -39,43 +38,43 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
         this.queryExecutor = queryExecutor;
     }
 
-    public ReactiveFederatedEvaluationStrategyImpl(ReactiveQueryExecutorImpl queryExecutor) {
+    public FederatedReactiveEvaluationStrategyImpl(ReactiveQueryExecutor queryExecutor) {
         this(queryExecutor, ValueFactoryImpl.getInstance());
     }
 
     @Override
-    public Observable<BindingSet> evaluateReactive(TupleExpr expr, BindingSet bindings)
+    public Observable<BindingSet> evaluateReactiveInternal(TupleExpr expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         if (expr instanceof SourceQuery) {
-            return evaluateReactive((SourceQuery) expr, bindings);
+            return evaluateReactiveInternal((SourceQuery) expr, bindings);
         }
         else if (expr instanceof Join) {
-            return evaluateReactive((Join) expr, bindings);
+            return evaluateReactiveInternal((Join) expr, bindings);
         }
         else if (expr instanceof Plan) {
-            return evaluateReactive(((Plan) expr).getArg(), bindings);
+            return evaluateReactiveInternal(((Plan) expr).getArg(), bindings);
         }
         else if (expr instanceof Transform) {
-            return evaluateReactive((Transform) expr, bindings);
+            return evaluateReactiveInternal((Transform) expr, bindings);
         }
         else
-            return super.evaluateReactive(expr, bindings);
+            return super.evaluateReactiveInternal(expr, bindings);
     }
 
 
     @Override
-    public Observable<BindingSet> evaluateReactive(Join expr, BindingSet bindings)
+    public Observable<BindingSet> evaluateReactiveInternal(Join expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         if (expr instanceof BindJoin) {
-            return evaluateReactive((BindJoin)expr, bindings);
+            return evaluateReactiveInternal((BindJoin) expr, bindings);
         }
         else if (expr instanceof HashJoin) {
-            return evaluateReactive((HashJoin)expr, bindings);
+            return evaluateReactiveInternal((HashJoin) expr, bindings);
         }
         else if (expr instanceof MergeJoin) {
-            return evaluateReactive((MergeJoin)expr, bindings);
+            return evaluateReactiveInternal((MergeJoin) expr, bindings);
         }
         else if (expr == null) {
             throw new IllegalArgumentException("expr must not be null");
@@ -85,15 +84,15 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
         }
     }
 
-    public Observable<BindingSet> evaluateReactive(HashJoin expr, BindingSet bindings)
+    public Observable<BindingSet> evaluateReactiveInternal(HashJoin expr, BindingSet bindings)
         throws QueryEvaluationException
     {
-        Observable<BindingSet> r = evaluateReactive(expr.getRightArg(), bindings);
+        Observable<BindingSet> r = evaluateReactiveInternal(expr.getRightArg(), bindings);
 
         Set<String> joinAttributes = expr.getLeftArg().getBindingNames();
         joinAttributes.retainAll(expr.getRightArg().getBindingNames());
 
-        return evaluateReactive(expr.getLeftArg(), bindings)
+        return evaluateReactiveInternal(expr.getLeftArg(), bindings)
                 .toMultimap(b -> calcKey(b, joinAttributes), b1 -> b1)
                 .flatMap((probe) ->
                     r.concatMap(b -> {
@@ -104,7 +103,7 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
                                              .join(Observable.just(b),
                                                      b1 -> Observable.never(),
                                                      b1 -> Observable.never(),
-                                                     ReactiveFederatedEvaluationStrategyImpl::joinBindings);
+                                                     FederatedReactiveEvaluationStrategyImpl::joinBindings);
                     })
                 );
     }
@@ -119,29 +118,29 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
                                         .join(Observable.just(b),
                                                 b1 -> Observable.never(),
                                                 b1 -> Observable.never(),
-                                                ReactiveFederatedEvaluationStrategyImpl::joinBindings);
+                                                FederatedReactiveEvaluationStrategyImpl::joinBindings);
                         })
                 );
     }
 
 
-    public Observable<BindingSet> evaluateReactive(BindJoin expr, BindingSet bindings)
+    public Observable<BindingSet> evaluateReactiveInternal(BindJoin expr, BindingSet bindings)
         throws QueryEvaluationException
     {
-        return this.evaluateReactive(expr.getLeftArg(), bindings)
+        return this.evaluateReactiveInternal(expr.getLeftArg(), bindings)
                 .buffer(15)
                 .flatMap((b) -> {
                     try {
-                        return evaluateReactive(expr.getRightArg(), b);
+                        return evaluateReactiveInternal(expr.getRightArg(), b);
                     } catch (Exception e) {
                         return Observable.error(e);
                     } });
     }
 
-    public Observable<BindingSet> evaluateReactive(SourceQuery expr, BindingSet bindings)
+    public Observable<BindingSet> evaluateReactiveInternal(SourceQuery expr, BindingSet bindings)
             throws QueryEvaluationException
     {
-        //return queryExecutor.evaluateReactive(null, expr.getArg(), bindings)
+        //return queryExecutor.evaluateReactiveInternal(null, expr.getArg(), bindings)
         if (expr.getSources().size() == 0)
             return Observable.empty();
         else if (expr.getSources().size() == 1)
@@ -159,39 +158,45 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
     public Observable<BindingSet> evaluateSourceReactive(URI source, TupleExpr expr, BindingSet bindings)
         throws QueryEvaluationException
     {
-        return queryExecutor.evaluateReactive(source, expr, bindings).subscribeOn(Schedulers.io());
+        Publisher<BindingSet> result = queryExecutor.evaluateReactive(source, expr, bindings);
+
+        return RxReactiveStreams.toObservable(result).subscribeOn(Schedulers.io());
     }
 
     public Observable<BindingSet> evaluateSourceReactive(URI source, TupleExpr expr, List<BindingSet> bindings)
             throws QueryEvaluationException
     {
-        return queryExecutor.evaluateReactive(source, expr, Observable.from(bindings)).subscribeOn(Schedulers.io());
+        Publisher<BindingSet> publisherOfBindings = RxReactiveStreams.toPublisher(Observable.from(bindings));
+
+        Publisher<BindingSet> result = queryExecutor.evaluateReactive(source, expr, publisherOfBindings);
+
+        return RxReactiveStreams.toObservable(result).subscribeOn(Schedulers.io());
     }
 
-    public Observable<BindingSet> evaluateReactive(Transform expr, BindingSet bindings)
+    public Observable<BindingSet> evaluateReactiveInternal(Transform expr, BindingSet bindings)
             throws QueryEvaluationException
     {
-        return this.evaluateReactive(expr.getArg(), bindings);
+        return this.evaluateReactiveInternal(expr.getArg(), bindings);
     }
 
 
-    public Observable<BindingSet> evaluateReactive(TupleExpr expr, List<BindingSet> bindingList)
+    public Observable<BindingSet> evaluateReactiveInternal(TupleExpr expr, List<BindingSet> bindingList)
         throws QueryEvaluationException
     {
         if (expr instanceof Plan)
-            return evaluateReactive(((Plan) expr).getArg(), bindingList);
+            return evaluateReactiveInternal(((Plan) expr).getArg(), bindingList);
         else if (expr instanceof Union)
-            return evaluateReactive((Union)expr, bindingList);
+            return evaluateReactiveInternal((Union) expr, bindingList);
         else if (expr instanceof SourceQuery)
-            return evaluateReactive((SourceQuery) expr, bindingList);
+            return evaluateReactiveInternal((SourceQuery) expr, bindingList);
         else
             return evaluateReactiveDefault(expr, bindingList);
     }
 
-    public Observable<BindingSet> evaluateReactive(SourceQuery expr, List<BindingSet> bindingList)
+    public Observable<BindingSet> evaluateReactiveInternal(SourceQuery expr, List<BindingSet> bindingList)
         throws QueryEvaluationException
     {
-        //return queryExecutor.evaluateReactive(null, expr.getArg(), bindings)
+        //return queryExecutor.evaluateReactiveInternal(null, expr.getArg(), bindings)
         if (expr.getSources().size() == 0)
             return Observable.empty();
         else if (expr.getSources().size() == 1)
@@ -210,7 +215,7 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
     {
         return Observable.from(bindingList).flatMap(b -> {
             try {
-                return evaluateReactive(expr, b);
+                return evaluateReactiveInternal(expr, b);
             }
             catch (Exception e) {
                 return Observable.error(e);
@@ -218,12 +223,12 @@ public class ReactiveFederatedEvaluationStrategyImpl extends ReactiveEvaluationS
         });
     }
 
-    public Observable<BindingSet> evaluateReactive(Union expr, List<BindingSet> bindingList)
+    public Observable<BindingSet> evaluateReactiveInternal(Union expr, List<BindingSet> bindingList)
             throws QueryEvaluationException
     {
         return Observable.just(expr.getLeftArg(), expr.getRightArg())
                 .flatMap(e -> { try {
-                    return evaluateReactive(e, bindingList);
+                    return evaluateReactiveInternal(e, bindingList);
                 } catch (Exception x) {
                     return Observable.error(x);
                 }});

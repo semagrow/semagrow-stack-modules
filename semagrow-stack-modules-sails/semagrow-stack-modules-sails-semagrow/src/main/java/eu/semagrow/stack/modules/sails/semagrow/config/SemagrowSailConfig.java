@@ -2,11 +2,9 @@ package eu.semagrow.stack.modules.sails.semagrow.config;
 
 import eu.semagrow.modules.fileutils.FileUtils;
 import eu.semagrow.stack.modules.sails.config.SEVODInferencerConfig;
-import org.openrdf.model.Graph;
-import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
-import org.openrdf.model.Value;
+import org.openrdf.model.*;
 import org.openrdf.model.util.GraphUtil;
+import org.openrdf.model.util.GraphUtilException;
 import org.openrdf.repository.config.RepositoryImplConfig;
 import org.openrdf.repository.sail.config.SailRepositoryConfig;
 import org.openrdf.sail.config.SailConfigException;
@@ -19,6 +17,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by angel on 5/29/14.
@@ -76,6 +75,13 @@ public class SemagrowSailConfig extends SailImplConfigBase {
         for (String file : filenames) {
             graph.add(implNode, SemagrowSchema.METADATAINIT, graph.getValueFactory().createLiteral(file));
         }
+
+        String queryTransfDB = getQueryTransformationDB();
+        if (queryTransfDB != null) {
+            graph.add(implNode, SemagrowSchema.QUERYTRANSFORMDB, graph.getValueFactory().createLiteral(queryTransfDB));
+            graph.add(implNode, SemagrowSchema.QUERYTRANSFORMUSER, graph.getValueFactory().createLiteral(getQueryTransformationUser()));
+            graph.add(implNode, SemagrowSchema.QUERYTRANSFORMPASSWORD, graph.getValueFactory().createLiteral(getQueryTransformationPassword()));
+        }
         return implNode;
     }
 
@@ -85,6 +91,17 @@ public class SemagrowSailConfig extends SailImplConfigBase {
         for (Value o : GraphUtil.getObjects(graph, node, SemagrowSchema.METADATAINIT))
         {
             filenames.add(o.stringValue());
+        }
+
+        try {
+            Literal dbLit = GraphUtil.getOptionalObjectLiteral(graph, node, SemagrowSchema.QUERYTRANSFORMDB);
+            Literal dbUser = GraphUtil.getOptionalObjectLiteral(graph, node, SemagrowSchema.QUERYTRANSFORMUSER);
+            Literal dbPass = GraphUtil.getOptionalObjectLiteral(graph, node, SemagrowSchema.QUERYTRANSFORMPASSWORD);
+
+            setQueryTransformationDB(dbLit.stringValue());
+            setQueryTransformationAuth(dbUser.stringValue(), dbPass.stringValue());
+        } catch (GraphUtilException e) {
+            e.printStackTrace();
         }
 
         super.parse(graph, node);
