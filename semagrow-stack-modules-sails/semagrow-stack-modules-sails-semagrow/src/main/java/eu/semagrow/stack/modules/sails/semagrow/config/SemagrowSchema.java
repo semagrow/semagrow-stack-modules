@@ -20,6 +20,10 @@ public class SemagrowSchema {
 
     public static final URI METADATAINIT;
 
+    public static final URI QUERYTRANSFORMDB;
+    public static final URI QUERYTRANSFORMUSER;
+    public static final URI QUERYTRANSFORMPASSWORD;
+
     // queryLog handler
     // source selection
     // decomposition algorithm
@@ -30,5 +34,8 @@ public class SemagrowSchema {
     static  {
         ValueFactory vf = ValueFactoryImpl.getInstance();
         METADATAINIT = vf.createURI(NAMESPACE, "metadataInit");
+        QUERYTRANSFORMDB = vf.createURI(NAMESPACE, "queryTransformDB");
+        QUERYTRANSFORMUSER = vf.createURI(NAMESPACE, "queryTransformUser");
+        QUERYTRANSFORMPASSWORD = vf.createURI(NAMESPACE, "queryTransformPass");
     }
 }

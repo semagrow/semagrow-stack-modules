@@ -4,6 +4,7 @@ import eu.semagrow.stack.modules.api.source.SourceMetadata;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.api.transformation.EquivalentURI;
 import eu.semagrow.stack.modules.api.transformation.QueryTransformation;
+import org.openrdf.model.Literal;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;
@@ -59,6 +60,7 @@ public class SourceSelectorWithQueryTransform extends SourceSelectorWrapper {
                 for (FuzzyEntry<Var> oVar1 : transformVar(oVar)) {
                     StatementPattern p = new StatementPattern(sVar1.getElem(), pVar1.getElem(), oVar1.getElem());
                     if (!p.equals(pattern)) {
+
                         double prox = Math.min(Math.min(sVar1.getProximity(), pVar1.getProximity()), oVar1.getProximity());
                         transformedPatterns.add(new FuzzyEntry<StatementPattern>(p, prox));
                     }
@@ -73,15 +75,16 @@ public class SourceSelectorWithQueryTransform extends SourceSelectorWrapper {
         Set<FuzzyEntry<Var>> vars = new HashSet<FuzzyEntry<Var>>();
 
         Value val = v.getValue();
-        if (val == null)
-            vars.add(new FuzzyEntry<Var>(v));
-        else {
+        if (val != null && val instanceof URI) {
             Collection<EquivalentURI> uris =  getEquivalentURI(v);
             for(EquivalentURI uri : uris)
             {
                 Var v1 = transformVar(v,uri);
                 vars.add(new FuzzyEntry<Var>(v1, uri.getProximity()));
             }
+        }
+        else {
+            vars.add(new FuzzyEntry<Var>(v));
         }
         return vars;
     }
