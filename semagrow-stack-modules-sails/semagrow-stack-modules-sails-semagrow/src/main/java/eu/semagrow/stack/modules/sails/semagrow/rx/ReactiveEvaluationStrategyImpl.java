@@ -347,8 +347,9 @@ public class ReactiveEvaluationStrategyImpl
         return fromIteration(this.evaluate(expr, bindings));
     }
 
-    protected <T> Observable<T> fromIteration(Iteration<? extends T, ? extends Exception> it) {
-        return Observable.create(new OnSubscribeFromIteration<T>(it));
+    protected <T> Observable<T> fromIteration(Iteration<T, ? extends Exception> it) {
+        //return Observable.create(new OnSubscribeFromIteration<T>(it));
+        return RxReactiveStreams.toObservable(new PublisherFromIteration(it));
     }
 
 

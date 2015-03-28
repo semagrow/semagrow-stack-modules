@@ -16,7 +16,9 @@ import reactor.rx.Stream;
 import reactor.rx.Streams;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 /**
  * Created by antonis on 26/3/2015.
@@ -85,6 +87,12 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
         }
     }
 
+    /*
+    private static <T, K, E> Stream<Map<K, List<E>>> toMultiMap(Stream<T> s, reactor.fn.Function<T, K> k, reactor.fn.Function<T,E> e) {
+        s.groupBy(k)
+    }
+    */
+    
     public Stream<BindingSet> evaluateReactorInternal(HashJoin expr, BindingSet bindings)
             throws QueryEvaluationException
     {
@@ -113,10 +121,10 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
         return left.toMultimap(b -> calcKey(b, joinAttributes), b1 -> b1)
                 .flatMap((probe) -> right.concatMap(b -> {
                             if (!probe.containsKey(calcKey(b, joinAttributes)))
-                                return Stream.empty();
+                                return Streams.empty();
                             else
-                                return Stream.from(probe.get(calcKey(b, joinAttributes)))
-                                        .join(Stream.just(b),
+                                return Streams.from(probe.get(calcKey(b, joinAttributes)))
+                                        .join(Streams.from(b),
                                                 b1 -> Stream.never(),
                                                 b1 -> Stream.never(),
                                                 FederatedReactiveEvaluationStrategyImpl::joinBindings);
@@ -161,17 +169,17 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
     {
         Publisher<BindingSet> result = queryExecutor.evaluateReactive(source, expr, bindings);
 
-        return RxReactiveStreams.toStream(result).subscribeOn(Schedulers.io());
+        return Streams.create(result); //.subscribeOn(Schedulers.io());
     }
 
     public Stream<BindingSet> evaluateSourceReactive(URI source, TupleExpr expr, List<BindingSet> bindings)
             throws QueryEvaluationException
     {
-        Publisher<BindingSet> publisherOfBindings = RxReactiveStreams.toPublisher(Stream.from(bindings));
+        Publisher<BindingSet> publisherOfBindings = Streams.from(bindings);
 
         Publisher<BindingSet> result = queryExecutor.evaluateReactive(source, expr, publisherOfBindings);
 
-        return RxReactiveStreams.toStream(result).subscribeOn(Schedulers.io());
+        return Streams.create(result); //.subscribeOn(Schedulers.io());
     }
 
     public Stream<BindingSet> evaluateReactorInternal(Transform expr, BindingSet bindings)

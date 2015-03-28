@@ -347,9 +347,8 @@ public class ReactorEvaluationStrategyImpl
         return fromIteration(this.evaluate(expr, bindings));
     }
 
-    protected <T> Stream<T> fromIteration(Iteration<? extends T, ? extends Exception> it) {
-        //return Streams.(new OnSubscribeFromIteration<T>(it));
-        return null;
+    protected <T> Stream<T> fromIteration(Iteration<T, ? extends Exception> it) {
+        return Streams.create(new PublisherFromIteration(it));
     }
 
 
