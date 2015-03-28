@@ -92,7 +92,7 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
         s.groupBy(k)
     }
     */
-    
+    /*
     public Stream<BindingSet> evaluateReactorInternal(HashJoin expr, BindingSet bindings)
             throws QueryEvaluationException
     {
@@ -131,7 +131,7 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
                         })
                 );
     }
-
+    */
 
     public Stream<BindingSet> evaluateReactorInternal(BindJoin expr, BindingSet bindings)
             throws QueryEvaluationException

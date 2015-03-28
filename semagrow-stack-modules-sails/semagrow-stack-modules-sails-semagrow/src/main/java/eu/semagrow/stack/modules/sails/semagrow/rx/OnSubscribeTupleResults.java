@@ -23,16 +23,13 @@ public class OnSubscribeTupleResults implements Observable.OnSubscribe<BindingSe
 
     private TupleQuery query;
 
-    final private RepositoryConnection conn;
-
-    public OnSubscribeTupleResults(TupleQuery query, RepositoryConnection conn) {
+    public OnSubscribeTupleResults(TupleQuery query) {
         this.query = query;
-        this.conn = conn;
     }
 
     @Override
     public void call(Subscriber<? super BindingSet> subscriber) {
-        subscriber.setProducer(new TupleQueryResultProducer(subscriber, query, conn));
+        subscriber.setProducer(new TupleQueryResultProducer(subscriber, query));
     }
 
     public static final class TupleQueryResultProducer implements Producer, TupleQueryResultHandler {
@@ -41,17 +38,15 @@ public class OnSubscribeTupleResults implements Observable.OnSubscribe<BindingSe
 
         private TupleQuery query;
 
-        private RepositoryConnection conn;
-
         private volatile long requested = 0;
 
         @SuppressWarnings("rawtypes")
         private static final AtomicLongFieldUpdater<TupleQueryResultProducer> REQUESTED_UPDATER = AtomicLongFieldUpdater.newUpdater(TupleQueryResultProducer.class, "requested");
 
-        public TupleQueryResultProducer(Subscriber<? super BindingSet> o, TupleQuery query, RepositoryConnection conn) {
+        public TupleQueryResultProducer(Subscriber<? super BindingSet> o, TupleQuery query) {
             this.subscriber = o;
             this.query = query;
-            this.conn = conn;
+
         }
 
         @Override
@@ -95,19 +90,6 @@ public class OnSubscribeTupleResults implements Observable.OnSubscribe<BindingSe
         public void endQueryResult() throws TupleQueryResultHandlerException {
             if (subscriber.isUnsubscribed())
                 return;
-
-            if (conn != null) {
-                try {
-                    if (conn.isOpen()) {
-                        conn.close();
-                        logger.debug("Connection " + conn.toString() + " closed");
-                    }
-                } catch (RepositoryException e) {
-                    logger.debug("Connection cannot be closed", e);
-                }
-            }
-
-
             subscriber.onCompleted();
         }
 

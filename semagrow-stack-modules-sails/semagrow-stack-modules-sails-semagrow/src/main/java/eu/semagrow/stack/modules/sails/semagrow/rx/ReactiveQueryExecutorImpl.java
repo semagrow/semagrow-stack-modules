@@ -214,7 +214,17 @@ public class ReactiveQueryExecutorImpl
         for (Binding b : bindings)
             query.setBinding(b.getName(), b.getValue());
 
-        return Observable.create(new OnSubscribeTupleResults(query, conn));
+        return Observable.create(new OnSubscribeTupleResults(query))
+                .doOnCompleted(() -> {
+                    try {
+                        if (conn.isOpen()) {
+                            conn.close();
+                            logger.debug("Connection " + conn.toString() + " closed");
+                        }
+                    } catch (RepositoryException e) {
+                        logger.debug("Connection cannot be closed", e);
+                    }
+                });
     }
 
     protected boolean
