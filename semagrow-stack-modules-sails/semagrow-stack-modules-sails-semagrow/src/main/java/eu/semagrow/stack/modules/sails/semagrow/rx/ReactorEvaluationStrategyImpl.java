@@ -40,6 +40,7 @@ public class ReactorEvaluationStrategyImpl
     @Override
     public Publisher<BindingSet> evaluateReactive(TupleExpr expr, BindingSet bindings) throws QueryEvaluationException {
         //return RxReactiveStreams.toPublisher(evaluateReactorInternal(expr, bindings));;
+        return evaluateReactorInternal(expr, bindings);
     }
 
     public Stream<BindingSet> evaluateReactorInternal(TupleExpr expr, BindingSet bindings)
@@ -239,7 +240,7 @@ public class ReactorEvaluationStrategyImpl
                     } catch (Exception e) {
                         return Streams.fail(e);
                     }
-                }).onErrorResumeNext(Streams::fail);
+                });
     }
 
     public Stream<BindingSet> evaluateReactorInternal(Union expr, BindingSet bindings)
@@ -347,7 +348,8 @@ public class ReactorEvaluationStrategyImpl
     }
 
     protected <T> Stream<T> fromIteration(Iteration<? extends T, ? extends Exception> it) {
-        return Streams.(new OnSubscribeFromIteration<T>(it));
+        //return Streams.(new OnSubscribeFromIteration<T>(it));
+        return null;
     }
 
 
