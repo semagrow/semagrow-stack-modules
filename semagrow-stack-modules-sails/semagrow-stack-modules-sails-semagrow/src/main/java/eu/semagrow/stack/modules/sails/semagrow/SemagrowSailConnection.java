@@ -6,7 +6,8 @@ import eu.semagrow.stack.modules.api.evaluation.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.EvaluationStrategyImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryExecutorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.optimizer.StaticOptimizer;
-import eu.semagrow.stack.modules.sails.semagrow.rx.ReactiveFederatedEvaluationStrategyImpl;
+import eu.semagrow.stack.modules.sails.semagrow.rx.FederatedReactiveEvaluationStrategyImpl;
+import eu.semagrow.stack.modules.sails.semagrow.rx.ReactiveEvaluationStrategy;
 import eu.semagrow.stack.modules.sails.semagrow.rx.ReactiveQueryExecutorImpl;
 import info.aduna.iteration.CloseableIteration;
 import org.openrdf.model.*;
@@ -18,13 +19,13 @@ import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.QueryRoot;
 import org.openrdf.query.algebra.TupleExpr;
 import org.openrdf.query.algebra.evaluation.QueryOptimizer;
-import org.openrdf.sail.SailConnection;
 import org.openrdf.sail.SailException;
 import org.openrdf.sail.SailReadOnlyException;
 import org.openrdf.sail.helpers.SailConnectionBase;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import rx.Observable;
+
 
 import java.util.Collection;
 import java.util.Collections;
@@ -149,14 +150,14 @@ public class SemagrowSailConnection extends SailConnectionBase {
         return evaluateOnly(decomposed, dataset, bindings, b, p);
     }
 
-    public  Observable<? extends BindingSet>
+    public  Publisher<? extends BindingSet>
         evaluateReactive(TupleExpr tupleExpr, Dataset dataset, BindingSet bindings, boolean b, boolean p)
             throws SailException
     {
         return evaluateInternalReactive(tupleExpr, dataset, bindings, b, p, Collections.emptySet(), Collections.emptySet());
     }
 
-    protected Observable<? extends BindingSet>
+    protected Publisher<? extends BindingSet>
         evaluateInternalReactive(TupleExpr tupleExpr,
                      Dataset dataset,
                      BindingSet bindings,
@@ -218,13 +219,13 @@ public class SemagrowSailConnection extends SailConnectionBase {
         }
     }
 
-    public Observable<? extends BindingSet>
+    public Publisher<? extends BindingSet>
         evaluateOnlyReactive(TupleExpr expr, Dataset dataset, BindingSet bindings, boolean b, boolean p)
             throws SailException
     {
         try {
             ReactiveQueryExecutorImpl executor = new ReactiveQueryExecutorImpl();
-            ReactiveFederatedEvaluationStrategyImpl strategy = new ReactiveFederatedEvaluationStrategyImpl(executor);
+            ReactiveEvaluationStrategy strategy = new FederatedReactiveEvaluationStrategyImpl(executor);
             return strategy.evaluateReactive(expr, bindings);
         } catch(QueryEvaluationException e) {
             throw new SailException(e);

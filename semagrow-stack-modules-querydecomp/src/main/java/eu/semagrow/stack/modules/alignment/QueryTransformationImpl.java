@@ -198,7 +198,6 @@ public class QueryTransformationImpl implements QueryTransformation {
 
         try {
             Class.forName("org.postgresql.Driver");
-
             connection = DriverManager.getConnection(databaseUrl, databaseUsername, databasePassword);
             stmt = connection.createStatement();
 

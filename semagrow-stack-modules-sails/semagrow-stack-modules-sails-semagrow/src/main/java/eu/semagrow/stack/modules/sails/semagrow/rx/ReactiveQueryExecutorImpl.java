@@ -9,17 +9,22 @@ import org.openrdf.query.impl.EmptyBindingSet;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
 import rx.Observable;
 import rx.functions.Func2;
+import rx.RxReactiveStreams;
 
 /**
  * Created by angel on 11/25/14.
  */
-public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
+public class ReactiveQueryExecutorImpl
+        extends QueryExecutorImpl
+        implements ReactiveQueryExecutor
+{
 
     private final Logger logger = LoggerFactory.getLogger(ReactiveQueryExecutorImpl.class);
 
@@ -27,8 +32,21 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
 
     private boolean rowIdOpt = false;
 
+    public Publisher<BindingSet> evaluateReactive(final URI endpoint, final TupleExpr expr, final BindingSet bindings)
+        throws QueryEvaluationException
+    {
+        return RxReactiveStreams.toPublisher(evaluateReactiveImpl(endpoint, expr, bindings));
+    }
+
+    public Publisher<BindingSet> evaluateReactive(final URI endpoint, final TupleExpr expr, final Publisher<BindingSet> bindings)
+            throws QueryEvaluationException
+    {
+        Observable<BindingSet> observableBindings = RxReactiveStreams.toObservable(bindings);
+        return RxReactiveStreams.toPublisher(evaluateReactiveImpl(endpoint, expr, observableBindings));
+    }
+
     public Observable<BindingSet>
-        evaluateReactive(final URI endpoint, final TupleExpr expr, final BindingSet bindings)
+        evaluateReactiveImpl(final URI endpoint, final TupleExpr expr, final BindingSet bindings)
             throws QueryEvaluationException {
 
         Observable<BindingSet> result = null;
@@ -81,7 +99,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
                 //result = sendTupleQuery(endpoint, sparqlQuery, relevantBindings);
                 //result = new InsertBindingSetCursor(result, bindings);
                 result = sendTupleQueryReactive(endpoint, sparqlQuery, relevantBindings)
-                    .map(b -> ReactiveFederatedEvaluationStrategyImpl.joinBindings(bindings, b));
+                    .map(b -> FederatedReactiveEvaluationStrategyImpl.joinBindings(bindings, b));
             }
 
             return result;
@@ -94,7 +112,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
     }
 
     public Observable<BindingSet>
-        evaluateReactive(URI endpoint, TupleExpr expr,
+        evaluateReactiveImpl(URI endpoint, TupleExpr expr,
              Observable<BindingSet> bindingIter)
             throws QueryEvaluationException {
 
@@ -103,14 +121,12 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
         try {
 
 
-
-            return bindingIter.buffer(10).flatMap(
+            return bindingIter.buffer(15).concatMap(
                      bl ->  { try {
                          return evaluateReactiveInternal(endpoint, expr, bl);
                      } catch (Exception e) {
                             return Observable.error(e);
                      } });
-
 
 
             /*
@@ -135,7 +151,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
     {
 
         if (bindings.size() == 1)
-            return evaluateReactive(endpoint, expr, bindings.get(0));
+            return evaluateReactiveImpl(endpoint, expr, bindings.get(0));
 
         Observable<BindingSet> result = null;
 
@@ -149,23 +165,17 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
 
         result = sendTupleQueryReactive(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
 
-        result = result.map(b -> convertUnionBindings(b, bindings, ReactiveFederatedEvaluationStrategyImpl::joinBindings));
-
-
-        /*
-        String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
-
-        result = sendTupleQueryReactive(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
+        result = result.map(b -> convertUnionBindings(b, bindings, FederatedReactiveEvaluationStrategyImpl::joinBindings));
 
         if (!relevant.isEmpty()) {
 
             final Observable<BindingSet> r = result;
 
             result = Observable.from(bindings)
-                    .toMultimap(b -> ReactiveFederatedEvaluationStrategyImpl.calcKey(b, relevant), b1 -> b1)
+                    .toMultimap(b -> FederatedReactiveEvaluationStrategyImpl.calcKey(b, relevant), b1 -> b1)
                     .flatMap(probe ->
                             r.concatMap(b -> {
-                                BindingSet k = ReactiveFederatedEvaluationStrategyImpl.calcKey(b, relevant);
+                                BindingSet k = FederatedReactiveEvaluationStrategyImpl.calcKey(b, relevant);
                                 if (!probe.containsKey(k))
                                     return Observable.empty();
                                 else
@@ -173,7 +183,7 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
                                             .join(Observable.just(b),
                                                     b1 -> Observable.never(),
                                                     b1 -> Observable.never(),
-                                                    ReactiveFederatedEvaluationStrategyImpl::joinBindings);
+                                                    FederatedReactiveEvaluationStrategyImpl::joinBindings);
                             }));
 
         }
@@ -182,9 +192,8 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
             result = result.join(Observable.from(bindings),
                         (b) -> Observable.never(),
                         (b) -> Observable.never(),
-                        ReactiveFederatedEvaluationStrategyImpl::joinBindings);
+                        FederatedReactiveEvaluationStrategyImpl::joinBindings);
         }
-        */
 
         return result;
     }
@@ -226,7 +235,17 @@ public class ReactiveQueryExecutorImpl extends QueryExecutorImpl {
         for (Binding b : bindings)
             query.setBinding(b.getName(), b.getValue());
 
-        return Observable.create(new OnSubscribeTupleResults(query)).onBackpressureBuffer();
+        return Observable.create(new OnSubscribeTupleResults(query))
+                .doOnCompleted(() -> {
+                    try {
+                        if (conn.isOpen()) {
+                            conn.close();
+                            logger.debug("Connection " + conn.toString() + " closed");
+                        }
+                    } catch (RepositoryException e) {
+                        logger.debug("Connection cannot be closed", e);
+                    }
+                });
     }
 
     protected boolean

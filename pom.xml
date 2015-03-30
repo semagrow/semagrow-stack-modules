@@ -78,6 +78,12 @@
         <id>maven-central</id>
         <url>http://repo1.maven.org/maven2</url>
     </repository>
+
+    <repository>
+        <id>spring-milestone</id>
+        <name>Spring Milestones</name>
+        <url>https://repo.spring.io/libs-milestone</url>
+    </repository>
 </repositories>
 
     <pluginRepositories>
@@ -229,7 +235,7 @@
     <modules>
         <module>semagrow-stack-modules-commons</module>
         <module>semagrow-stack-modules-vocabulary</module>
-	<module>semagrow-stack-modules-api</module>
+	    <module>semagrow-stack-modules-api</module>
         <module>semagrow-stack-modules-utils</module>
     	<module>semagrow-stack-modules-querydecomp</module>
         <module>semagrow-stack-modules-sails</module>

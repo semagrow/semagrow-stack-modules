@@ -6,3 +6,4 @@
 .classpath
 .settings/
 *.versionsBackup
+.DS_Store

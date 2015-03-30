@@ -1,6 +1,9 @@
 package eu.semagrow.stack.modules.sails.semagrow.rx;
 
 import org.openrdf.query.*;
+import org.openrdf.repository.Repository;
+import org.openrdf.repository.RepositoryConnection;
+import org.openrdf.repository.RepositoryException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
@@ -43,6 +46,7 @@ public class OnSubscribeTupleResults implements Observable.OnSubscribe<BindingSe
         public TupleQueryResultProducer(Subscriber<? super BindingSet> o, TupleQuery query) {
             this.subscriber = o;
             this.query = query;
+
         }
 
         @Override
@@ -86,7 +90,6 @@ public class OnSubscribeTupleResults implements Observable.OnSubscribe<BindingSe
         public void endQueryResult() throws TupleQueryResultHandlerException {
             if (subscriber.isUnsubscribed())
                 return;
-
             subscriber.onCompleted();
         }
 

@@ -15,6 +15,9 @@ import org.openrdf.repository.sail.SailQuery;
 import org.openrdf.repository.sail.SailRepositoryConnection;
 import org.openrdf.repository.sail.SailTupleQuery;
 import org.openrdf.sail.SailException;
+import org.reactivestreams.Publisher;
+import org.reactivestreams.Subscriber;
+import org.reactivestreams.Subscription;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
@@ -70,7 +73,7 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
         TupleExpr tupleExpr = getParsedQuery().getTupleExpr();
 
         try {
-            Observable<? extends BindingSet> result;
+            Publisher<? extends BindingSet> result;
 
             SemagrowSailConnection sailCon = (SemagrowSailConnection) getConnection().getSailConnection();
 
@@ -79,16 +82,8 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
             //result = enforceMaxQueryTime(bindingsIter);
 
-            result.subscribe(b -> { try { handler.handleSolution(b); } catch(Exception e) { } },
-                    t -> { logger.error("Evaluation error",t);
-                        try {
-                            handler.endQueryResult();
-                        } catch (TupleQueryResultHandlerException e) {
-                            e.printStackTrace();
-                        }
-                    },
-                    () -> { try { handler.endQueryResult(); } catch (Exception e) { } });
-            //return new TupleQueryResultImpl(new ArrayList<String>(tupleExpr.getBindingNames()), bindingsIter);
+            result.subscribe(toSubscriber(handler));
+
         }
         catch (SailException e) {
             throw new QueryEvaluationException(e.getMessage(), e);
@@ -101,4 +96,44 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
     public boolean getIncludeProvenanceData() { return includeProvenanceData; }
 
+    private Subscriber<BindingSet> toSubscriber(TupleQueryResultHandler handler) {
+        return new HandlerSubscriberAdapter(handler);
+    }
+
+
+    private class HandlerSubscriberAdapter implements Subscriber<BindingSet>
+    {
+        private TupleQueryResultHandler handler;
+
+        public HandlerSubscriberAdapter(TupleQueryResultHandler handler) {
+            this.handler = handler;
+        }
+
+        public void onSubscribe(Subscription subscription) {
+            // FIXME: is it possible that tuplequeryhandler be slower than producer?
+            subscription.request(Long.MAX_VALUE);
+        }
+
+        public void onNext(BindingSet bindings) {
+            try {
+                handler.handleSolution(bindings);
+            } catch (TupleQueryResultHandlerException e) {
+                logger.error("Tuple handle solution error", e);
+            }
+        }
+
+
+        public void onError(Throwable throwable) {
+            logger.error("Evaluation error", throwable);
+        }
+
+
+        public void onComplete() {
+            try {
+                handler.endQueryResult();
+            } catch (TupleQueryResultHandlerException e) {
+                logger.error("Tuple handle solution error", e);
+            }
+        }
+    }
 }

@@ -16,63 +16,62 @@ import org.openrdf.query.algebra.evaluation.util.OrderComparator;
 import org.openrdf.query.algebra.evaluation.util.ValueComparator;
 import org.openrdf.util.iterators.Iterators;
 import org.reactivestreams.Publisher;
-import rx.Observable;
-import rx.RxReactiveStreams;
+import reactor.rx.Stream;
+import reactor.rx.Streams;
 
 import java.util.*;
 
+
 /**
- * Created by angel on 11/22/14.
+ * Created by antonis on 26/3/2015.
  */
-public class ReactiveEvaluationStrategyImpl
+public class ReactorEvaluationStrategyImpl
         extends EvaluationStrategyImpl
-        implements ReactiveEvaluationStrategy
-{
+        implements ReactiveEvaluationStrategy {
 
-
-    public ReactiveEvaluationStrategyImpl(TripleSource tripleSource, Dataset dataset) {
-        super(tripleSource, dataset);
-    }
-
-    public ReactiveEvaluationStrategyImpl(TripleSource tripleSource) {
+    public ReactorEvaluationStrategyImpl(TripleSource tripleSource) {
         super(tripleSource);
     }
 
-    public Publisher<BindingSet> evaluateReactive(TupleExpr expr, BindingSet bindings)
-        throws QueryEvaluationException
-    {
-        return RxReactiveStreams.toPublisher(evaluateReactiveInternal(expr, bindings));
+    public ReactorEvaluationStrategyImpl(TripleSource tripleSource, Dataset dataset) {
+        super(tripleSource, dataset);
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(TupleExpr expr, BindingSet bindings)
+    @Override
+    public Publisher<BindingSet> evaluateReactive(TupleExpr expr, BindingSet bindings) throws QueryEvaluationException {
+        //return RxReactiveStreams.toPublisher(evaluateReactorInternal(expr, bindings));;
+        return evaluateReactorInternal(expr, bindings);
+    }
+
+    public Stream<BindingSet> evaluateReactorInternal(TupleExpr expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         if (expr instanceof StatementPattern) {
-            return evaluateReactiveInternal((StatementPattern) expr, bindings);
+            return evaluateReactorInternal((StatementPattern) expr, bindings);
         }
         else if (expr instanceof UnaryTupleOperator) {
-            return evaluateReactiveInternal((UnaryTupleOperator) expr, bindings);
+            return evaluateReactorInternal((UnaryTupleOperator) expr, bindings);
         }
         else if (expr instanceof BinaryTupleOperator) {
-            return evaluateReactiveInternal((BinaryTupleOperator) expr, bindings);
+            return evaluateReactorInternal((BinaryTupleOperator) expr, bindings);
         }
         else if (expr instanceof SingletonSet) {
-            return evaluateReactiveInternal((SingletonSet) expr, bindings);
+            return evaluateReactorInternal((SingletonSet) expr, bindings);
         }
         else if (expr instanceof EmptySet) {
-            return evaluateReactiveInternal((EmptySet) expr, bindings);
+            return evaluateReactorInternal((EmptySet) expr, bindings);
         }
         else if (expr instanceof ExternalSet) {
-            return evaluateReactiveInternal((ExternalSet) expr, bindings);
+            return evaluateReactorInternal((ExternalSet) expr, bindings);
         }
         else if (expr instanceof ZeroLengthPath) {
-            return evaluateReactiveInternal((ZeroLengthPath) expr, bindings);
+            return evaluateReactorInternal((ZeroLengthPath) expr, bindings);
         }
         else if (expr instanceof ArbitraryLengthPath) {
-            return evaluateReactiveInternal((ArbitraryLengthPath) expr, bindings);
+            return evaluateReactorInternal((ArbitraryLengthPath) expr, bindings);
         }
         else if (expr instanceof BindingSetAssignment) {
-            return evaluateReactiveInternal((BindingSetAssignment) expr, bindings);
+            return evaluateReactorInternal((BindingSetAssignment) expr, bindings);
         }
         else if (expr == null) {
             throw new IllegalArgumentException("expr must not be null");
@@ -82,46 +81,45 @@ public class ReactiveEvaluationStrategyImpl
         }
     }
 
-
-    public Observable<BindingSet> evaluateReactiveInternal(UnaryTupleOperator expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(UnaryTupleOperator expr, BindingSet bindings)
             throws QueryEvaluationException
     {
 
         if (expr instanceof Projection) {
-            return evaluateReactiveInternal((Projection) expr, bindings);
+            return evaluateReactorInternal((Projection) expr, bindings);
         }
         else if (expr instanceof MultiProjection) {
-            return evaluateReactiveInternal((MultiProjection) expr, bindings);
+            return evaluateReactorInternal((MultiProjection) expr, bindings);
         }
         else if (expr instanceof Filter) {
-            return evaluateReactiveInternal((Filter) expr, bindings);
+            return evaluateReactorInternal((Filter) expr, bindings);
         }
         else if (expr instanceof Extension) {
-            return evaluateReactiveInternal((Extension) expr, bindings);
+            return evaluateReactorInternal((Extension) expr, bindings);
         }
         else if (expr instanceof Group) {
-            return evaluateReactiveInternal((Group) expr, bindings);
+            return evaluateReactorInternal((Group) expr, bindings);
         }
         else if (expr instanceof Order) {
-            return evaluateReactiveInternal((Order) expr, bindings);
+            return evaluateReactorInternal((Order) expr, bindings);
         }
         else if (expr instanceof Slice) {
-            return evaluateReactiveInternal((Slice) expr, bindings);
+            return evaluateReactorInternal((Slice) expr, bindings);
         }
         else if (expr instanceof Distinct) {
-            return evaluateReactiveInternal((Distinct) expr, bindings);
+            return evaluateReactorInternal((Distinct) expr, bindings);
         }
         else if (expr instanceof Reduced) {
-            return evaluateReactiveInternal((Reduced) expr, bindings);
+            return evaluateReactorInternal((Reduced) expr, bindings);
         }
         else if (expr instanceof Service) {
-            return evaluateReactiveInternal((Service) expr, bindings);
+            return evaluateReactorInternal((Service) expr, bindings);
         }
         else if (expr instanceof QueryRoot) {
-            return evaluateReactiveInternal(expr.getArg(), bindings);
+            return evaluateReactorInternal(expr.getArg(), bindings);
         }
         else if (expr instanceof DescribeOperator) {
-            return evaluateReactiveInternal((DescribeOperator) expr, bindings);
+            return evaluateReactorInternal((DescribeOperator) expr, bindings);
         }
         else if (expr == null) {
             throw new IllegalArgumentException("expr must not be null");
@@ -131,23 +129,23 @@ public class ReactiveEvaluationStrategyImpl
         }
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(BinaryTupleOperator expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(BinaryTupleOperator expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         if (expr instanceof Union) {
-            return evaluateReactiveInternal((Union) expr, bindings);
+            return evaluateReactorInternal((Union) expr, bindings);
         }
         else if (expr instanceof Join) {
-            return evaluateReactiveInternal((Join) expr, bindings);
+            return evaluateReactorInternal((Join) expr, bindings);
         }
         else if (expr instanceof LeftJoin) {
-            return evaluateReactiveInternal((LeftJoin) expr, bindings);
+            return evaluateReactorInternal((LeftJoin) expr, bindings);
         }
         else if (expr instanceof Intersection) {
-            return evaluateReactiveInternal((Intersection) expr, bindings);
+            return evaluateReactorInternal((Intersection) expr, bindings);
         }
         else if (expr instanceof Difference) {
-            return evaluateReactiveInternal((Difference) expr, bindings);
+            return evaluateReactorInternal((Difference) expr, bindings);
         }
         else if (expr == null) {
             throw new IllegalArgumentException("expr must not be null");
@@ -157,25 +155,25 @@ public class ReactiveEvaluationStrategyImpl
         }
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(SingletonSet expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(SingletonSet expr, BindingSet bindings)
             throws QueryEvaluationException
     {
-        return Observable.just(bindings);
+        return Streams.just(bindings);
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(EmptySet expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(EmptySet expr, BindingSet bindings)
             throws QueryEvaluationException
     {
-        return Observable.empty();
+        return Streams.empty();
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(StatementPattern expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(StatementPattern expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         return fromIteration(evaluate(expr, bindings));
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(BindingSetAssignment expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(BindingSetAssignment expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         final Iterator<BindingSet> iter = expr.getBindingSets().iterator();
@@ -183,7 +181,7 @@ public class ReactiveEvaluationStrategyImpl
         final List<BindingSet> blist = new LinkedList();
         Iterators.addAll(iter, blist);
 
-        return Observable.from(blist)
+        return Streams.from(blist)
                 .map((b) -> {
                     QueryBindingSet bb = new QueryBindingSet(bindings);
                     bb.addAll(b);
@@ -191,114 +189,116 @@ public class ReactiveEvaluationStrategyImpl
                 });
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(ExternalSet expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(ExternalSet expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         return fromIteration(expr.evaluate(bindings));
     }
 
 
-    public Observable<BindingSet> evaluateReactiveInternal(ZeroLengthPath expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(ZeroLengthPath expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         return fromIteration(this.evaluate(expr, bindings));
     }
 
 
-    public Observable<BindingSet> evaluateReactiveInternal(ArbitraryLengthPath expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(ArbitraryLengthPath expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         return fromIteration(this.evaluate(expr, bindings));
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Filter expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Filter expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         QueryBindingSet scopeBindings = new QueryBindingSet(bindings);
 
-        return evaluateReactiveInternal(expr.getArg(), bindings)
-                    .filter((b) ->  {
-                        try {
-                            return this.isTrue(expr.getCondition(), scopeBindings);
-                        }catch(QueryEvaluationException /*| ValueExprEvaluationException */ e) {
-                            return false;
-                        } });
+        return evaluateReactorInternal(expr.getArg(), bindings)
+                .filter((b) ->  {
+                    try {
+                        return this.isTrue(expr.getCondition(), scopeBindings);
+                    }catch(QueryEvaluationException /*| ValueExprEvaluationException */ e) {
+                        return false;
+                    } });
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Projection expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Projection expr, BindingSet bindings)
             throws QueryEvaluationException
     {
-        return evaluateReactiveInternal(expr.getArg(), bindings)
+        return evaluateReactorInternal(expr.getArg(), bindings)
                 .map((b) -> project(expr.getProjectionElemList(), b, bindings));
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Extension expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Extension expr, BindingSet bindings)
             throws QueryEvaluationException
     {
-        return evaluateReactiveInternal(expr.getArg(), bindings)
+        return evaluateReactorInternal(expr.getArg(), bindings)
                 .concatMap((b) -> {
                     try {
-                        return Observable.just(extend(expr.getElements(), b));
+                        return Streams.just(extend(expr.getElements(), b));
                     } catch (Exception e) {
-                        return Observable.error(e);
+                        return Streams.fail(e);
                     }
-                }).onErrorResumeNext(Observable::error);
+                });
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Union expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Union expr, BindingSet bindings)
             throws QueryEvaluationException
     {
-        return Observable.merge(
-                this.evaluateReactiveInternal(expr.getLeftArg(), bindings),
-                this.evaluateReactiveInternal(expr.getRightArg(), bindings));
+        return Streams.merge(
+                this.evaluateReactorInternal(expr.getLeftArg(), bindings),
+                this.evaluateReactorInternal(expr.getRightArg(), bindings));
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Join expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Join expr, BindingSet bindings)
             throws QueryEvaluationException
     {
-        return evaluateReactiveInternal(expr.getLeftArg(), bindings)
-                    .concatMap( (b) -> {
-                        try {
-                            return this.evaluateReactiveInternal(expr.getRightArg(), b);
-                        } catch (Exception e) { return Observable.error(e); } });
+        return evaluateReactorInternal(expr.getLeftArg(), bindings)
+                .concatMap( (b) -> {
+                    try {
+                        return this.evaluateReactorInternal(expr.getRightArg(), b);
+                    } catch (Exception e) { return Streams.fail(e); } });
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(LeftJoin expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(LeftJoin expr, BindingSet bindings)
             throws QueryEvaluationException
     {
-        Observable<BindingSet> r = evaluateReactiveInternal(expr.getRightArg(), bindings);
+        Stream<BindingSet> r = evaluateReactorInternal(expr.getRightArg(), bindings);
 
         Set<String> joinAttributes = expr.getLeftArg().getBindingNames();
         joinAttributes.retainAll(expr.getRightArg().getBindingNames());
 
-        return evaluateReactiveInternal(expr.getLeftArg(), bindings)
+        return evaluateReactorInternal(expr.getLeftArg(), bindings)
                 .concatMap( (b) -> {
                     try {
-                        return this.evaluateReactiveInternal(expr.getRightArg(), b).defaultIfEmpty(b);
+                        return this.evaluateReactorInternal(expr.getRightArg(), b).defaultIfEmpty(b);
                     } catch (Exception e) {
-                        return Observable.error(e); }
+                        return Streams.fail(e); }
                 });
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Group expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Group expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         return null;
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Order expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Order expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         ValueComparator vcmp = new ValueComparator();
         OrderComparator cmp = new OrderComparator(this, expr, vcmp);
-        return evaluateReactiveInternal(expr.getArg(), bindings)
+        /*return evaluateReactorInternal(expr.getArg(), bindings)
                 .toSortedList(cmp::compare)
-                .flatMap(Observable::from);
+                .flatMap(Streams::from);*/
+        return evaluateReactorInternal(expr.getArg(), bindings)
+                .sort(cmp::compare);
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Slice expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Slice expr, BindingSet bindings)
             throws QueryEvaluationException {
-        Observable<BindingSet> result = evaluateReactiveInternal(expr.getArg(), bindings);
+        Stream<BindingSet> result = evaluateReactorInternal(expr.getArg(), bindings);
 
         if (expr.hasOffset())
             result = result.skip((int) expr.getOffset());
@@ -309,47 +309,46 @@ public class ReactiveEvaluationStrategyImpl
         return result;
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Distinct expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Distinct expr, BindingSet bindings)
             throws QueryEvaluationException {
 
-        return evaluateReactiveInternal(expr.getArg(), bindings).distinct();
+        return evaluateReactorInternal(expr.getArg(), bindings).distinct();
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Reduced expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Reduced expr, BindingSet bindings)
             throws QueryEvaluationException {
 
-        return evaluateReactiveInternal(expr.getArg(), bindings).distinctUntilChanged();
+        return evaluateReactorInternal(expr.getArg(), bindings).distinctUntilChanged();
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(DescribeOperator expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(DescribeOperator expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         return fromIteration(this.evaluate(expr, bindings));
     }
 
-    public Observable<BindingSet> evaluateReactiveInternal(Intersection expr, BindingSet bindings)
-            throws QueryEvaluationException
-    {
-        return fromIteration(this.evaluate(expr, bindings));
-    }
-
-
-    public Observable<BindingSet> evaluateReactiveInternal(Difference expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Intersection expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         return fromIteration(this.evaluate(expr, bindings));
     }
 
 
-    public Observable<BindingSet> evaluateReactiveInternal(Service expr, BindingSet bindings)
+    public Stream<BindingSet> evaluateReactorInternal(Difference expr, BindingSet bindings)
             throws QueryEvaluationException
     {
         return fromIteration(this.evaluate(expr, bindings));
     }
 
-    protected <T> Observable<T> fromIteration(Iteration<T, ? extends Exception> it) {
-        //return Observable.create(new OnSubscribeFromIteration<T>(it));
-        return RxReactiveStreams.toObservable(new PublisherFromIteration(it));
+
+    public Stream<BindingSet> evaluateReactorInternal(Service expr, BindingSet bindings)
+            throws QueryEvaluationException
+    {
+        return fromIteration(this.evaluate(expr, bindings));
+    }
+
+    protected <T> Stream<T> fromIteration(Iteration<T, ? extends Exception> it) {
+        return Streams.create(new PublisherFromIteration(it));
     }
 
 
