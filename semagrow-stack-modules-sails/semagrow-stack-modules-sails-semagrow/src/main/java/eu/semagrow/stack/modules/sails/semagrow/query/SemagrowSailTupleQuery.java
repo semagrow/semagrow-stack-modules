@@ -80,7 +80,13 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
             //result = enforceMaxQueryTime(bindingsIter);
 
             result.subscribe(b -> { try { handler.handleSolution(b); } catch(Exception e) { } },
-                    t -> logger.error("Evaluation error",t),
+                    t -> { logger.error("Evaluation error",t);
+                        try {
+                            handler.endQueryResult();
+                        } catch (TupleQueryResultHandlerException e) {
+                            e.printStackTrace();
+                        }
+                    },
                     () -> { try { handler.endQueryResult(); } catch (Exception e) { } });
             //return new TupleQueryResultImpl(new ArrayList<String>(tupleExpr.getBindingNames()), bindingsIter);
         }
