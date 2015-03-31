@@ -348,7 +348,7 @@ public class ReactorEvaluationStrategyImpl
     }
 
     protected <T> Stream<T> fromIteration(Iteration<T, ? extends Exception> it) {
-        return Streams.create(new PublisherFromIteration(it));
+        return Streams.wrap(new PublisherFromIteration(it));
     }
 
 

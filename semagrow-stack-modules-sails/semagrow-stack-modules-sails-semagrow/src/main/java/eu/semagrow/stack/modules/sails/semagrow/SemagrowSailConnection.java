@@ -7,6 +7,7 @@ import eu.semagrow.stack.modules.sails.semagrow.evaluation.EvaluationStrategyImp
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryExecutorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.optimizer.StaticOptimizer;
 import eu.semagrow.stack.modules.sails.semagrow.rx.FederatedReactiveEvaluationStrategyImpl;
+import eu.semagrow.stack.modules.sails.semagrow.rx.FederatedReactorEvaluationStrategyImpl;
 import eu.semagrow.stack.modules.sails.semagrow.rx.ReactiveEvaluationStrategy;
 import eu.semagrow.stack.modules.sails.semagrow.rx.ReactiveQueryExecutorImpl;
 import info.aduna.iteration.CloseableIteration;
@@ -225,7 +226,7 @@ public class SemagrowSailConnection extends SailConnectionBase {
     {
         try {
             ReactiveQueryExecutorImpl executor = new ReactiveQueryExecutorImpl();
-            ReactiveEvaluationStrategy strategy = new FederatedReactiveEvaluationStrategyImpl(executor);
+            ReactiveEvaluationStrategy strategy = new FederatedReactorEvaluationStrategyImpl(executor);
             return strategy.evaluateReactive(expr, bindings);
         } catch(QueryEvaluationException e) {
             throw new SailException(e);

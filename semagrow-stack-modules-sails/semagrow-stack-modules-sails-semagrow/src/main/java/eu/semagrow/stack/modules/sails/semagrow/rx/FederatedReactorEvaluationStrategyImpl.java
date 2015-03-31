@@ -169,7 +169,7 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
     {
         Publisher<BindingSet> result = queryExecutor.evaluateReactive(source, expr, bindings);
 
-        return Streams.create(result); //.subscribeOn(Schedulers.io());
+        return Streams.wrap(result); //.subscribeOn(Schedulers.io());
     }
 
     public Stream<BindingSet> evaluateSourceReactive(URI source, TupleExpr expr, List<BindingSet> bindings)
@@ -179,7 +179,7 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
 
         Publisher<BindingSet> result = queryExecutor.evaluateReactive(source, expr, publisherOfBindings);
 
-        return Streams.create(result); //.subscribeOn(Schedulers.io());
+        return Streams.wrap(result); //.subscribeOn(Schedulers.io());
     }
 
     public Stream<BindingSet> evaluateReactorInternal(Transform expr, BindingSet bindings)
