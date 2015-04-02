@@ -128,7 +128,7 @@ public class FederatedReactiveEvaluationStrategyImpl extends ReactiveEvaluationS
         throws QueryEvaluationException
     {
         return this.evaluateReactiveInternal(expr.getLeftArg(), bindings)
-                .buffer(15)
+                .buffer(10)
                 .flatMap((b) -> {
                     try {
                         return evaluateReactiveInternal(expr.getRightArg(), b);

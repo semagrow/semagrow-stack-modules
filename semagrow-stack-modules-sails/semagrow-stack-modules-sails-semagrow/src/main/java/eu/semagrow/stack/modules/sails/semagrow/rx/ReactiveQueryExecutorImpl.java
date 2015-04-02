@@ -121,7 +121,7 @@ public class ReactiveQueryExecutorImpl
         try {
 
 
-            return bindingIter.buffer(15).concatMap(
+            return bindingIter.buffer(10).concatMap(
                      bl ->  { try {
                          return evaluateReactiveInternal(endpoint, expr, bl);
                      } catch (Exception e) {
@@ -160,8 +160,6 @@ public class ReactiveQueryExecutorImpl
         Set<String> relevant = new HashSet<String>(getRelevantBindingNames(bindings, exprVars));
 
         String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
-
-        System.out.println(sparqlQuery);
 
         result = sendTupleQueryReactive(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
 

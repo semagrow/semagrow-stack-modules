@@ -12,6 +12,10 @@ import org.openrdf.query.algebra.TupleExpr;
 import org.openrdf.query.algebra.Union;
 import org.openrdf.query.algebra.evaluation.TripleSource;
 import org.reactivestreams.Publisher;
+import reactor.Environment;
+import reactor.core.dispatch.MpscDispatcher;
+import reactor.core.dispatch.RingBufferDispatcher;
+import reactor.core.dispatch.ThreadPoolExecutorDispatcher;
 import reactor.rx.Stream;
 import reactor.rx.Streams;
 
@@ -26,6 +30,7 @@ import java.util.function.Function;
 public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStrategyImpl {
 
     public ReactiveQueryExecutor queryExecutor;
+    protected Environment env;
 
     public FederatedReactorEvaluationStrategyImpl(ReactiveQueryExecutor queryExecutor, final ValueFactory vf) {
         super(new TripleSource() {
@@ -39,6 +44,7 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
             }
         });
         this.queryExecutor = queryExecutor;
+        this.loadEnv();
     }
 
     public FederatedReactorEvaluationStrategyImpl(ReactiveQueryExecutor queryExecutor) {
@@ -168,8 +174,7 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
             throws QueryEvaluationException
     {
         Publisher<BindingSet> result = queryExecutor.evaluateReactive(source, expr, bindings);
-
-        return Streams.wrap(result); //.subscribeOn(Schedulers.io());
+        return Streams.wrap(result).dispatchOn(env.getDefaultDispatcher());
     }
 
     public Stream<BindingSet> evaluateSourceReactive(URI source, TupleExpr expr, List<BindingSet> bindings)
@@ -179,7 +184,7 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
 
         Publisher<BindingSet> result = queryExecutor.evaluateReactive(source, expr, publisherOfBindings);
 
-        return Streams.wrap(result); //.subscribeOn(Schedulers.io());
+        return Streams.wrap(result).dispatchOn(env.getDefaultDispatcher());
     }
 
     public Stream<BindingSet> evaluateReactorInternal(Transform expr, BindingSet bindings)
@@ -241,6 +246,14 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
                 } catch (Exception x) {
                     return Streams.fail(x);
                 }});
+    }
+
+    public void loadEnv() {
+        env = Environment.initializeIfEmpty().assignErrorJournal();
+    }
+
+    public void closeEnv() {
+        Environment.terminate();
     }
 
 }
