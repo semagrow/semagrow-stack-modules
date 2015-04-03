@@ -254,7 +254,7 @@ public class SemagrowSailConnection extends SailConnectionBase {
 
         long end = System.currentTimeMillis() - start;
 
-        logger.debug("Decomposition time = " + end + "ms");
+        logger.debug("Decomposition time = " + end);
 
         return tupleExpr;
     }

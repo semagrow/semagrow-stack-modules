@@ -30,7 +30,6 @@ import java.util.function.Function;
 public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStrategyImpl {
 
     public ReactiveQueryExecutor queryExecutor;
-    protected Environment env;
 
     public FederatedReactorEvaluationStrategyImpl(ReactiveQueryExecutor queryExecutor, final ValueFactory vf) {
         super(new TripleSource() {
@@ -44,7 +43,8 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
             }
         });
         this.queryExecutor = queryExecutor;
-        this.loadEnv();
+        if (!Environment.alive())
+            Environment.initialize();
     }
 
     public FederatedReactorEvaluationStrategyImpl(ReactiveQueryExecutor queryExecutor) {
@@ -174,7 +174,7 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
             throws QueryEvaluationException
     {
         Publisher<BindingSet> result = queryExecutor.evaluateReactive(source, expr, bindings);
-        return Streams.wrap(result).dispatchOn(env.getDefaultDispatcher());
+        return Streams.wrap(result).dispatchOn(Environment.cachedDispatcher());
     }
 
     public Stream<BindingSet> evaluateSourceReactive(URI source, TupleExpr expr, List<BindingSet> bindings)
@@ -184,7 +184,7 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
 
         Publisher<BindingSet> result = queryExecutor.evaluateReactive(source, expr, publisherOfBindings);
 
-        return Streams.wrap(result).dispatchOn(env.getDefaultDispatcher());
+        return Streams.wrap(result).dispatchOn(Environment.cachedDispatcher());
     }
 
     public Stream<BindingSet> evaluateReactorInternal(Transform expr, BindingSet bindings)
@@ -247,14 +247,5 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
                     return Streams.fail(x);
                 }});
     }
-
-    public void loadEnv() {
-        env = Environment.initializeIfEmpty().assignErrorJournal();
-    }
-
-    public void closeEnv() {
-        Environment.terminate();
-    }
-
 }
 
