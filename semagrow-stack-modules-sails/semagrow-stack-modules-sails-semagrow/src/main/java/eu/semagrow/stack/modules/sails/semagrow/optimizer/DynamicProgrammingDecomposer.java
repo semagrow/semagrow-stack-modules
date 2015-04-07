@@ -76,7 +76,7 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
             
             if (sources.isEmpty()) {
                 //throw new QueryDecompositionException("No suitable sources found for statement pattern " + pattern.toString());
-                Plan p = createPlan(exprLabel, new EmptySet(), ctx);
+                Plan p = createPlan(exprLabel, new SingletonSet(), ctx);
                 plans.add(p);
                 return plans;
             }

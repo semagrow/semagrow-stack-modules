@@ -149,7 +149,9 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
                         return evaluateReactorInternal(expr.getRightArg(), b);
                     } catch (Exception e) {
                         return Streams.fail(e);
-                    } });
+                    }
+                })
+                .dispatchOn(Environment.cachedDispatcher());
     }
 
     public Stream<BindingSet> evaluateReactorInternal(SourceQuery expr, BindingSet bindings)
