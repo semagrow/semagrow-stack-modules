@@ -20,7 +20,7 @@ import java.util.*;
 /**
  * Created by antonis on 7/4/2015.
  */
-/*
+
 public class ReactorQueryExecutorImpl
         extends QueryExecutorImpl
         implements ReactiveQueryExecutor
@@ -80,7 +80,7 @@ public class ReactorQueryExecutorImpl
                         }
                     }
                 };
-                */ /*
+                */
                 result = Streams.just(bindings).flatMap(b -> {
                     try {
                         if (sendBooleanQuery(endpoint, sparqlQuery, relevantBindings))
@@ -136,7 +136,7 @@ public class ReactorQueryExecutorImpl
                     return Stream.error(e2);
                 }
             });
-            */ /*
+            */
 
         } catch (Exception e) {
             throw new QueryEvaluationException(e);
@@ -168,28 +168,27 @@ public class ReactorQueryExecutorImpl
 
             final Stream<BindingSet> r = result;
 
-            result = Streams.from(bindings)
-                    .toMultimap(b -> FederatedReactorEvaluationStrategyImpl.calcKey(b, relevant), b1 -> b1)
-                    .flatMap(probe ->
-                            r.concatMap(b -> {
-                                BindingSet k = FederatedReactiveEvaluationStrategyImpl.calcKey(b, relevant);
-                                if (!probe.containsKey(k))
-                                    return Streams.empty();
-                                else
-                                    return Streams.from(probe.get(k))
-                                            .join(Streams.just(b),
-                                                    b1 -> Streams.never(),
-                                                    b1 -> Streams.never(),
-                                                    FederatedReactiveEvaluationStrategyImpl::joinBindings);
-                            }));
+            HashMap<BindingSet, List<BindingSet>> probe = new HashMap();
+            // bindings.toMultimap(b -> FederatedReactiveEvaluationStrategyImpl.calcKey(b, relevant));
+            // TODO
+
+            result = r.concatMap(b -> {
+                        BindingSet k = FederatedReactiveEvaluationStrategyImpl.calcKey(b, relevant);
+                        List<BindingSet> bb = probe.get(k);
+                        if (!probe.containsKey(k))
+                            return Streams.empty();
+                        else
+                            return Streams.from(bb).map(bbb -> FederatedReactiveEvaluationStrategyImpl.joinBindings(b, bbb));
+                    }
+            );
 
         }
-        else {
+       else {
+            final Stream<BindingSet> r = result;
 
-            result = result.join(Streams.from(bindings),
-                    (b) -> Streams.never(),
-                    (b) -> Streams.never(),
-                    FederatedReactiveEvaluationStrategyImpl::joinBindings);
+            result = r.concatMap(b ->
+                     Streams.from(bindings).map(bbb -> FederatedReactiveEvaluationStrategyImpl.joinBindings(b, bbb))
+            );
         }
 
         return result;
@@ -229,7 +228,7 @@ public class ReactorQueryExecutorImpl
 
         for (Binding b : bindings)
             query.setBinding(b.getName(), b.getValue());
-
+/*
         return Streams.wrap(new OnSubscribeTupleResults(query)).onBackpressureBuffer()
                 .doOnCompleted(() -> {
                     try {
@@ -240,7 +239,8 @@ public class ReactorQueryExecutorImpl
                     } catch (RepositoryException e) {
                         logger.debug("Connection cannot be closed", e);
                     }
-                });
+                }); */
+        return Streams.empty();
     }
 
     protected boolean
@@ -258,4 +258,3 @@ public class ReactorQueryExecutorImpl
     }
 
 }
-*/

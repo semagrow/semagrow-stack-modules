@@ -150,8 +150,8 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
                     } catch (Exception e) {
                         return Streams.fail(e);
                     }
-                })
-                .dispatchOn(Environment.cachedDispatcher());
+                });
+                //.dispatchOn(Environment.cachedDispatcher());
     }
 
     public Stream<BindingSet> evaluateReactorInternal(SourceQuery expr, BindingSet bindings)
@@ -243,10 +243,11 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
             throws QueryEvaluationException
     {
         return Streams.just(expr.getLeftArg(), expr.getRightArg())
-                .flatMap(e -> { try {
-                    return evaluateReactorInternal(e, bindingList);
-                } catch (Exception x) {
-                    return Streams.fail(x);
+                .flatMap(e -> {
+                    try {
+                        return evaluateReactorInternal(e, bindingList);
+                    } catch (Exception x) {
+                        return Streams.fail(x);
                 }});
     }
 }
