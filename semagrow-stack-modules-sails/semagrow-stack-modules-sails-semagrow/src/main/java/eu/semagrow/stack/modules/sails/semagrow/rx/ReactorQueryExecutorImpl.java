@@ -169,8 +169,13 @@ public class ReactorQueryExecutorImpl
             final Stream<BindingSet> r = result;
 
             HashMap<BindingSet, List<BindingSet>> probe = new HashMap();
-            // bindings.toMultimap(b -> FederatedReactiveEvaluationStrategyImpl.calcKey(b, relevant));
-            // TODO
+            for (BindingSet b : bindings) {
+                List bs = probe.get(FederatedReactiveEvaluationStrategyImpl.calcKey(b, relevant));
+                if (bs == null)
+                    bs = new ArrayList<BindingSet>();
+                bs.add(b);
+                probe.put(FederatedReactiveEvaluationStrategyImpl.calcKey(b, relevant), bs);
+            }
 
             result = r.concatMap(b -> {
                         BindingSet k = FederatedReactiveEvaluationStrategyImpl.calcKey(b, relevant);
@@ -228,8 +233,8 @@ public class ReactorQueryExecutorImpl
 
         for (Binding b : bindings)
             query.setBinding(b.getName(), b.getValue());
-/*
-        return Streams.wrap(new OnSubscribeTupleResults(query)).onBackpressureBuffer()
+
+        return Streams.wrap(new OnSubscribeTupleResultsReactor(query)) /* onBackpressureBuffer()
                 .doOnCompleted(() -> {
                     try {
                         if (conn.isOpen()) {
@@ -239,8 +244,8 @@ public class ReactorQueryExecutorImpl
                     } catch (RepositoryException e) {
                         logger.debug("Connection cannot be closed", e);
                     }
-                }); */
-        return Streams.empty();
+                }) */;
+        //return Streams.empty();
     }
 
     protected boolean
