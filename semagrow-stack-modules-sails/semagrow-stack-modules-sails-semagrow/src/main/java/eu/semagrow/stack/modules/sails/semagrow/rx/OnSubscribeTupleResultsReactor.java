@@ -86,7 +86,7 @@ public class OnSubscribeTupleResultsReactor implements Publisher {
 
         @Override
         public void endQueryResult() throws TupleQueryResultHandlerException {
-
+            subscriber.onComplete();
         }
 
         @Override

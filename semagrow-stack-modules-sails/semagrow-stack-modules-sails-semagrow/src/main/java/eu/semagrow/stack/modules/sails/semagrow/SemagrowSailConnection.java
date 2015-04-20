@@ -6,10 +6,7 @@ import eu.semagrow.stack.modules.api.evaluation.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.EvaluationStrategyImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryExecutorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.optimizer.StaticOptimizer;
-import eu.semagrow.stack.modules.sails.semagrow.rx.FederatedReactiveEvaluationStrategyImpl;
-import eu.semagrow.stack.modules.sails.semagrow.rx.FederatedReactorEvaluationStrategyImpl;
-import eu.semagrow.stack.modules.sails.semagrow.rx.ReactiveEvaluationStrategy;
-import eu.semagrow.stack.modules.sails.semagrow.rx.ReactiveQueryExecutorImpl;
+import eu.semagrow.stack.modules.sails.semagrow.rx.*;
 import info.aduna.iteration.CloseableIteration;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -225,7 +222,7 @@ public class SemagrowSailConnection extends SailConnectionBase {
             throws SailException
     {
         try {
-            ReactiveQueryExecutorImpl executor = new ReactiveQueryExecutorImpl();
+            ReactorQueryExecutorImpl executor = new ReactorQueryExecutorImpl();
             ReactiveEvaluationStrategy strategy = new FederatedReactorEvaluationStrategyImpl(executor);
             return strategy.evaluateReactive(expr, bindings);
         } catch(QueryEvaluationException e) {
