@@ -271,7 +271,7 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
         TupleExpr e = PlanUtils.applyRemainingFilters(innerExpr.clone(), ctx.filters);
 
         // update cardinality and cost properties
-        plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite().getURI()));
+        plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite()));
         plan.getProperties().setCardinality(cardinalityEstimator.getCardinality(e, plan.getProperties().getSite().getURI()));
 
         // update site
@@ -292,7 +292,7 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
         PlanProperties properties = PlanPropertiesUpdater.process(e);
 
         // update cardinality and cost properties
-        plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite().getURI()));
+        plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite()));
         plan.getProperties().setCardinality(cardinalityEstimator.getCardinality(e, plan.getProperties().getSite().getURI()));
 
         plan.setProperties(properties);
