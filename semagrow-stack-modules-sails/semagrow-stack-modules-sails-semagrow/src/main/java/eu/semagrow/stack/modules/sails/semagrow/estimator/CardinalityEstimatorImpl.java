@@ -4,7 +4,7 @@ import eu.semagrow.stack.modules.api.estimator.SelectivityEstimator;
 import eu.semagrow.stack.modules.api.statistics.Statistics;
 import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.SourceQuery;
-import eu.semagrow.stack.modules.sails.semagrow.optimizer.Plan;
+import eu.semagrow.stack.modules.sails.semagrow.planner.Plan;
 import org.openrdf.model.URI;
 import org.openrdf.query.algebra.*;
 import org.openrdf.query.algebra.helpers.VarNameCollector;
@@ -45,7 +45,7 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
         else if (expr instanceof SourceQuery)
             return getCardinality((SourceQuery)expr, source);
         else if (expr instanceof Plan)
-            return ((Plan)expr).getCardinality();
+            return ((Plan)expr).getProperties().getCardinality();
 
         return 0;
     }
@@ -213,7 +213,7 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
     }
 
     public double getVarSelectivity(String varName, Plan p, URI source) {
-        return getVarSelectivity(varName, p.getArg(), p.getSite());
+        return getVarSelectivity(varName, p.getArg(), p.getProperties().getSite().getURI());
     }
 
     public double getVarSelectivity(String varName, UnaryTupleOperator expr, URI source) {

@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.optimizer;
+package eu.semagrow.stack.modules.sails.semagrow.planner;
 
 import org.openrdf.query.algebra.OrderElem;
 
@@ -19,7 +19,6 @@ public class Ordering {
 
     public boolean cover(Ordering ordering) {
         return isPrefix(orderElements.iterator(), ordering.orderElements.iterator());
-
     }
 
     static public Ordering NoOrdering() { return new Ordering(new LinkedList<OrderElem>()); }

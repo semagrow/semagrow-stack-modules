@@ -5,20 +5,19 @@ import eu.semagrow.stack.modules.api.decomposer.QueryDecompositionException;
 import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
 import eu.semagrow.stack.modules.api.source.SourceMetadata;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
-import eu.semagrow.stack.modules.api.estimator.CostEstimator;
+import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimator;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.BindJoin;
-import eu.semagrow.stack.modules.sails.semagrow.algebra.HashJoin;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.SourceQuery;
 import eu.semagrow.stack.modules.sails.semagrow.helpers.BPGCollector;
 import eu.semagrow.stack.modules.sails.semagrow.helpers.CombinationIterator;
 import eu.semagrow.stack.modules.sails.semagrow.helpers.FilterCollector;
+import eu.semagrow.stack.modules.sails.semagrow.planner.*;
 import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.algebra.*;
 import org.openrdf.query.algebra.evaluation.QueryOptimizer;
 import org.openrdf.query.algebra.helpers.StatementPatternCollector;
-import org.openrdf.query.algebra.helpers.VarNameCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -28,10 +27,13 @@ import java.util.*;
 /**
  * Created by angel on 3/13/14.
  */
+@Deprecated
 public class DynamicProgrammingDecomposer implements QueryDecomposer {
 
     private CostEstimator costEstimator;
+
     private CardinalityEstimator cardinalityEstimator;
+
     private SourceSelector sourceSelector;
 
     final private Logger logger = LoggerFactory.getLogger(DynamicProgrammingDecomposer.class);
@@ -52,8 +54,10 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
      * @param expr
      * @return a list of access plans.
      */
-    protected Collection<Plan> accessPlans(TupleExpr expr, Dataset dataset, BindingSet bindings,
-                                         DecomposerContext ctx)
+    protected Collection<Plan> accessPlans(TupleExpr expr,
+                                           Dataset dataset,
+                                           BindingSet bindings,
+                                           DecomposerContext ctx)
         throws QueryDecompositionException {
 
         Collection<Plan> plans = new LinkedList<Plan>();
@@ -125,8 +129,10 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
 
         Collection<Plan> plans = new LinkedList<Plan>();
 
-        for (Plan p1 : plan1) {
-            for (Plan p2 : plan2) {
+        for (Plan p1 : plan1)
+        {
+            for (Plan p2 : plan2)
+            {
 
                 Set<String> s1 = p1.getBindingNames();
                 Set<String> s2 = p2.getBindingNames();
@@ -220,15 +226,13 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
         // FIXME
         if (e2.getPlanId().size() == 1) {
 
-            if (e1.getPlanId().size() == 2 && !e1.getSite().equals(Plan.LOCAL)) {
+            if (e1.getPlanId().size() == 2 && e1.getProperties().getSite().isRemote()) {
                 int i = 0;
                 i++;
             }
 
-
             expr = new BindJoin(enforceLocalSite(e1, ctx), enforceLocalSite(e2, ctx));
             plans.add(expr);
-
         }
 
         /*
@@ -243,10 +247,10 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
 
     private Plan pushJoinRemote(Plan e1, Plan e2, DecomposerContext ctx) {
 
-        URI site1 = e1.getSite();
-        URI site2 = e2.getSite();
+        Site site1 = e1.getProperties().getSite();
+        Site site2 = e2.getProperties().getSite();
 
-        if (site1.equals(site2) && !site1.equals(Plan.LOCAL)) {
+        if (site1.equals(site2) && !site1.isLocal()) {
             Set<TupleExpr> planid = new HashSet<TupleExpr>(e1.getPlanId());
             planid.addAll(e2.getPlanId());
             return createPlan(planid, new Join(e1,e2), site1, ctx);
@@ -259,15 +263,16 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
      * Update the properties of a plan
      * @param plan
      */
-    protected void updatePlan(Plan plan, DecomposerContext ctx) {
+    protected void updatePlan(Plan plan, DecomposerContext ctx)
+    {
         TupleExpr innerExpr = plan.getArg();
 
         // apply filters that can be applied
-        TupleExpr e = applyRemainingFilters(innerExpr.clone(), ctx.filters);
+        TupleExpr e = PlanUtils.applyRemainingFilters(innerExpr.clone(), ctx.filters);
 
         // update cardinality and cost properties
-        plan.setCost(costEstimator.getCost(e, plan.getSite()));
-        plan.setCardinality(cardinalityEstimator.getCardinality(e, plan.getSite()));
+        plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite().getURI()));
+        plan.getProperties().setCardinality(cardinalityEstimator.getCardinality(e, plan.getProperties().getSite().getURI()));
 
         // update site
 
@@ -277,15 +282,35 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
         //FIXME: update ordering, limit, distinct, group by
     }
 
-    protected Plan createPlan(Set<TupleExpr> planId, TupleExpr innerExpr, DecomposerContext ctx) {
+    protected void updatePlan1(Plan plan, DecomposerContext ctx)
+    {
+        TupleExpr innerExpr = plan.getArg();
+
+        TupleExpr e = PlanUtils.applyRemainingFilters(innerExpr.clone(), ctx.filters);
+
+        //FIXME: update ordering, limit, distinct, group by
+        PlanProperties properties = PlanPropertiesUpdater.process(e);
+
+        // update cardinality and cost properties
+        plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite().getURI()));
+        plan.getProperties().setCardinality(cardinalityEstimator.getCardinality(e, plan.getProperties().getSite().getURI()));
+
+        plan.setProperties(properties);
+
+        plan.getArg().replaceWith(e);
+    }
+
+    protected Plan createPlan(Set<TupleExpr> planId, TupleExpr innerExpr, DecomposerContext ctx)
+    {
         Plan p = new Plan(planId, innerExpr);
         updatePlan(p, ctx);
         return p;
     }
 
-    protected Plan createPlan(Set<TupleExpr> planId, TupleExpr innerExpr, URI source, DecomposerContext ctx) {
+    protected Plan createPlan(Set<TupleExpr> planId, TupleExpr innerExpr, Site source, DecomposerContext ctx)
+    {
         Plan p = new Plan(planId, innerExpr);
-        p.setSite(source);
+        p.getProperties().setSite(source);
         updatePlan(p, ctx);
         return p;
     }
@@ -295,23 +320,24 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
     {
         URI source = metadata.getEndpoints().get(0);
         Plan p = new Plan(planId, innerExpr);
-        p.setSite(source);
+        p.getProperties().setSite(new Site(source));
 
         Set<String> varNames = innerExpr.getBindingNames();
+        /*
         for (String varName : varNames) {
             Collection<URI> schemas = metadata.getSchema(varName);
             if (!schemas.isEmpty())
                 p.setSchemas(varName, schemas);
         }
-
+        */
         updatePlan(p, ctx);
         return p;
     }
 
-
     private boolean isPlanComparable(Plan plan1, Plan plan2) {
         // FIXME: take plan properties into account
-        return plan1.getSite().equals(plan2.getSite());
+        return plan1.getPlanId().equals(plan2.getPlanId()) &&
+                plan1.getProperties().isComparable(plan2.getProperties());
     }
 
     /**
@@ -326,7 +352,7 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
      */
     private int comparePlan(Plan plan1, Plan plan2) {
         if (isPlanComparable(plan1, plan2)) {
-            return plan1.getCost() < plan2.getCost() ? -1 : 1;
+            return plan1.getProperties().getCost().compareTo(plan2.getProperties().getCost());
         } else {
             return 0;
         }
@@ -344,17 +370,18 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
         Plan bestPlan = plans.iterator().next();
 
         for (Plan p : plans)
-            if (p.getCost() < bestPlan.getCost())
+            if (p.getProperties().getCost().compareTo(bestPlan.getProperties().getCost()) == -1)
                 bestPlan = p;
 
         return bestPlan;
     }
 
     private Plan enforceLocalSite(Plan p, DecomposerContext ctx) {
-        if (p.getSite() == Plan.LOCAL)
+        Site s = p.getProperties().getSite();
+        if (s.isLocal())
             return p;
         else
-            return createPlan(p.getPlanId(), new SourceQuery(p, p.getSite()), Plan.LOCAL, ctx);
+            return createPlan(p.getPlanId(), new SourceQuery(p, s.getURI()), Site.LOCAL, ctx);
     }
 
     protected Collection<SourceMetadata> getSources(StatementPattern pattern, Dataset dataset, BindingSet bindings) {
@@ -369,35 +396,6 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
 
     private static <T> Iterable<Set<T>> subsetsOf(Set<T> s, int k) {
         return new CombinationIterator<T>(k, s);
-    }
-
-    public static Collection<ValueExpr> getRelevantFiltersConditions(TupleExpr e, Collection<ValueExpr> filterConditions) {
-        Set<String> variables = VarNameCollector.process(e);
-        Collection<ValueExpr> relevantConditions = new LinkedList<ValueExpr>();
-
-        for (ValueExpr condition : filterConditions) {
-            Set<String> conditionVariables = VarNameCollector.process(condition);
-            if (variables.containsAll(conditionVariables))
-                relevantConditions.add(condition);
-        }
-
-        return relevantConditions;
-    }
-
-    private static TupleExpr applyFilters(TupleExpr e, Collection<ValueExpr> conditions) {
-        TupleExpr expr = e;
-
-        for (ValueExpr condition : conditions)
-            expr = new Filter(expr, condition);
-
-        return expr;
-    }
-
-    public static TupleExpr applyRemainingFilters(TupleExpr e, Collection<ValueExpr> conditions) {
-        Collection<ValueExpr> filtersApplied = FilterCollector.process(e);
-        Collection<ValueExpr> remainingFilters = getRelevantFiltersConditions(e, conditions);
-        remainingFilters.removeAll(filtersApplied);
-        return applyFilters(e, remainingFilters);
     }
 
     public void decompose(TupleExpr tupleExpr, Dataset dataset, BindingSet bindings)
@@ -447,6 +445,7 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
 
                         Collection<Plan> plans1 = optPlans.get(o1);
                         Collection<Plan> plans2 = optPlans.get(o2);
+
                         Collection<Plan> newPlans = joinPlans(plans1, plans2, ctx);
 
                         optPlans.addPlan(newPlans);
@@ -463,5 +462,27 @@ public class DynamicProgrammingDecomposer implements QueryDecomposer {
             TupleExpr bestPlan = getBestPlan(fullPlans);
             bgp.replaceWith(bestPlan);
         }
+    }
+
+
+    /**
+     * Check if a set of expressions is connected with respect to variables.
+     * Two expressions are considered connected if they share at least one common variable.
+     *
+     * @param expr
+     * @return
+     */
+    public boolean isConnected(Set<TupleExpr> expr)
+    {
+        return true;
+    }
+
+    public boolean haveCommonVars(TupleExpr e1, TupleExpr e2) {
+
+        Set<String> s1 = e1.getBindingNames();
+        Set<String> s2 = e2.getBindingNames();
+        s1.retainAll(s2);
+
+        return !s1.isEmpty();
     }
 }

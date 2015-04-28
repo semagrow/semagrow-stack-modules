@@ -2,7 +2,7 @@ package eu.semagrow.stack.modules.sails.semagrow.config;
 
 import eu.semagrow.stack.modules.alignment.QueryTransformationImpl;
 import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
-import eu.semagrow.stack.modules.api.estimator.CostEstimator;
+import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimator;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.api.statistics.Statistics;
 import eu.semagrow.stack.modules.api.transformation.QueryTransformation;

@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.optimizer;
+package eu.semagrow.stack.modules.sails.semagrow.planner;
 
 import org.openrdf.query.algebra.TupleExpr;
 
