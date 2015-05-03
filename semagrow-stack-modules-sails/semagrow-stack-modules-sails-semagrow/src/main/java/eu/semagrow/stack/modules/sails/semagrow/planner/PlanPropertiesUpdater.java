@@ -13,7 +13,6 @@ import org.openrdf.query.algebra.TupleExpr;
  */
 public class PlanPropertiesUpdater extends PlanVisitorBase<RuntimeException> {
 
-
     private PlanProperties properties;
 
     static public PlanProperties process(TupleExpr expr) {
@@ -29,7 +28,7 @@ public class PlanPropertiesUpdater extends PlanVisitorBase<RuntimeException> {
 
     @Override
     public void meet(Filter filter) throws RuntimeException  {
-
+        filter.getArg().visit(this);
     }
 
     @Override

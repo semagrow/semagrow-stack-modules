@@ -22,7 +22,10 @@ public class PlanGeneratorImpl implements PlanGenerator {
     private SourceSelector       sourceSelector;
     private CostEstimator        costEstimator;
     private CardinalityEstimator cardinalityEstimator;
+
     private DecomposerContext ctx;
+
+    protected Collection<JoinImplGenerator> joinImplGenerators;
 
     public PlanGeneratorImpl(DecomposerContext ctx,
                              SourceSelector selector,
@@ -33,6 +36,10 @@ public class PlanGeneratorImpl implements PlanGenerator {
         this.sourceSelector = selector;
         this.costEstimator = costEstimator;
         this.cardinalityEstimator = cardinalityEstimator;
+
+        this.joinImplGenerators = new LinkedList<JoinImplGenerator>();
+        this.joinImplGenerators.add(new BindJoinGenerator());
+        this.joinImplGenerators.add(new RemoteJoinGenerator());
     }
 
     /**
@@ -177,24 +184,16 @@ public class PlanGeneratorImpl implements PlanGenerator {
     {
         Collection<Plan> plans = new LinkedList<Plan>();
 
-        for (Plan p1 : plan1)
-        {
-            for (Plan p2 : plan2)
-            {
-                Set<TupleExpr> s = getId(p1.getPlanId(), p2.getPlanId());
+        for (JoinImplGenerator generator : joinImplGenerators) {
 
-                Collection<TupleExpr> joins = createPhysicalJoins(p1, p2);
+            for (Plan p1 : plan1) {
+                for (Plan p2 : plan2) {
+                    Set<TupleExpr> s = getId(p1.getPlanId(), p2.getPlanId());
 
-                for (TupleExpr plan : joins) {
-                    //TupleExpr e = applyRemainingFilters(plan, ctx.filters);
-                    Plan p = createPlan(s, plan);
-                    plans.add(p);
-                }
+                    Collection<Join> joins = generator.generate(p1, p2);
 
-                Plan expr = pushJoinRemote(p1, p2);
-
-                if (expr != null) {
-                    plans.add(expr);
+                    for (Join j : joins)
+                        plans.add(createPlan(s, j));
                 }
             }
         }
@@ -205,37 +204,6 @@ public class PlanGeneratorImpl implements PlanGenerator {
         Set<TupleExpr> s = new HashSet<TupleExpr>(id1);
         s.addAll(id2);
         return s;
-    }
-
-    private Collection<TupleExpr> createPhysicalJoins(Plan e1, Plan e2)
-    {
-        Collection<TupleExpr> plans = new LinkedList<TupleExpr>();
-
-        TupleExpr expr;
-
-        //TupleExpr expr = new Join(e1, e2);
-        //if (!e2.getSite().equals(Plan.LOCAL)) {
-        // FIXME
-        if (isBindable(e2)) {
-            expr = new BindJoin(enforceLocalSite(e1), enforceLocalSite(e2));
-            plans.add(expr);
-        }
-
-        return plans;
-    }
-
-    private Plan pushJoinRemote(Plan e1, Plan e2) {
-
-        Site site1 = e1.getProperties().getSite();
-        Site site2 = e2.getProperties().getSite();
-
-        if (site1.equals(site2) && !site1.isLocal()) {
-            Set<TupleExpr> planid = new HashSet<TupleExpr>(e1.getPlanId());
-            planid.addAll(e2.getPlanId());
-            return createPlan(planid, new Join(e1,e2), site1);
-        }
-
-        return null;
     }
 
     private Plan enforceLocalSite(Plan p)
@@ -250,44 +218,116 @@ public class PlanGeneratorImpl implements PlanGenerator {
     @Override
     public Collection<Plan> finalizePlans(Collection<Plan> plans) { return plans; }
 
-    private boolean isBindable(TupleExpr expr) {
-        IsBindableVisitor v = new IsBindableVisitor();
-        expr.visit(v);
-        return v.condition;
-    }
 
-    private class IsBindableVisitor extends PlanVisitorBase<RuntimeException>
+    protected interface JoinImplGenerator
     {
-        boolean condition = false;
+        Collection<Join> generate(Plan p1, Plan p2);
+    }
 
+    protected interface PropertyEnforcer
+    {
+        Plan enforceSite(Plan p, Site s);
+
+        Plan enforceOrdering(Plan p, Ordering o);
+
+    }
+
+    private class PropertyEnforcerImpl implements PropertyEnforcer
+    {
         @Override
-        public void meet(Union union) {
-            union.getLeftArg().visit(this);
-
-            if (condition)
-                union.getRightArg().visit(this);
-        }
-
-        @Override
-        public void meetPlan(Plan e) {
-            e.getArg().visit(this);
-        }
-
-        @Override
-        public void meet(SourceQuery query) {
-            condition = true;
-        }
-
-        @Override
-        public void meetOther(QueryModelNode node) {
-            if (node instanceof Plan)
-                meetPlan((Plan)node);
-            else if (node instanceof SourceQuery)
-                meet((SourceQuery)node);
-            else if (node instanceof Union)
-                meet((Union) node);
+        public Plan enforceSite(Plan p, Site s) {
+            if (p.getProperties().getSite().equals(s))
+                return p;
             else
-                condition = false;
+                return createPlan(p.getPlanId(),new SourceQuery(p, s.getURI()));
+        }
+
+        @Override
+        public Plan enforceOrdering(Plan p, Ordering o) {
+            return p;
         }
     }
+
+    private class RemoteJoinGenerator implements JoinImplGenerator {
+
+        @Override
+        public Collection<Join> generate(Plan p1, Plan p2) {
+            Collection<Join> l = new LinkedList<Join>();
+
+            if (p1.getProperties().getSite().isRemote() &&
+                    p2.getProperties().getSite().isRemote() &&
+                    p1.getProperties().getSite().equals(p2.getProperties().getSite())) {
+                Join j = new Join(p1, p2);
+                l.add(j);
+            }
+
+            return l;
+        }
+    }
+
+    private class BindJoinGenerator implements JoinImplGenerator {
+
+            @Override
+            public Collection<Join> generate(Plan p1, Plan p2) {
+
+                Collection<Join> l = new LinkedList<Join>();
+
+                if (isBindable(p1)) {
+                    Join expr = new BindJoin(enforceLocalSite(p1), enforceLocalSite(p2));
+                    l.add(expr);
+                }
+
+                return l;
+            }
+
+            private boolean isBindable(TupleExpr expr) {
+                IsBindableVisitor v = new IsBindableVisitor();
+                expr.visit(v);
+                return v.condition;
+            }
+
+            private class IsBindableVisitor extends PlanVisitorBase<RuntimeException> {
+                boolean condition = false;
+
+                @Override
+                public void meet(Union union) {
+                    union.getLeftArg().visit(this);
+
+                    if (condition)
+                        union.getRightArg().visit(this);
+                }
+
+                @Override
+                public void meet(Join join) {
+                    condition = false;
+                }
+
+                @Override
+                public void meetPlan(Plan e) {
+                    if (e.getProperties().getSite().isRemote())
+                        condition = true;
+                    else
+                        e.getArg().visit(this);
+                }
+
+                @Override
+                public void meet(SourceQuery query) {
+                    condition = true;
+                }
+
+                @Override
+                public void meetOther(QueryModelNode node) {
+                    if (node instanceof Plan)
+                        meetPlan((Plan) node);
+                    else if (node instanceof SourceQuery)
+                        meet((SourceQuery) node);
+                    else if (node instanceof Union)
+                        meet((Union) node);
+                    else
+                        condition = false;
+                }
+            }
+
+        }
+
 }

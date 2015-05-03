@@ -53,4 +53,9 @@ public class Cost implements Comparable<Cost> {
         c.networkCost = networkCost;
         return c;
     }
+
+    @Override
+    public String toString() {
+        return "["+this.cpuCost+","+this.networkCost+"]";
+    }
 }

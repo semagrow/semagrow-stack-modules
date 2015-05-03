@@ -36,14 +36,18 @@ public class DPPlanOptimizer implements PlanOptimizer {
             while (pIter.hasNext()) {
                 Plan plan = pIter.next();
 
-                int plan_comp = comparePlan(candidatePlan, plan);
-
-                if (plan_comp != 0)
+                if (isPlanComparable(candidatePlan, plan)) {
                     inComparable = false;
+                    int plan_comp = comparePlan(candidatePlan, plan);
 
-                if (plan_comp == -1) {
-                    pIter.remove();
-                    pIter.add(candidatePlan);
+
+                    if (plan_comp != 0)
+                        inComparable = false;
+
+                    if (plan_comp < 1) {
+                        pIter.remove();
+                        pIter.add(candidatePlan);
+                    }
                 }
             }
 
