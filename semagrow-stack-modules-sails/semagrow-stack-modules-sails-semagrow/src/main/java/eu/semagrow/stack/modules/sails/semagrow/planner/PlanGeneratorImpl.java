@@ -46,6 +46,19 @@ public class PlanGeneratorImpl implements PlanGenerator {
         //this.joinImplGenerators.add(new MergeJoinGenerator());
     }
 
+    protected void updatePlanProperties(Plan plan)
+    {
+        TupleExpr e = plan.getArg();
+
+        PlanProperties properties = PlanPropertiesUpdater.process(e, plan.getProperties());
+
+        plan.setProperties(properties);
+
+        // update cardinality and cost properties
+        plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite()));
+        plan.getProperties().setCardinality(cardinalityEstimator.getCardinality(e, plan.getProperties().getSite().getURI()));
+    }
+
     /**
      * Update the properties of a plan
      * @param plan
@@ -57,35 +70,9 @@ public class PlanGeneratorImpl implements PlanGenerator {
         // apply filters that can be applied
         TupleExpr e = PlanUtils.applyRemainingFilters(innerExpr.clone(), ctx.filters);
 
-        // update cardinality and cost properties
-        plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite()));
-        plan.getProperties().setCardinality(cardinalityEstimator.getCardinality(e, plan.getProperties().getSite().getURI()));
-
-        // update site
-
-        // update ordering
-
         plan.getArg().replaceWith(e);
-        //FIXME: update ordering, limit, distinct, group by
-    }
 
-    protected void updatePlanProperties(Plan plan)
-    {
-        TupleExpr innerExpr = plan.getArg();
-
-        TupleExpr e = PlanUtils.applyRemainingFilters(innerExpr.clone(), ctx.filters);
-
-        //FIXME: update ordering, limit, distinct, group by
-        PlanProperties properties = PlanPropertiesUpdater.process(e);
-
-        plan.setProperties(properties);
-
-        // update cardinality and cost properties
-        plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite()));
-        plan.getProperties().setCardinality(cardinalityEstimator.getCardinality(e, plan.getProperties().getSite().getURI()));
-
-
-        plan.getArg().replaceWith(e);
+        updatePlanProperties(plan);
     }
 
     protected Plan createPlan(Set<TupleExpr> planId, TupleExpr innerExpr)
@@ -95,21 +82,14 @@ public class PlanGeneratorImpl implements PlanGenerator {
         return p;
     }
 
-    protected Plan createPlan(Set<TupleExpr> planId, TupleExpr innerExpr, Site source)
-    {
-        Plan p = new Plan(planId, innerExpr);
-        p.getProperties().setSite(source);
-        updatePlan(p);
-        return p;
-    }
-
     protected Plan createPlan(Set<TupleExpr> planId, TupleExpr innerExpr, SourceMetadata metadata)
     {
         URI source = metadata.getEndpoints().get(0);
+
         Plan p = new Plan(planId, innerExpr);
-        p.getProperties().setSite(new Site(source));
 
         Set<String> varNames = innerExpr.getBindingNames();
+
         /*
         for (String varName : varNames) {
             Collection<URI> schemas = metadata.getSchema(varName);
@@ -117,7 +97,9 @@ public class PlanGeneratorImpl implements PlanGenerator {
                 p.setSchemas(varName, schemas);
         }
         */
+        p.getProperties().setSite(new Site(source));
         updatePlan(p);
+
         return p;
     }
 
