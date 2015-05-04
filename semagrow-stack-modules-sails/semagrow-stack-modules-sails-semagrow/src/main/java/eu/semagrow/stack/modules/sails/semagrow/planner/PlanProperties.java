@@ -53,6 +53,14 @@ public class PlanProperties {
         return p;
     }
 
+    public PlanProperties clone() {
+        PlanProperties p = new PlanProperties();
+        p.nodeCost = this.nodeCost;
+        p.ordering = this.ordering;
+        p.site = this.site;
+        return p;
+    }
+
     public boolean isComparable(PlanProperties properties) {
         return (properties.getSite().equals(this.getSite()));
     }

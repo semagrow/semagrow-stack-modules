@@ -39,10 +39,17 @@ public class PlanVisitorBase<X extends Exception> extends QueryModelVisitorBase<
 
     @Override
     public void meetOther(QueryModelNode node) throws X {
-        if (node instanceof Plan)
-            meetPlan((Plan)node);
 
-        super.meetOther(node);
+        if (node instanceof Plan)
+            meet((Plan)node);
+        else if (node instanceof SourceQuery)
+            meet((SourceQuery)node);
+        else if (node instanceof BindJoin)
+            meet((BindJoin)node);
+        else if (node instanceof HashJoin)
+            meet((HashJoin)node);
+        else
+            super.meetOther(node);
     }
 
 

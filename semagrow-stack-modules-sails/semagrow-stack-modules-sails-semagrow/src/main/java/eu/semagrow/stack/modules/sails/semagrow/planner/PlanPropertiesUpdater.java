@@ -3,10 +3,7 @@ package eu.semagrow.stack.modules.sails.semagrow.planner;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.BindJoin;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.HashJoin;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.SourceQuery;
-import org.openrdf.query.algebra.Filter;
-import org.openrdf.query.algebra.Join;
-import org.openrdf.query.algebra.Order;
-import org.openrdf.query.algebra.TupleExpr;
+import org.openrdf.query.algebra.*;
 
 /**
  * Created by angel on 21/4/2015.
@@ -59,8 +56,14 @@ public class PlanPropertiesUpdater extends PlanVisitorBase<RuntimeException> {
     }
 
     @Override
+    public void meet(Union union) throws RuntimeException {
+        union.getLeftArg().visit(this);
+        union.getRightArg().visit(this);
+    }
+
+    @Override
     public void meet(Plan plan) throws RuntimeException {
-        this.properties = plan.getProperties();
+        this.properties = plan.getProperties().clone();
     }
 
 }
