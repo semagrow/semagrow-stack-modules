@@ -10,12 +10,23 @@ import org.openrdf.query.algebra.*;
  */
 public class PlanPropertiesUpdater extends PlanVisitorBase<RuntimeException> {
 
-    private PlanProperties properties;
+    private PlanProperties properties = PlanProperties.defaultProperties();
 
     static public PlanProperties process(TupleExpr expr) {
+        return process(expr, PlanProperties.defaultProperties());
+    }
+
+    static public PlanProperties process(TupleExpr expr, PlanProperties initialProperties) {
+
         PlanPropertiesUpdater updater  = new PlanPropertiesUpdater();
+        updater.properties = initialProperties;
+
         expr.visit(updater);
-        return updater.properties;
+
+        if (updater.properties != null)
+            return updater.properties;
+        else
+            return initialProperties;
     }
 
     @Override

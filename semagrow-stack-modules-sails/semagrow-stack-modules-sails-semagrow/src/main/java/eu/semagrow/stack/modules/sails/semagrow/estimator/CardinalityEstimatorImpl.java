@@ -279,7 +279,6 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
         // if (subset) then min else if (disjoint) 0 else something in between
         // if not joined variable then
         // if in left arg ->
-
     }
     */
 
