@@ -3,7 +3,9 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.HashJoinIteration;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.InsertValuesBindingsIteration;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.UnionJoinIteration;
 import info.aduna.iteration.*;
+
 import org.openrdf.model.Literal;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -27,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * Created by angel on 6/6/14.
@@ -157,7 +160,6 @@ public class QueryExecutorImpl implements QueryExecutor {
                 return result;
             }
 
-            /*
             try {
                 result = evaluateInternal(endpoint, expr, bindings);
                 return result;
@@ -165,8 +167,8 @@ public class QueryExecutorImpl implements QueryExecutor {
                 logger.debug("Failover to sequential iteration", e);
                 return new SequentialQueryIteration(endpoint, expr, bindings);
             }
-            */
-            return new SequentialQueryIteration(endpoint, expr, bindings);
+
+            //return new SequentialQueryIteration(endpoint, expr, bindings);
 
         } /*catch (MalformedQueryException e) {
                 // this exception must not be silenced, bug in our code
@@ -191,26 +193,37 @@ public class QueryExecutorImpl implements QueryExecutor {
         CloseableIteration<BindingSet, QueryEvaluationException> result = null;
 
         Set<String> exprVars = computeVars(expr);
-
+        
         List<String> relevant = getRelevantBindingNames(bindings, exprVars);
 
-        String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
+        String sparqlQuery = "";
+
+        if (relevant.isEmpty())
+            sparqlQuery = buildSelectSPARQLQuery(expr, null);
+        else
+            sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
+
+        System.out.println(sparqlQuery);
 
         result = sendTupleQuery(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
 
         if (!relevant.isEmpty()) {
+        	
             if (rowIdOpt)
                 result = new InsertValuesBindingsIteration(result, bindings);
             else {
-                result = new HashJoinIteration(
+                result = new UnionJoinIteration(
                                 new CollectionIteration<BindingSet, QueryEvaluationException>(bindings),
                                 result,
                                 new HashSet<String>(relevant));
             }
+            
         }
-        else
-            result = new ServiceCrossProductIteration(result, bindings);
+        else {
+        	
+        	result = new ServiceCrossProductIteration(result, bindings);
 
+        }
         return result;
     }
 
@@ -226,6 +239,8 @@ public class QueryExecutorImpl implements QueryExecutor {
 
     private List<String> getRelevantBindingNames(List<BindingSet> bindings, Set<String> exprVars) {
 
+    	if (bindings.isEmpty())
+    		return new ArrayList<String>();
         return getRelevantBindingNames(bindings.get(0), exprVars);
     }
 
@@ -398,16 +413,99 @@ public class QueryExecutorImpl implements QueryExecutor {
         return buildSPARQLQuery(expr,freeVars) + buildVALUESClause(bindings,relevantBindingNames);
     }
 
-    private String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
-            throws Exception {
+    ////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////
 
-        return null;
+    protected String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+            throws Exception {
+        Set<String> freeVars = computeVars(expr);
+        freeVars.removeAll(relevantBindingNames);
+        if (freeVars.isEmpty()) {
+            return buildSPARQLQueryUNIONFILTER(expr, bindings, relevantBindingNames);
+        }
+        String query = new SPARQLQueryRenderer().render(new ParsedTupleQuery(expr));
+        String where = query.substring(query.indexOf('{'));
+        StringBuilder sb = new StringBuilder();
+        int i = 1;
+        boolean flag = false;
+        for (BindingSet b : bindings) {
+            if (flag) {
+                sb.append(" UNION ");
+            }
+            flag = true;
+            String tmpStr = where;
+            for (String name : relevantBindingNames) {
+                String pattern = "[\\?\\$]" + name + "(?=\\W)";
+                StringBuilder val = new StringBuilder();
+                appendValueAsString(val, b.getValue(name));
+                String replacement = val.toString();
+                tmpStr = tmpStr.replaceAll(pattern, Matcher.quoteReplacement(replacement));
+            }
+            for (String name : freeVars) {
+                String pattern = "[\\?\\$]" + name + "(?=\\W)";
+                String replacement = "?" + name + "_" + i;
+                tmpStr = tmpStr.replaceAll(pattern, Matcher.quoteReplacement(replacement));
+            }
+            sb.append(tmpStr);
+            i++;
+        }
+        sb.append(" }");
+        String pr = "SELECT ";
+        for (int j=1; j<i; j++) {
+            for (String name : freeVars) {
+                pr = pr + "?" + name + "_" + j + " ";
+            }
+        }
+        pr = pr + "\nWHERE { ";
+        return (pr + sb.toString());
     }
+
+    private String buildSPARQLQueryUNIONFILTER(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+            throws Exception {
+        String query = new SPARQLQueryRenderer().render(new ParsedTupleQuery(expr));
+        String where = query.substring(query.indexOf('{'));
+        StringBuilder sb = new StringBuilder();
+        int i = 1;
+        for (BindingSet b : bindings) {
+            String tmpStr = where;
+            for (String name : relevantBindingNames) {
+                String pattern = "[\\?\\$]" + name + "(?=\\W)";
+                String replacement = "?" + name + "_" + i;
+                tmpStr = tmpStr.replaceAll(pattern, Matcher.quoteReplacement(replacement));
+            }
+            tmpStr = tmpStr.substring(1,tmpStr.lastIndexOf('}'));
+            sb.append(tmpStr);
+            sb.append(" FILTER (");
+            boolean flag = false;
+            for (String name : relevantBindingNames) {
+                if (flag) {
+                    sb.append(" and ");
+                }
+                flag = true;
+                sb.append("?"+name + "_" + i +"=");
+                appendValueAsString(sb, b.getValue(name));
+            }
+            sb.append(") } UNION {");
+            i++;
+        }
+        sb.append("} }");
+        String pr = "SELECT ";
+        for (int j=1; j<i; j++) {
+            for (String name : relevantBindingNames) {
+                pr = pr + "?" + name + "_" + j + " ";
+            }
+        }
+        pr = pr + "\nWHERE { { ";
+        return (pr + sb.toString());
+    }
+    ////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////
+
 
     protected StringBuilder appendValueAsString(StringBuilder sb, Value value) {
 
         // TODO check if there is some convenient method in Sesame!
-
+    	
         if (value == null)
             return sb.append("UNDEF"); // see grammar for BINDINGs def
 
@@ -449,11 +547,11 @@ public class QueryExecutorImpl implements QueryExecutor {
         //    sb.append('@');
         //    sb.append(lit.getLanguage());
        // }
-        //else {
+        if (lit.getDatatype() != null ) {
             sb.append("^^<");
             sb.append(lit.getDatatype().stringValue());
             sb.append('>');
-        //}
+        }
         return sb;
     }
 

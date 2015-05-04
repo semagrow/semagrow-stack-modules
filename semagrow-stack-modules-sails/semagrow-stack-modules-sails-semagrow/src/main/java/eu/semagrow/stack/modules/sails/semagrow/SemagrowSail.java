@@ -10,7 +10,6 @@ import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryEvaluationImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.FileManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.*;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.rdf.RDFQueryLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.planner.DPQueryDecomposer;
 import org.openrdf.model.URI;
@@ -93,6 +92,7 @@ public class SemagrowSail extends SailBase {
     public QueryDecomposer getDecomposer(Collection<URI> includeOnly, Collection<URI> exclude) {
         SourceSelector selector = getSourceSelector();
         selector = new RestrictiveSourceSelector(selector, includeOnly, exclude);
+        selector = new AskSourceSelector(selector);
         CostEstimator costEstimator = getCostEstimator();
         CardinalityEstimator cardinalityEstimator = getCardinalityEstimator();
         return new DPQueryDecomposer(costEstimator, cardinalityEstimator, selector);
