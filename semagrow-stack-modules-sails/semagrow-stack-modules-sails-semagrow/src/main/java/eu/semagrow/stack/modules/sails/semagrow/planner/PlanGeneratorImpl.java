@@ -78,11 +78,12 @@ public class PlanGeneratorImpl implements PlanGenerator {
         //FIXME: update ordering, limit, distinct, group by
         PlanProperties properties = PlanPropertiesUpdater.process(e);
 
+        plan.setProperties(properties);
+
         // update cardinality and cost properties
         plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite()));
         plan.getProperties().setCardinality(cardinalityEstimator.getCardinality(e, plan.getProperties().getSite().getURI()));
 
-        plan.setProperties(properties);
 
         plan.getArg().replaceWith(e);
     }
@@ -90,7 +91,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
     protected Plan createPlan(Set<TupleExpr> planId, TupleExpr innerExpr)
     {
         Plan p = new Plan(planId, innerExpr);
-        updatePlan(p);
+        updatePlanProperties(p);
         return p;
     }
 
@@ -216,7 +217,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
         if (s.isLocal())
             return p;
         else
-            return createPlan(p.getPlanId(), new SourceQuery(p, s.getURI()), Site.LOCAL);
+            return createPlan(p.getPlanId(), new SourceQuery(p, s.getURI()));
     }
 
     private Plan enforceOrdering(Plan p, Ordering ordering)
@@ -288,7 +289,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
 
                 Collection<Join> l = new LinkedList<Join>();
 
-                if (isBindable(p1)) {
+                if (isBindable(p2)) {
                     Join expr = new BindJoin(enforceLocalSite(p1), enforceLocalSite(p2));
                     l.add(expr);
                 }
@@ -319,7 +320,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
                 }
 
                 @Override
-                public void meetPlan(Plan e) {
+                public void meet(Plan e) {
                     if (e.getProperties().getSite().isRemote())
                         condition = true;
                     else
@@ -329,18 +330,6 @@ public class PlanGeneratorImpl implements PlanGenerator {
                 @Override
                 public void meet(SourceQuery query) {
                     condition = true;
-                }
-
-                @Override
-                public void meetOther(QueryModelNode node) {
-                    if (node instanceof Plan)
-                        meetPlan((Plan) node);
-                    else if (node instanceof SourceQuery)
-                        meet((SourceQuery) node);
-                    else if (node instanceof Union)
-                        meet((Union) node);
-                    else
-                        condition = false;
                 }
             }
 

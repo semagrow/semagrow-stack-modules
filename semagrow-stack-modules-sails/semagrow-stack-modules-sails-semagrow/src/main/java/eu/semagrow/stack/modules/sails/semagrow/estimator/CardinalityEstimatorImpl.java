@@ -92,7 +92,7 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
         double sel = getJoinSelectivity(join, source);
 
         double t = card1 * card2 * sel;
-        long tt = (long)t;
+        long tt = (long)Math.ceil(t);
 
         if (tt < 0)
             return 0;

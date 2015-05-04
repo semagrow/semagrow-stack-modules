@@ -90,8 +90,14 @@ public class PlanPropertiesUpdater extends PlanVisitorBase<RuntimeException> {
     }
 
     @Override
+    public void meet(Union union) throws RuntimeException {
+        union.getLeftArg().visit(this);
+        union.getRightArg().visit(this);
+    }
+
+    @Override
     public void meet(Plan plan) throws RuntimeException {
-        this.properties = plan.getProperties();
+        this.properties = plan.getProperties().clone();
     }
 
 }

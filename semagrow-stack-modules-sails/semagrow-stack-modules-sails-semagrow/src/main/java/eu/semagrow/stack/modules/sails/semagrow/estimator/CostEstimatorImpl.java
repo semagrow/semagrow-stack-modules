@@ -18,8 +18,8 @@ public class CostEstimatorImpl implements CostEstimator {
 
     private CardinalityEstimator cardinalityEstimator;
 
-    private static double C_TRANSFER_TUPLE = 0.001;
-    private static double C_TRANSFER_QUERY = 0.005;
+    private static double C_TRANSFER_TUPLE = 0.1;
+    private static double C_TRANSFER_QUERY = 5;
 
     private static double C_PROBE_TUPLE = 0.001;   //cost to probe a tuple against a hash table
     private static double C_HASH_TUPLE = 0.003;    //cost to hash a tuple to a hash table
@@ -84,11 +84,11 @@ public class CostEstimatorImpl implements CostEstimator {
         long rightCard = cardinalityEstimator.getCardinality(join.getRightArg(), source);
         long joinCard = cardinalityEstimator.getCardinality(join, source);
 
-        double commuCost =
+        double commuCost = C_TRANSFER_QUERY +
                 leftCard * (C_TRANSFER_QUERY + C_TRANSFER_TUPLE)
                 + joinCard * C_TRANSFER_TUPLE;
 
-        return getCost(join.getLeftArg(), source).add(getCost(join.getRightArg(), source)).add(new Cost(commuCost));
+        return getCost(join.getLeftArg()).add(new Cost(commuCost));
     }
 
     public Cost getCost(HashJoin join, URI source) {
@@ -96,9 +96,7 @@ public class CostEstimatorImpl implements CostEstimator {
         long rightCard = cardinalityEstimator.getCardinality(join.getRightArg());
 
         //return (leftCard + rightCard) * C_TRANSFER_TUPLE + 2 * C_TRANSFER_QUERY;
-        return getCost(join.getLeftArg())
-                    .add(getCost(join.getRightArg()))
-                    .add(Cost.cpuCost(C_HASH_TUPLE*leftCard + C_PROBE_TUPLE*rightCard));
+        return Cost.cpuCost(C_HASH_TUPLE*leftCard + C_PROBE_TUPLE*rightCard);
     }
 
     public Cost getCost(MergeJoin join, URI source) {
