@@ -6,6 +6,7 @@ import eu.semagrow.stack.modules.api.evaluation.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.EvaluationStrategyImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryExecutorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.optimizer.StaticOptimizer;
+import eu.semagrow.stack.modules.sails.semagrow.rx.*;
 import info.aduna.iteration.CloseableIteration;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -16,12 +17,13 @@ import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.QueryRoot;
 import org.openrdf.query.algebra.TupleExpr;
 import org.openrdf.query.algebra.evaluation.QueryOptimizer;
-import org.openrdf.sail.SailConnection;
 import org.openrdf.sail.SailException;
 import org.openrdf.sail.SailReadOnlyException;
 import org.openrdf.sail.helpers.SailConnectionBase;
+import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
 
 import java.util.Collection;
 import java.util.Collections;
@@ -135,6 +137,36 @@ public class SemagrowSailConnection extends SailConnectionBase {
         logger.debug("Starting decomposition of " + tupleExpr.toString());
 
         TupleExpr decomposed = null;
+        try {
+            decomposed = decompose(tupleExpr, dataset, bindings, includeOnlySources, excludeSources);
+        } catch (QueryDecompositionException e) {
+            throw new SailException(e);
+        }
+        logger.debug("Query decomposed to " + decomposed.toString());
+        logger.info("Decomposed query: " + decomposed.toString());
+
+        return evaluateOnly(decomposed, dataset, bindings, b, p);
+    }
+
+    public  Publisher<? extends BindingSet>
+        evaluateReactive(TupleExpr tupleExpr, Dataset dataset, BindingSet bindings, boolean b, boolean p)
+            throws SailException
+    {
+        return evaluateInternalReactive(tupleExpr, dataset, bindings, b, p, Collections.emptySet(), Collections.emptySet());
+    }
+
+    protected Publisher<? extends BindingSet>
+        evaluateInternalReactive(TupleExpr tupleExpr,
+                     Dataset dataset,
+                     BindingSet bindings,
+                     boolean b, boolean p,
+                     Collection<URI> includeOnlySources,
+                     Collection<URI> excludeSources)
+            throws SailException
+    {
+        logger.debug("Starting decomposition of " + tupleExpr.toString());
+
+        TupleExpr decomposed = null;
         //////////////////////////////////////////////////
         // NA VGEI!!!
         try {
@@ -146,18 +178,17 @@ public class SemagrowSailConnection extends SailConnectionBase {
             logger.debug("Query decomposed to " + decomposed.toString());
             logger.info("Decomposed query: " + decomposed.toString());
             System.out.println(decomposed.toString());
-            return evaluateOnly(decomposed, dataset, bindings, b, p);
+            return evaluateOnlyReactive(decomposed, dataset, bindings, b, p);
         }
-        //////////////////////////////////////////////////
+        /////////////////////////////////////////////////
         try {
             decomposed = decompose(tupleExpr, dataset, bindings, includeOnlySources, excludeSources);
         } catch (QueryDecompositionException e) {
             throw new SailException(e);
         }
         logger.debug("Query decomposed to " + decomposed.toString());
-        logger.info("Decomposed query: " + decomposed.toString());
-        System.out.println(decomposed.toString());
-        return evaluateOnly(decomposed, dataset, bindings, b, p);
+
+        return evaluateOnlyReactive(decomposed, dataset, bindings, b, p);
     }
 
     public CloseableIteration<? extends BindingSet, QueryEvaluationException>
@@ -186,6 +217,19 @@ public class SemagrowSailConnection extends SailConnectionBase {
         }
     }
 
+    public Publisher<? extends BindingSet>
+        evaluateOnlyReactive(TupleExpr expr, Dataset dataset, BindingSet bindings, boolean b, boolean p)
+            throws SailException
+    {
+        try {
+            ReactorQueryExecutorImpl executor = new ReactorQueryExecutorImpl();
+            ReactiveEvaluationStrategy strategy = new FederatedReactorEvaluationStrategyImpl(executor);
+            return strategy.evaluateReactive(expr, bindings);
+        } catch(QueryEvaluationException e) {
+            throw new SailException(e);
+        }
+    }
+
     public TupleExpr decompose(TupleExpr tupleExpr, Dataset dataset, BindingSet bindings)
             throws QueryDecompositionException
     {
@@ -206,6 +250,7 @@ public class SemagrowSailConnection extends SailConnectionBase {
         decomposer.decompose(tupleExpr, dataset, bindings);
 
         long end = System.currentTimeMillis() - start;
+
         logger.debug("Decomposition time = " + end);
 
         return tupleExpr;

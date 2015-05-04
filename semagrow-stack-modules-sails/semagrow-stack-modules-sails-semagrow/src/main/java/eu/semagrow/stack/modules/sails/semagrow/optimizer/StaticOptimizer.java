@@ -34,63 +34,63 @@ public class StaticOptimizer {
     private TupleExpr ls6;
     private TupleExpr ls7;
 
-    private String qcd2 = "SELECT ?party ?page  WHERE {\n" +
-            "   <http://dbpedia.org/resource/Barack_Obama> <http://dbpedia.org/ontology/party> ?party .\n" +
-            "   ?x <http://data.nytimes.com/elements/topicPage> ?page .\n" +
-            "   ?x <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/Barack_Obama> .\n" +
+    private String qcd2 = "SELECT ?party ?page WHERE {\n" +
+    " <http://dbpedia.org/resource/Barack_Obama> <http://dbpedia.org/ontology/party> ?party .\n" +
+            " ?x <http://data.nytimes.com/elements/topicPage> ?page .\n" +
+            " ?x <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/Barack_Obama> .\n" +
             "}";
 
     private String qcd3 = "SELECT ?president ?party ?page WHERE {\n" +
-            "   ?president <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/President> .\n" +
-            "   ?president <http://dbpedia.org/ontology/nationality> <http://dbpedia.org/resource/United_States> .\n" +
-            "   ?president <http://dbpedia.org/ontology/party> ?party .\n" +
-            "   ?x <http://data.nytimes.com/elements/topicPage> ?page .\n" +
-            "   ?x <http://www.w3.org/2002/07/owl#sameAs> ?president .\n" +
+    " ?president <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/President> .\n" +
+            " ?president <http://dbpedia.org/ontology/nationality> <http://dbpedia.org/resource/United_States> .\n" +
+            " ?president <http://dbpedia.org/ontology/party> ?party .\n" +
+            " ?x <http://data.nytimes.com/elements/topicPage> ?page .\n" +
+            " ?x <http://www.w3.org/2002/07/owl#sameAs> ?president .\n" +
             "}";
 
     private String qls3 = "SELECT ?Drug ?IntDrug ?IntEffect WHERE {\n" +
-            "  ?Drug <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Drug> .\n" +
-            "  ?y <http://www.w3.org/2002/07/owl#sameAs> ?Drug .\n" +
-            "  ?Int <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/interactionDrug1> ?y .\n" +
-            "  ?Int <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/interactionDrug2> ?IntDrug .\n" +
-            "  ?Int <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/text> ?IntEffect . \n" +
+    " ?Drug <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://dbpedia.org/ontology/Drug> .\n" +
+            " ?y <http://www.w3.org/2002/07/owl#sameAs> ?Drug .\n" +
+            " ?Int <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/interactionDrug1> ?y .\n" +
+            " ?Int <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/interactionDrug2> ?IntDrug .\n" +
+            " ?Int <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/text> ?IntEffect . \n" +
             "}";
 
     private String qls4 = "SELECT ?drugDesc ?cpd ?equation WHERE {\n" +
-            "  ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugCategory> <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugcategory/cathartics> .\n" +
-            "  ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/keggCompoundId> ?cpd .\n" +
-            "  ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/description> ?drugDesc .\n" +
-            "  ?enzyme <http://bio2rdf.org/ns/kegg#xSubstrate> ?cpd .\n" +
-            "  ?enzyme <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://bio2rdf.org/ns/kegg#Enzyme> .\n" +
-            "  ?reaction <http://bio2rdf.org/ns/kegg#xEnzyme> ?enzyme .\n" +
-            "  ?reaction <http://bio2rdf.org/ns/kegg#equation> ?equation . \n" +
+    " ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugCategory> <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugcategory/cathartics> .\n" +
+            " ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/keggCompoundId> ?cpd .\n" +
+            " ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/description> ?drugDesc .\n" +
+            " ?enzyme <http://bio2rdf.org/ns/kegg#xSubstrate> ?cpd .\n" +
+            " ?enzyme <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://bio2rdf.org/ns/kegg#Enzyme> .\n" +
+            " ?reaction <http://bio2rdf.org/ns/kegg#xEnzyme> ?enzyme .\n" +
+            " ?reaction <http://bio2rdf.org/ns/kegg#equation> ?equation . \n" +
             "}";
 
     private String qls5 = "SELECT $drug $keggUrl $chebiImage WHERE {\n" +
-            "  $drug <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugs> .\n" +
-            "  $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/keggCompoundId> $keggDrug .\n" +
-            "  $keggDrug <http://bio2rdf.org/ns/bio2rdf#url> $keggUrl .\n" +
-            "  $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName> $drugBankName .\n" +
-            "  $chebiDrug <http://purl.org/dc/elements/1.1/title> $drugBankName .\n" +
-            "  $chebiDrug <http://bio2rdf.org/ns/bio2rdf#image> $chebiImage .\n" +
+    " $drug <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugs> .\n" +
+            " $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/keggCompoundId> $keggDrug .\n" +
+            " $keggDrug <http://bio2rdf.org/ns/bio2rdf#url> $keggUrl .\n" +
+            " $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/genericName> $drugBankName .\n" +
+            " $chebiDrug <http://purl.org/dc/elements/1.1/title> $drugBankName .\n" +
+            " $chebiDrug <http://bio2rdf.org/ns/bio2rdf#image> $chebiImage .\n" +
             "} ";
 
     private String qls6 = "SELECT ?drug ?title WHERE { \n" +
-            "  ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugCategory> <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugcategory/micronutrient> .\n" +
-            "  ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/casRegistryNumber> ?id .\n" +
-            "  ?keggDrug <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://bio2rdf.org/ns/kegg#Drug> .\n" +
-            "  ?keggDrug <http://bio2rdf.org/ns/bio2rdf#xRef> ?id .\n" +
-            "  ?keggDrug <http://purl.org/dc/elements/1.1/title> ?title .\n" +
+    " ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugCategory> <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugcategory/micronutrient> .\n" +
+            " ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/casRegistryNumber> ?id .\n" +
+            " ?keggDrug <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://bio2rdf.org/ns/kegg#Drug> .\n" +
+            " ?keggDrug <http://bio2rdf.org/ns/bio2rdf#xRef> ?id .\n" +
+            " ?keggDrug <http://purl.org/dc/elements/1.1/title> ?title .\n" +
             "}";
 
-    private String qls7 = "SELECT $drug $transform $mass WHERE {  \n" +
-            "  { $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/affectedOrganism>  'Humans and other mammals'.\n" +
-            "    $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/casRegistryNumber> $cas .\n" +
-            "    $keggDrug <http://bio2rdf.org/ns/bio2rdf#xRef> $cas .\n" +
-            "    $keggDrug <http://bio2rdf.org/ns/bio2rdf#mass> $mass\n" +
-            "      FILTER ( $mass > '5' )\n" +
-            "  } \n" +
-            "  OPTIONAL { $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/biotransformation> $transform . } \n" +
+    private String qls7 = "SELECT $drug $transform $mass WHERE { \n" +
+    " { $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/affectedOrganism> 'Humans and other mammals'.\n" +
+            " $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/casRegistryNumber> $cas .\n" +
+            " $keggDrug <http://bio2rdf.org/ns/bio2rdf#xRef> $cas .\n" +
+            " $keggDrug <http://bio2rdf.org/ns/bio2rdf#mass> $mass\n" +
+            " FILTER ( $mass > '5' )\n" +
+            " } \n" +
+            " OPTIONAL { $drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/biotransformation> $transform . } \n" +
             "}";
 
     public StaticOptimizer() throws MalformedQueryException {
@@ -149,11 +149,11 @@ public class StaticOptimizer {
 
         return new Projection(
                 new BindJoin(
-                    new BindJoin(
-                        new SourceQuery(new Join(new Join(p.get(0),p.get(1)), p.get(2)), Dbpedia),
-                        groupPatternCD(p.get(4))
-                    ),
-                    new SourceQuery(p.get(3), NYT)
+                        new BindJoin(
+                                new SourceQuery(new Join(new Join(p.get(0),p.get(1)), p.get(2)), Dbpedia),
+                                groupPatternCD(p.get(4))
+                        ),
+                        new SourceQuery(p.get(3), NYT)
                 ), ((Projection) q).getProjectionElemList());
     }
 
@@ -185,13 +185,13 @@ public class StaticOptimizer {
 
         return new Projection(
                 new BindJoin(
-                    new BindJoin(
-                            new BindJoin(
-                                    new SourceQuery(new Join(new Join(p.get(0),p.get(1)), p.get(3)), DrugBank),
-                                    new Union(new SourceQuery(p.get(2),KEGG), new SourceQuery(p.get(2),ChEBI))
-                            ),
-                            new Union(new SourceQuery(p.get(4),KEGG), new SourceQuery(p.get(4),ChEBI))
-                    ), new SourceQuery(p.get(5),ChEBI)
+                        new BindJoin(
+                                new BindJoin(
+                                        new SourceQuery(new Join(new Join(p.get(0),p.get(1)), p.get(3)), DrugBank),
+                                        new Union(new SourceQuery(p.get(2),KEGG), new SourceQuery(p.get(2),ChEBI))
+                                ),
+                                new Union(new SourceQuery(p.get(4),KEGG), new SourceQuery(p.get(4),ChEBI))
+                        ), new SourceQuery(p.get(5),ChEBI)
                 ), ((Projection) q).getProjectionElemList());
     }
 

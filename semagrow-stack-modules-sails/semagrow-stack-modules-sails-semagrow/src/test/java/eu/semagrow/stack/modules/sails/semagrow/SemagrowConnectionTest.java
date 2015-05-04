@@ -20,6 +20,10 @@ import org.openrdf.sail.inferencer.fc.config.ForwardChainingRDFSInferencerConfig
 import org.openrdf.sail.memory.config.MemoryStoreConfig;
 
 import java.io.File;
+import java.lang.reflect.Array;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.concurrent.CountDownLatch;
 
 public class SemagrowConnectionTest extends TestCase {
 
@@ -29,9 +33,69 @@ public class SemagrowConnectionTest extends TestCase {
 
     public void testEvaluateInternal() throws Exception {
 
+        String q = "SELECT ?party ?page  WHERE {\n" +
+                "   <http://dbpedia.org/resource/Barack_Obama> <http://dbpedia.org/ontology/party> ?party .\n" +
+                "   ?x <http://data.nytimes.com/elements/topicPage> ?page .\n" +
+                "   ?x <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/Barack_Obama> .\n" +
+                "}" ;
+
+        List<String> mf = new ArrayList<String>();
+        mf.add("/home/antonis/Documents/crossDomain.void.n3");
+
+        SailImplConfig config = new SemagrowSailConfig();
+
+        SemagrowRepositoryConfig repoConfig = new SemagrowRepositoryConfig();
+        repoConfig.getSemagrowSailConfig().setInitialFiles(mf);
+        SemagrowSailRepository repo = (SemagrowSailRepository) RepositoryRegistry.getInstance().get(repoConfig.getType()).getRepository(repoConfig);
+        repo.initialize();
+        SemagrowSailRepositoryConnection conn = repo.getConnection();
+        SemagrowTupleQuery query =  conn.prepareTupleQuery(QueryLanguage.SPARQL, q);
+        query.setIncludeInferred(true);
+        query.setIncludeProvenanceData(true);
+
+        final CountDownLatch latch = new CountDownLatch(1);
+
+
+        query.evaluate(new TupleQueryResultHandler() {
+            @Override
+            public void handleBoolean(boolean b) throws
+                    QueryResultHandlerException {
+
+            }
+
+            @Override
+            public void handleLinks(List<String> list) throws
+                    QueryResultHandlerException {
+
+            }
+
+            @Override
+            public void startQueryResult(List<String> list) throws
+                    TupleQueryResultHandlerException {
+
+            }
+
+            @Override
+            public void endQueryResult() throws
+                    TupleQueryResultHandlerException {
+                latch.countDown();
+            }
+
+            @Override
+            public void handleSolution(BindingSet bindingSet) throws
+                    TupleQueryResultHandlerException {
+                System.out.println(bindingSet);
+            }
+        });
+
+        latch.await();
+    }
+
+    public void testEvaluateInternal1() throws Exception {
+
         String q1 = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
-                   "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
-                   "PREFIX void: <http://rdfs.org/ns/void#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX void: <http://rdfs.org/ns/void#>\n" +
                 "SELECT *  { ?s <http://localhost/my> ?z. " +
                 "?z <http://rdf.iit.demokritos.gr/2014/my#pred2> ?y . }" ;
 

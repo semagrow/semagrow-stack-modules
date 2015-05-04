@@ -39,11 +39,11 @@ public class QueryExecutorImpl implements QueryExecutor {
 
     private final Logger logger = LoggerFactory.getLogger(QueryExecutorImpl.class);
 
+    private int countconn = 0;
+
     private Map<URI,Repository> repoMap = new HashMap<URI,Repository>();
 
     private boolean rowIdOpt = false;
-
-    private int countconn = 0;
 
     public void initialize() { }
 
@@ -76,7 +76,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         try {
             Set<String> freeVars = computeVars(expr);
 
-            List<String> relevant = getRelevantBindingNames(bindings, freeVars);
+            Set<String> relevant = getRelevantBindingNames(bindings, freeVars);
             final BindingSet relevantBindings = filterRelevant(bindings, relevant);
 
             freeVars.removeAll(bindings.getBindingNames());
@@ -106,7 +106,6 @@ public class QueryExecutorImpl implements QueryExecutor {
                     }
                 };
                 */
-
             } else {
                 String sparqlQuery = buildSPARQLQuery(expr, freeVars);
                 result = sendTupleQuery(endpoint, sparqlQuery, relevantBindings);
@@ -160,10 +159,11 @@ public class QueryExecutorImpl implements QueryExecutor {
                 return result;
             }
 
+
             try {
                 result = evaluateInternal(endpoint, expr, bindings);
                 return result;
-            } catch(QueryEvaluationException e) {
+            } catch(Exception e) {
                 logger.debug("Failover to sequential iteration", e);
                 return new SequentialQueryIteration(endpoint, expr, bindings);
             }
@@ -193,22 +193,15 @@ public class QueryExecutorImpl implements QueryExecutor {
         CloseableIteration<BindingSet, QueryEvaluationException> result = null;
 
         Set<String> exprVars = computeVars(expr);
-        
-        List<String> relevant = getRelevantBindingNames(bindings, exprVars);
 
-        String sparqlQuery = "";
+        Set<String> relevant = getRelevantBindingNames(bindings, exprVars);
 
-        if (relevant.isEmpty())
-            sparqlQuery = buildSelectSPARQLQuery(expr, null);
-        else
-            sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
-
-        System.out.println(sparqlQuery);
+        //String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
+        String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
 
         result = sendTupleQuery(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
 
         if (!relevant.isEmpty()) {
-        	
             if (rowIdOpt)
                 result = new InsertValuesBindingsIteration(result, bindings);
             else {
@@ -217,17 +210,17 @@ public class QueryExecutorImpl implements QueryExecutor {
                                 result,
                                 new HashSet<String>(relevant));
             }
-            
+
         }
         else {
-        	
+
         	result = new ServiceCrossProductIteration(result, bindings);
 
         }
         return result;
     }
 
-    private BindingSet filterRelevant(BindingSet bindings, List<String> relevant) {
+    protected BindingSet filterRelevant(BindingSet bindings, Collection<String> relevant) {
         QueryBindingSet newBindings = new QueryBindingSet();
         for (Binding b : bindings) {
             if (relevant.contains(b.getName())) {
@@ -237,15 +230,16 @@ public class QueryExecutorImpl implements QueryExecutor {
         return newBindings;
     }
 
-    private List<String> getRelevantBindingNames(List<BindingSet> bindings, Set<String> exprVars) {
+    protected Set<String> getRelevantBindingNames(List<BindingSet> bindings, Set<String> exprVars) {
 
     	if (bindings.isEmpty())
-    		return new ArrayList<String>();
+    		return Collections.emptySet();
+
         return getRelevantBindingNames(bindings.get(0), exprVars);
     }
 
-    private List<String> getRelevantBindingNames(BindingSet bindings, Set<String> exprVars){
-        List<String> relevantBindingNames = new ArrayList<String>(5);
+    protected Set<String> getRelevantBindingNames(BindingSet bindings, Set<String> exprVars){
+        Set<String> relevantBindingNames = new HashSet<String>(5);
         for (String bName : bindings.getBindingNames()) {
             if (exprVars.contains(bName))
                 relevantBindingNames.add(bName);
@@ -260,7 +254,7 @@ public class QueryExecutorImpl implements QueryExecutor {
      *
      * @return the set of variable names in the given service expression
      */
-    private Set<String> computeVars(TupleExpr serviceExpression) {
+    protected Set<String> computeVars(TupleExpr serviceExpression) {
         final Set<String> res = new HashSet<String>();
         serviceExpression.visit(new QueryModelVisitorBase<RuntimeException>() {
 
@@ -288,12 +282,12 @@ public class QueryExecutorImpl implements QueryExecutor {
         for (Binding b : bindings)
             query.setBinding(b.getName(), b.getValue());
 
-        logger.debug("Sending to " + endpoint.stringValue() + " query " + sparqlQuery.replace('\n', ' ')+ " with bindings " + bindings.toString());
-        return closeConnAfter(this, conn, query.evaluate());
+        logger.debug("Sending to " + endpoint.stringValue() + " query " + sparqlQuery.replace('\n', ' '));
+        return closeConnAfter(conn, query.evaluate());
     }
 
-    private static <E,X extends Exception> CloseableIteration<E,X> closeConnAfter(QueryExecutorImpl t, RepositoryConnection conn, CloseableIteration<E,X> iter) {
-        return new CloseConnAfterIteration<E,X>(t, conn,iter);
+    private static <E,X extends Exception> CloseableIteration<E,X> closeConnAfter(RepositoryConnection conn, CloseableIteration<E,X> iter) {
+        return new CloseConnAfterIteration<E,X>(conn,iter);
     }
 
     protected boolean
@@ -306,11 +300,9 @@ public class QueryExecutorImpl implements QueryExecutor {
         for (Binding b : bindings)
             query.setBinding(b.getName(), b.getValue());
 
-        logger.debug("Sending to " + endpoint.stringValue() + " query " + sparqlQuery.replace('\n', ' ') + " with bindings " + bindings.toString());
+        logger.debug("Sending to " + endpoint.stringValue() + " query " + sparqlQuery.replace('\n', ' '));
         boolean answer = query.evaluate();
         conn.close();
-        logger.debug("Connection " + conn.toString() + " closed, currently open "+ countconn);
-        countconn--;
         return answer;
     }
 
@@ -326,7 +318,7 @@ public class QueryExecutorImpl implements QueryExecutor {
      *         input bindings
      * @throws QueryEvaluationException
      */
-    private String buildVALUESClause(List<BindingSet> bindings, List<String> relevantBindingNames)
+    private String buildVALUESClause(List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws QueryEvaluationException
     {
 
@@ -363,14 +355,14 @@ public class QueryExecutorImpl implements QueryExecutor {
         return sb.toString();
     }
 
-    private String buildSPARQLQuery(TupleExpr expr, Collection<String> projection) throws Exception {
+    protected String buildSPARQLQuery(TupleExpr expr, Collection<String> projection) throws Exception {
         if (projection != null && projection.isEmpty())
             return buildAskSPARQLQuery(expr);
         else
             return buildSelectSPARQLQuery(expr, projection);
     }
 
-    private String buildSelectSPARQLQuery(TupleExpr expr, Collection<String> projection)
+    protected String buildSelectSPARQLQuery(TupleExpr expr, Collection<String> projection)
             throws Exception {
 
 
@@ -400,7 +392,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         return new SPARQLQueryRenderer().render(query);
     }
 
-    private String buildSPARQLQueryVALUES(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+    protected String buildSPARQLQueryVALUES(TupleExpr expr, List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws Exception {
 
         Set<String> freeVars = computeVars(expr);
@@ -416,8 +408,9 @@ public class QueryExecutorImpl implements QueryExecutor {
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////
 
-    protected String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+    protected String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws Exception {
+
         Set<String> freeVars = computeVars(expr);
         freeVars.removeAll(relevantBindingNames);
         if (freeVars.isEmpty()) {
@@ -459,8 +452,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         pr = pr + "\nWHERE { ";
         return (pr + sb.toString());
     }
-
-    private String buildSPARQLQueryUNIONFILTER(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+    private String buildSPARQLQueryUNIONFILTER(TupleExpr expr, List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws Exception {
         String query = new SPARQLQueryRenderer().render(new ParsedTupleQuery(expr));
         String where = query.substring(query.indexOf('{'));
@@ -501,11 +493,10 @@ public class QueryExecutorImpl implements QueryExecutor {
     ////////////////////////////////////////////////////////////////////////////////////
     ////////////////////////////////////////////////////////////////////////////////////
 
-
     protected StringBuilder appendValueAsString(StringBuilder sb, Value value) {
 
         // TODO check if there is some convenient method in Sesame!
-    	
+
         if (value == null)
             return sb.append("UNDEF"); // see grammar for BINDINGs def
 
@@ -547,11 +538,13 @@ public class QueryExecutorImpl implements QueryExecutor {
         //    sb.append('@');
         //    sb.append(lit.getLanguage());
        // }
-        if (lit.getDatatype() != null ) {
+        //else {
+        if (lit.getDatatype() != null) {
             sb.append("^^<");
             sb.append(lit.getDatatype().stringValue());
             sb.append('>');
         }
+        //}
         return sb;
     }
 
@@ -572,14 +565,7 @@ public class QueryExecutorImpl implements QueryExecutor {
 
         @Override
         protected void handleBindings() throws QueryEvaluationException {
-            for (final BindingSet b : bindings) {
-                /*
-                CloseableIteration<BindingSet,QueryEvaluationException> result = new DelayedIteration<BindingSet, QueryEvaluationException>() {
-                    @Override
-                    protected Iteration<? extends BindingSet, ? extends QueryEvaluationException> createIteration() throws QueryEvaluationException {
-                        return evaluate(endpoint, expr, b);
-                    }
-                };*/
+            for (BindingSet b : bindings) {
                 CloseableIteration<BindingSet,QueryEvaluationException> result = evaluate(endpoint, expr, b);
                 addResult(result);
             }
@@ -591,13 +577,11 @@ public class QueryExecutorImpl implements QueryExecutor {
     private static class CloseConnAfterIteration<E,X extends Exception> extends IterationWrapper<E,X> {
 
         private RepositoryConnection conn;
-        private QueryExecutorImpl impl;
 
-        public CloseConnAfterIteration(QueryExecutorImpl impl, RepositoryConnection conn, Iteration<? extends E, ? extends X> iter) {
+        public CloseConnAfterIteration(RepositoryConnection conn, Iteration<? extends E, ? extends X> iter) {
             super(iter);
             assert conn != null;
             this.conn = conn;
-            this.impl = impl;
         }
 
         @Override
@@ -605,11 +589,8 @@ public class QueryExecutorImpl implements QueryExecutor {
             super.handleClose();
 
             try {
-                if (conn != null && conn.isOpen()) {
+                if (conn != null && conn.isOpen())
                     conn.close();
-                    impl.logger.debug("Connection " + conn.toString() + " closed, currently open "+ impl.countconn);
-                    impl.countconn--;
-                }
             } catch (RepositoryException e) {
 
             }
