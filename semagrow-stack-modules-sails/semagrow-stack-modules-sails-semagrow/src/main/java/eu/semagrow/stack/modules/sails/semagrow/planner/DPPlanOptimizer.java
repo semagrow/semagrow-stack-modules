@@ -92,6 +92,7 @@ public class DPPlanOptimizer implements PlanOptimizer {
 
         int count = r.size();
 
+        // TODO: implement a generic pair enumerator.
         // bottom-up starting for subplans of size "k"
         for (int k = 2; k <= count; k++) {
 
@@ -146,4 +147,35 @@ public class DPPlanOptimizer implements PlanOptimizer {
         return new CombinationIterator<T>(k, s);
     }
 
+
+    private class Pair<A, B>
+    {
+
+        final private A first;
+
+        final private B second;
+
+        public Pair(A first, B second)
+        {
+            this.first = first;
+            this.second = second;
+        }
+
+
+        public A getFirst() { return first; }
+
+        public B getSecond() { return second; }
+
+        public String toString() { return "(" + first.toString() + ", " + second.toString() + ")"; }
+
+
+    }
+
+    /*
+    private class SubsetPairIterator<A> extends Iterator<Pair<Set<A>, Set<A>>>
+    {
+
+
+    }
+    */
 }

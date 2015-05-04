@@ -7,6 +7,7 @@ import eu.semagrow.stack.modules.sails.semagrow.algebra.SourceQuery;
 import eu.semagrow.stack.modules.sails.semagrow.planner.Plan;
 import org.openrdf.model.URI;
 import org.openrdf.query.algebra.*;
+import org.openrdf.query.algebra.helpers.QueryModelVisitorBase;
 import org.openrdf.query.algebra.helpers.VarNameCollector;
 
 import java.util.Set;
@@ -22,12 +23,13 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
         this.statistics = statistics;
     }
 
-    public long getCardinality(TupleExpr expr) {
-
+    public long getCardinality(TupleExpr expr)
+    {
         return getCardinality(expr, null);
     }
 
-    public long getCardinality(TupleExpr expr, URI source) {
+    public long getCardinality(TupleExpr expr, URI source)
+    {
         if (expr instanceof StatementPattern)
             return getCardinality((StatementPattern)expr, source);
         else if (expr instanceof Union)
@@ -86,6 +88,7 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
 
         double t = card1 * card2 * sel;
         long tt = (long)t;
+
         if (tt < 0)
             return 0;
 
@@ -111,6 +114,7 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
             card += getCardinality(query.getArg(), src);
         return card;
     }
+
 
     /**
      * Estimate the join selectivity factor *sel* of a join, such that
@@ -286,5 +290,7 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
         set1.retainAll(set2);
         return set1;
     }
+
+
 }
 

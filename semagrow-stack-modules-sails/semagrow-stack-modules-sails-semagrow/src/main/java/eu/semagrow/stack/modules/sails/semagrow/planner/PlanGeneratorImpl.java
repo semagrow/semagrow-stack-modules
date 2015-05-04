@@ -4,6 +4,8 @@ import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
 import eu.semagrow.stack.modules.api.source.SourceMetadata;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.BindJoin;
+import eu.semagrow.stack.modules.sails.semagrow.algebra.HashJoin;
+import eu.semagrow.stack.modules.sails.semagrow.algebra.MergeJoin;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.SourceQuery;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimator;
 import org.openrdf.model.URI;
@@ -40,6 +42,8 @@ public class PlanGeneratorImpl implements PlanGenerator {
         this.joinImplGenerators = new LinkedList<JoinImplGenerator>();
         this.joinImplGenerators.add(new BindJoinGenerator());
         this.joinImplGenerators.add(new RemoteJoinGenerator());
+        //this.joinImplGenerators.add(new HashJoinGenerator());
+        //this.joinImplGenerators.add(new MergeJoinGenerator());
     }
 
     /**
@@ -215,6 +219,13 @@ public class PlanGeneratorImpl implements PlanGenerator {
             return createPlan(p.getPlanId(), new SourceQuery(p, s.getURI()), Site.LOCAL);
     }
 
+    private Plan enforceOrdering(Plan p, Ordering ordering)
+    {
+        //TODO: implement
+
+        return p;
+    }
+
     @Override
     public Collection<Plan> finalizePlans(Collection<Plan> plans) { return plans; }
 
@@ -328,6 +339,40 @@ public class PlanGeneratorImpl implements PlanGenerator {
                 }
             }
 
+    }
+
+    private class HashJoinGenerator implements JoinImplGenerator {
+
+        @Override
+        public Collection<Join> generate(Plan p1, Plan p2) {
+
+            Collection<Join> l = new LinkedList<Join>();
+
+            Join expr = new HashJoin(enforceLocalSite(p1), enforceLocalSite(p2));
+
+            l.add(expr);
+
+            return l;
         }
+    }
+
+    private class MergeJoinGenerator implements JoinImplGenerator {
+
+        @Override
+        public Collection<Join> generate(Plan p1, Plan p2) {
+
+            Collection<Join> l = new LinkedList<Join>();
+
+            Ordering o = null;
+
+            Join expr = new MergeJoin(
+                    enforceLocalSite(enforceOrdering(p1, o)),
+                    enforceLocalSite(enforceOrdering(p2, o)));
+
+            l.add(expr);
+
+            return l;
+        }
+    }
 
 }
