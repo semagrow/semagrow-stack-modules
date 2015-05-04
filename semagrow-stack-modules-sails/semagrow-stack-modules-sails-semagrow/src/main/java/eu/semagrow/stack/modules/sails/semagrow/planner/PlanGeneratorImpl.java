@@ -210,7 +210,13 @@ public class PlanGeneratorImpl implements PlanGenerator {
     }
 
     @Override
-    public Collection<Plan> finalizePlans(Collection<Plan> plans) { return plans; }
+    public Collection<Plan> finalizePlans(Collection<Plan> plans) {
+        Collection<Plan> pl = new LinkedList<Plan>();
+        for (Plan p : plans)
+            pl.add(enforceLocalSite(p));
+
+        return pl;
+    }
 
 
     protected interface JoinImplGenerator
