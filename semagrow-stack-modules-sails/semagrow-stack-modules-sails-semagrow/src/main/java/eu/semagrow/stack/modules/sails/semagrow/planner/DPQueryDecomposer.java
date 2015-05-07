@@ -53,7 +53,6 @@ public class DPQueryDecomposer implements QueryDecomposer {
 
         Plan bestPlan = planOptimizer.getBestPlan(bgp, bindings, dataset);
         bgp.replaceWith(bestPlan);
-
     }
 
     protected DecomposerContext getContext(TupleExpr bgp, Dataset dataset, BindingSet bindings) {

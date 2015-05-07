@@ -1,9 +1,11 @@
 package eu.semagrow.stack.modules.querydecomp.selector;
 
 import eu.semagrow.stack.modules.api.statistics.Statistics;
+import eu.semagrow.stack.modules.api.statistics.StatisticsProvider;
 import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
+import org.openrdf.query.BindingSet;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.repository.Repository;
 
@@ -12,10 +14,9 @@ import java.util.*;
 /**
  * Created by angel on 4/30/14.
  */
-public class VOIDStatistics extends VOIDBase implements Statistics {
+public class VOIDStatisticsProvider extends VOIDBase implements StatisticsProvider {
 
-
-    public VOIDStatistics(Repository voidRepository) {
+    public VOIDStatisticsProvider(Repository voidRepository) {
         super(voidRepository);
     }
 
@@ -108,6 +109,15 @@ public class VOIDStatistics extends VOIDBase implements Statistics {
         }else{
             return getDistinctPredicates(datasets);
         }
+    }
+
+    @Override
+    public Statistics getStats(final StatementPattern pattern, BindingSet bindings, final URI source) {
+        return new StatisticsImpl(pattern,
+                getPatternCount(pattern, source),
+                getDistinctSubjects(pattern, source),
+                getDistinctPredicates(pattern, source),
+                getDistinctObjects(pattern,source));
     }
 
     public long getPatternCount(StatementPattern pattern, URI source) {
@@ -238,5 +248,45 @@ public class VOIDStatistics extends VOIDBase implements Statistics {
             }
         }
         return (i == 0) ? 1 : triples/i;
+    }
+
+
+    private class StatisticsImpl implements Statistics {
+
+        private StatementPattern pattern;
+        private long patternCount;
+        private long distinctSubjects;
+        private long distinctPredicates;
+        private long distinctObjects;
+
+        public StatisticsImpl(StatementPattern pattern,
+                              long patternCount,
+                              long distinctSubjects,
+                              long distinctPredicates,
+                              long distinctObjects)
+        {
+            this.pattern = pattern;
+            this.patternCount = patternCount;
+            this.distinctSubjects = distinctSubjects;
+            this.distinctPredicates = distinctPredicates;
+            this.distinctObjects = distinctObjects;
+        }
+
+        @Override
+        public long getCardinality() { return patternCount; }
+
+        @Override
+        public long getVarCardinality(String var) {
+            if (pattern.getSubjectVar().getName().equals(var))
+                return distinctSubjects;
+
+            if (pattern.getPredicateVar().getName().equals(var))
+                return distinctPredicates;
+
+            if (pattern.getObjectVar().getName().equals(var))
+                return distinctObjects;
+
+            return 0;
+        }
     }
 }
