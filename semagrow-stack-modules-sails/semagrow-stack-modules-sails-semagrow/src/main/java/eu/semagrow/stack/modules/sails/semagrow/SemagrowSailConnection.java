@@ -181,12 +181,14 @@ public class SemagrowSailConnection extends SailConnectionBase {
                                Collection<URI> includeOnlySources, Collection<URI> excludeSources)
             throws QueryDecompositionException {
 
+
         QueryOptimizer optimizer = semagrowSail.getOptimizer();
         optimizer.optimize(tupleExpr, dataset, bindings);
+        long t = System.currentTimeMillis();
         QueryDecomposer decomposer = semagrowSail.getDecomposer(includeOnlySources, excludeSources);
         tupleExpr = new QueryRoot(tupleExpr);
         decomposer.decompose(tupleExpr, dataset, bindings);
-
+        logger.debug("Decomp time = " + (System.currentTimeMillis() - t));
         return tupleExpr;
     }
 

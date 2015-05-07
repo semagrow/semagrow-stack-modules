@@ -235,7 +235,6 @@ public class PlanGeneratorImpl implements PlanGenerator {
         return pl;
     }
 
-
     protected interface JoinImplGenerator
     {
         Collection<Join> generate(Plan p1, Plan p2);
