@@ -250,7 +250,6 @@ public class VOIDStatisticsProvider extends VOIDBase implements StatisticsProvid
         return (i == 0) ? 1 : triples/i;
     }
 
-
     private class StatisticsImpl implements Statistics {
 
         private StatementPattern pattern;

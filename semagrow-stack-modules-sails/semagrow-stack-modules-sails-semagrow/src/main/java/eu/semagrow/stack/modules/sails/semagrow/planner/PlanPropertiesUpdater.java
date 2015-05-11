@@ -23,7 +23,9 @@ public class PlanPropertiesUpdater extends PlanVisitorBase<RuntimeException> {
 
     @Override
     public void meet(Order order) throws RuntimeException  {
-
+        Ordering o = new Ordering(order.getElements());
+        order.getArg().visit(this);
+        properties.setOrdering(o);
     }
 
     @Override

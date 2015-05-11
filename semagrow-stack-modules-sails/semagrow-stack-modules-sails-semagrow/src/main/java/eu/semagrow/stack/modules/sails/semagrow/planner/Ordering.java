@@ -11,17 +11,31 @@ import java.util.List;
  */
 public class Ordering {
 
+    static public Ordering NOORDERING = new Ordering(new LinkedList<OrderElem>());
+
     private List<OrderElem> orderElements;
 
     public Ordering(List<OrderElem> orderElements) {
         this.orderElements = new LinkedList<OrderElem>(orderElements);
     }
 
-    public boolean cover(Ordering ordering) {
-        return isPrefix(orderElements.iterator(), ordering.orderElements.iterator());
+    public Ordering cover(Ordering ordering) {
+        if (isPrefix(orderElements.iterator(), ordering.orderElements.iterator())) {
+            return this.clone();
+        } else if (isPrefix(orderElements.iterator(), ordering.orderElements.iterator())) {
+            return ordering.clone();
+        } else {
+            return null;
+        }
     }
 
-    static public Ordering NoOrdering() { return new Ordering(new LinkedList<OrderElem>()); }
+    public boolean isCoverOf(Ordering ordering) {
+        return isPrefix(ordering.orderElements.iterator(), orderElements.iterator());
+    }
+
+    public Ordering clone() {
+        return new Ordering(this.orderElements);
+    }
 
     static private <T> boolean isPrefix(Iterator<T> iter1, Iterator<T> iter2) {
 
@@ -37,6 +51,7 @@ public class Ordering {
         }
         return true;
     }
+
 
     public String toString() {
         if (orderElements.isEmpty())
