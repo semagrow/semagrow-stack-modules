@@ -1,10 +1,13 @@
 package eu.semagrow.stack.modules.sails.semagrow.planner;
 
 import org.openrdf.query.algebra.OrderElem;
+import org.openrdf.query.algebra.ValueExpr;
+import org.openrdf.query.algebra.Var;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by angel on 10/2/14.
@@ -50,6 +53,20 @@ public class Ordering {
                 return false;
         }
         return true;
+    }
+
+
+    public Ordering filter(Set<String> fields) {
+        List<OrderElem> oo = new LinkedList<OrderElem>();
+        for (OrderElem el : this.orderElements) {
+            ValueExpr ve = el.getExpr();
+            if (ve instanceof Var) {
+                Var v = (Var) ve;
+                if (fields.contains(v.getName()))
+                    oo.add(el);
+            }
+        }
+        return new Ordering(oo);
     }
 
 
