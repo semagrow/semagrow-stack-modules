@@ -48,7 +48,7 @@ public class PlanProperties {
 
     public static PlanProperties defaultProperties() {
         PlanProperties p = new PlanProperties();
-        p.setOrdering(Ordering.NoOrdering());
+        p.setOrdering(Ordering.NOORDERING);
         p.setSite(Site.LOCAL);
         return p;
     }
