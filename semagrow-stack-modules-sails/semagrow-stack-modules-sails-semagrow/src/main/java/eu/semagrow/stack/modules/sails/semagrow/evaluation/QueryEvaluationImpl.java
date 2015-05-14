@@ -76,7 +76,8 @@ public class QueryEvaluationImpl implements FederatedQueryEvaluation {
         protected Collection<QueryExecutionInterceptor> getQueryExecutorInterceptors() {
         	Collection<QueryExecutionInterceptor> interceptors = super.getQueryExecutorInterceptors();
         	//interceptors.add(new ObservingInterceptor());
-            interceptors.add(new QueryLogInterceptor(QueryLogRecordFactoryImpl.getInstance(), getQFRHandler(), this.getMaterializationManager()));
+            //interceptors.add(new QueryLogInterceptor(QueryLogRecordFactoryImpl.getInstance(), getQFRHandler(), this.getMaterializationManager()));
+            interceptors.add(new QueryLogInterceptor(getQFRHandler(), this.getMaterializationManager()));
         	return interceptors;
         }
 

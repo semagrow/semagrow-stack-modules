@@ -24,5 +24,7 @@ public class SemagrowConfig extends SailImplConfigBase {
                         new MemoryStoreConfig()));
     }
 
+    //crossDomain.void.n3
+
     public File getMetadataFile() throws IOException { return FileUtils.getFile("metadata.ttl"); }
 }

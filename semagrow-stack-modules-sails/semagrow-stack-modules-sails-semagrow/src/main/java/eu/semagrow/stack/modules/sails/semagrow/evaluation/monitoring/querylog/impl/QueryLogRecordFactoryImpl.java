@@ -3,9 +3,11 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogRecord;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogRecordFactory;
 import org.openrdf.model.URI;
+import org.openrdf.query.BindingSet;
 import org.openrdf.query.algebra.TupleExpr;
 
 import java.util.Set;
+import java.util.UUID;
 
 /**
  * Created by angel on 10/22/14.
@@ -18,7 +20,7 @@ public class QueryLogRecordFactoryImpl implements QueryLogRecordFactory {
     @Override
     public QueryLogRecord createQueryLogRecord(URI endpoint,
                                                TupleExpr expr,
-                                               Set<String> bindingNames)
+                                               BindingSet bindingNames)
     {
         // TODO: session is null
         return new QueryLogRecordImpl(null, endpoint, expr, bindingNames);

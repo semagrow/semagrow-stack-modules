@@ -39,7 +39,7 @@ public class ObservingInterceptor
     public CloseableIteration<BindingSet, QueryEvaluationException>
         afterExecution(URI endpoint, TupleExpr expr, BindingSet bindings, CloseableIteration<BindingSet, QueryEvaluationException> result) {
 
-        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindings.getBindingNames());
+        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindings);
         return observe(metadata, result);
     }
 
@@ -58,7 +58,7 @@ public class ObservingInterceptor
 
         Set<String> bindingNames = (bindings.size() == 0) ? new HashSet<String>() : bindings.get(0).getBindingNames();
 
-        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindingNames);
+        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindings.get(0));
 
         return observe(metadata, result);
     }
@@ -73,8 +73,9 @@ public class ObservingInterceptor
     }
 
 
-    protected QueryLogRecordImpl createMetadata(URI endpoint, TupleExpr expr, Set<String> bindingNames) {
-        return new QueryLogRecordImpl(this.getQueryEvaluationSession(), endpoint, expr, bindingNames);
+    protected QueryLogRecordImpl createMetadata(URI endpoint, TupleExpr expr, BindingSet bindingNames) {
+        //return new QueryLogRecordImpl(this.getQueryEvaluationSession(), endpoint, expr, bindingNames);
+        return new QueryLogRecordImpl(null, endpoint, expr, bindingNames);
     }
 
     protected class QueryObserver extends ObservingIteration<BindingSet,QueryEvaluationException> {
@@ -85,7 +86,7 @@ public class ObservingInterceptor
             super(iter);
             this.metadata = metadata;
             try {
-				queue.put(metadata.getSession().getSessionId());
+				//queue.put(metadata.getSession().getSessionId());
 				queue.put(Long.toString(System.currentTimeMillis()));
 				queue.put(metadata.getEndpoint());
 				queue.put("@");

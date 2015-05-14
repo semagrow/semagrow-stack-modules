@@ -12,6 +12,7 @@ import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryEvaluationImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.FileManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.QueryLogRotation;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.rdf.RDFQueryLogFactory;
@@ -38,10 +39,7 @@ import org.openrdf.sail.SailException;
 import org.openrdf.sail.StackableSail;
 import org.openrdf.sail.helpers.SailBase;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Collection;
 
 /**
@@ -60,10 +58,14 @@ import java.util.Collection;
  */
 public class SemagrowSail extends SailBase implements StackableSail {
 
+    private final static String logDir = "/var/tmp/log/";
+
     private Sail metadataSail;
     private FederatedQueryEvaluation queryEvaluation;
 
-    private QueryLogWriter handler;
+    private QueryLogHandler handler;
+
+    private QueryLogRotation qfrRotation = new QueryLogRotation();
 
     public SemagrowSail() { }
 
@@ -159,8 +161,8 @@ public class SemagrowSail extends SailBase implements StackableSail {
     }
 
     public MaterializationManager getManager() {
-        File baseDir = new File("/var/tmp/");
-        TupleQueryResultFormat resultFF = TupleQueryResultFormat.BINARY;
+        File baseDir = new File(logDir);
+        TupleQueryResultFormat resultFF = TupleQueryResultFormat.CSV;
 
         TupleQueryResultWriterRegistry  registry = TupleQueryResultWriterRegistry.getInstance();
         TupleQueryResultWriterFactory writerFactory = registry.get(resultFF);
@@ -169,29 +171,31 @@ public class SemagrowSail extends SailBase implements StackableSail {
         return manager;
     }
 
-    public QueryLogWriter getRecordLog() {
+    public QueryLogHandler getRecordLog() {
 
-        QueryLogWriter handler;
+        QueryLogHandler handler;
 
-        File qfrLog  = new File("/var/tmp/qfr.log");
+        File qfrLog  = qfrRotation.checkFileChange();
+
         RDFFormat rdfFF = RDFFormat.NTRIPLES;
 
         RDFWriterRegistry writerRegistry = RDFWriterRegistry.getInstance();
         RDFWriterFactory rdfWriterFactory = writerRegistry.get(rdfFF);
         QueryLogFactory factory = new RDFQueryLogFactory(rdfWriterFactory);
+
         try {
-            OutputStream out = new FileOutputStream(qfrLog);
-            handler = factory.getQueryLogger(out);
+            OutputStream out = new FileOutputStream(qfrLog, true);
+            handler = factory.getQueryRecordLogger(out);
             return handler;
         } catch (FileNotFoundException e) {
-
+            e.printStackTrace();
         }
         return null;
     }
 
     @Override
     public void shutDown() throws SailException {
-        super.shutDown();
+
         if (handler != null) {
             try {
                 handler.endQueryLog();
@@ -199,6 +203,8 @@ public class SemagrowSail extends SailBase implements StackableSail {
                 throw new SailException(e);
             }
         }
+        super.shutDown();
+
     }
 
 }

@@ -1,13 +1,12 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.rdf;
 
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogException;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogHandler;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogRecord;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogWriter;
 import eu.semagrow.stack.modules.vocabulary.QFR;
-import org.openrdf.model.Resource;
-import org.openrdf.model.URI;
-import org.openrdf.model.Value;
-import org.openrdf.model.ValueFactory;
+import org.openrdf.model.*;
+import org.openrdf.model.impl.EmptyModel;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.query.Binding;
@@ -21,17 +20,19 @@ import org.openrdf.queryrender.sparql.SPARQLQueryRenderer;
 import org.openrdf.rio.RDFHandler;
 import org.openrdf.rio.RDFHandlerException;
 import org.openrdf.rio.RDFWriter;
+import org.openrdf.rio.Rio;
+import org.openrdf.rio.helpers.StatementCollector;
 
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * Created by angel on 10/20/14.
  */
-public class RDFQueryLogWriter implements QueryLogWriter {
+public class RDFQueryLogWriter implements QueryLogHandler {
 
     private RDFWriter handler;
     private ValueFactory vf = ValueFactoryImpl.getInstance();
+
 
     public RDFQueryLogWriter(RDFWriter handler) {
         this.handler = handler;
@@ -69,9 +70,9 @@ public class RDFQueryLogWriter implements QueryLogWriter {
         Resource record = vf.createURI("urn:" + UUID.randomUUID().toString());
 
         createStatement(record, RDF.TYPE, QFR.QUERYRECORD);
-        createStatement(record, QFR.SESSION, qr.getSession().getSessionId().toURI());
+       // createStatement(record, QFR.SESSION, qr.getSession().getSessionId().toURI());
         createStatement(record, QFR.ENDPOINT, qr.getEndpoint());
-        createStatement(record, QFR.RESULTFILE, qr.getResults().getId());
+        createStatement(record, QFR.RESULTFILE, qr.getResults());
         createStatement(record, QFR.CARDINALITY, vf.createLiteral(qr.getCardinality()));
         createStatement(record, QFR.START, vf.createLiteral(qr.getStartTime()));
         createStatement(record, QFR.END, vf.createLiteral(qr.getEndTime()));
@@ -102,5 +103,6 @@ public class RDFQueryLogWriter implements QueryLogWriter {
             throw new QueryLogException(e);
         }
     }
+
 
 }
