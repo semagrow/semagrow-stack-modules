@@ -156,7 +156,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
 
         while (it.hasNext()) {
             Plan i = it.next();
-            p = createPlan(p.getPlanId(), new Union(enforceLocalSite(p), enforceLocalSite(i)));
+            p = createPlan(p.getKey(), new Union(enforceLocalSite(p), enforceLocalSite(i)));
         }
 
         return p;
@@ -175,7 +175,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
 
             for (Plan p1 : plan1) {
                 for (Plan p2 : plan2) {
-                    Set<TupleExpr> s = getId(p1.getPlanId(), p2.getPlanId());
+                    Set<TupleExpr> s = getKey(p1.getKey(), p2.getKey());
 
                     Collection<Join> joins = generator.generate(p1, p2);
 
@@ -187,7 +187,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
         return plans;
     }
 
-    private Set<TupleExpr> getId(Set<TupleExpr> id1, Set<TupleExpr> id2) {
+    private Set<TupleExpr> getKey(Set<TupleExpr> id1, Set<TupleExpr> id2) {
         Set<TupleExpr> s = new HashSet<TupleExpr>(id1);
         s.addAll(id2);
         return s;
@@ -199,19 +199,22 @@ public class PlanGeneratorImpl implements PlanGenerator {
         if (s.isLocal())
             return p;
         else
-            return createPlan(p.getPlanId(), new SourceQuery(p, s.getURI()));
+            return createPlan(p.getKey(), new SourceQuery(p, s.getURI()));
     }
 
     private Plan enforceOrdering(Plan p, Ordering ordering)
     {
-        //TODO: implement
-
-        return p;
+        if (p.getProperties().getOrdering().isCoverOf(ordering)) {
+            return p;
+        } else {
+            return createPlan(p.getKey(), new Order(p, ordering.getOrderElements()));
+        }
     }
 
     @Override
-    public Collection<Plan> finalizePlans(Collection<Plan> plans) {
+    public Collection<Plan> finalizePlans(Collection<Plan> plans, PlanProperties properties) {
         Collection<Plan> pl = new LinkedList<Plan>();
+
         for (Plan p : plans)
             pl.add(enforceLocalSite(p));
 
@@ -238,7 +241,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
             if (p.getProperties().getSite().equals(s))
                 return p;
             else
-                return createPlan(p.getPlanId(),new SourceQuery(p, s.getURI()));
+                return createPlan(p.getKey(),new SourceQuery(p, s.getURI()));
         }
 
         @Override

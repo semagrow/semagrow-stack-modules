@@ -16,6 +16,8 @@ public class DPPlanOptimizer implements PlanOptimizer {
 
     private PlanGenerator planGenerator;
 
+    private PlanProperties properties = PlanProperties.defaultProperties();
+
     final private Logger logger = LoggerFactory.getLogger(DPPlanOptimizer.class);
 
     public DPPlanOptimizer(PlanGenerator planGenerator)
@@ -90,37 +92,25 @@ public class DPPlanOptimizer implements PlanOptimizer {
         //
         Set<TupleExpr> r = optPlans.getExpressions();
 
-        int count = r.size();
+        for (Pair<Set<TupleExpr>, Set<TupleExpr>> p : pairsubsets(r))
+        {
+            Set<TupleExpr> o1 = p.getFirst();
+            Set<TupleExpr> o2 = p.getSecond();
+            Set<TupleExpr> s  = new HashSet<>(o1);
+            s.addAll(o2);
 
-        // TODO: implement a generic pair enumerator.
-        // bottom-up starting for subplans of size "k"
-        for (int k = 2; k <= count; k++) {
+            Collection<Plan> plans1 = optPlans.get(o1);
+            Collection<Plan> plans2 = optPlans.get(o2);
 
-            // enumerate all subsets of r of size k
-            for (Set<TupleExpr> s : subsetsOf(r, k)) {
+            Collection<Plan> newPlans = planGenerator.joinPlans(plans1, plans2);
 
-                for (int i = 1; i < k; i++) {
+            optPlans.addPlan(newPlans);
 
-                    // let disjoint sets o1 and o2 such that s = o1 union o2
-                    for (Set<TupleExpr> o1 : subsetsOf(s, i)) {
-
-                        Set<TupleExpr> o2 = new HashSet<TupleExpr>(s);
-                        o2.removeAll(o1);
-
-                        Collection<Plan> plans1 = optPlans.get(o1);
-                        Collection<Plan> plans2 = optPlans.get(o2);
-
-                        Collection<Plan> newPlans = planGenerator.joinPlans(plans1, plans2);
-
-                        optPlans.addPlan(newPlans);
-                    }
-                }
-                prunePlans(optPlans.get(s));
-            }
+            prunePlans(optPlans.get(s));
         }
 
         Collection<Plan> fullPlans = optPlans.get(r);
-        fullPlans = planGenerator.finalizePlans(fullPlans);
+        fullPlans = planGenerator.finalizePlans(fullPlans, properties);
 
         if (!fullPlans.isEmpty()) {
             logger.info("Found " + fullPlans.size() + " complete optimal plans");
@@ -143,12 +133,19 @@ public class DPPlanOptimizer implements PlanOptimizer {
         return bestPlan;
     }
 
+    /*
     private static <T> Iterable<Set<T>> subsetsOf(Set<T> s, int k) {
         return new CombinationIterator<T>(k, s);
     }
+    */
+
+    private static <T> Iterable<Pair<Set<T>, Set<T>>> pairsubsets(Set<T> s) {
+        return new PairSubsetIterator<T>(s);
+    }
 
 
-    private class Pair<A, B>
+
+    static private class Pair<A, B>
     {
 
         final private A first;
@@ -171,11 +168,131 @@ public class DPPlanOptimizer implements PlanOptimizer {
 
     }
 
-    /*
-    private class SubsetPairIterator<A> extends Iterator<Pair<Set<A>, Set<A>>>
+    static public class SubsetsIterator<T> implements Iterator<Set<T>>
     {
 
+        private final Set<T> elements;
+        private int k = 0;
 
+        private Iterator<Set<T>> current;
+
+        public SubsetsIterator(Set<T> elements) {
+            this.elements = elements;
+            k = 0;
+        }
+
+        public SubsetsIterator(Set<T> elements, int k)
+        {
+            this(elements);
+            this.k = k - 1;
+            assert k > 0;
+            assert k <= elements.size();
+        }
+
+        public boolean hasNext() {
+            return k <= elements.size();
+        }
+
+        public Set<T> next() {
+
+            if (k > this.elements.size())
+                return null;
+
+            if (current == null || !current.hasNext()) {
+                k++;
+
+                if (k == this.elements.size()) {
+                    k++;
+                    return elements;
+                }
+
+                current = new CombinationIterator<>(k, elements);
+            }
+
+            return current.next();
+        }
     }
-    */
+
+
+    static public class PairSubsetIterator<T> implements Iterator<Pair<Set<T>, Set<T>>>, Iterable<Pair<Set<T>,Set<T>>>
+    {
+        private Set<T> items;
+
+        private Iterator<Set<T>> outer;
+        private Iterator<Set<T>> inner;
+
+        private Set<T> outerCurrent;
+        private Pair<Set<T>,Set<T>> n;
+
+
+        public PairSubsetIterator(Set<T> items) {
+            this.items = items;
+            init();
+        }
+
+        public void init() {
+            if (items.size() < 2) {
+                n = null;
+            } else {
+                outer = new SubsetsIterator<T>(items, 2);
+                n = getNext();
+            }
+        }
+
+        @Override
+        public boolean hasNext() {
+            return n != null;
+        }
+
+        @Override
+        public Pair<Set<T>, Set<T>> next() {
+            Pair<Set<T>,Set<T>> nn = n;
+            n = getNext();
+            return nn;
+        }
+
+
+        protected Pair<Set<T>, Set<T>> getNext()
+        {
+            while (true)
+            {
+
+                if (inner == null || !inner.hasNext()) {
+
+                    if (!outer.hasNext())
+                        return null;
+                    else
+                    {
+                        // get next outerCurrent, init inner
+                        outerCurrent = outer.next();
+                        inner = new SubsetsIterator<T>(outerCurrent);
+                    }
+                }
+
+                if (inner.hasNext()) {
+                    Set<T> i = inner.next();
+                    Pair<Set<T>,Set<T>> p =  getPair(outerCurrent, i);
+
+                    if (p != null)
+                        return p;
+                }
+            }
+
+        }
+
+        private Pair<Set<T>,Set<T>> getPair(Set<T> full, Set<T> part)
+        {
+            Set<T> s = new HashSet<>(full);
+            s.removeAll(part);
+            if (s.isEmpty())
+                return null;
+            else
+                return new Pair<>(s, part);
+        }
+
+        @Override
+        public Iterator<Pair<Set<T>, Set<T>>> iterator() {
+            return this;
+        }
+    }
 }

@@ -84,4 +84,8 @@ public class Ordering {
             return s;
         }
     }
+
+    public Iterable<OrderElem> getOrderElements() {
+        return orderElements;
+    }
 }
