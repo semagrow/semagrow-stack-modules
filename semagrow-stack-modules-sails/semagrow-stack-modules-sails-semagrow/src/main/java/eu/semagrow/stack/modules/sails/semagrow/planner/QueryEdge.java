@@ -1,13 +1,15 @@
 package eu.semagrow.stack.modules.sails.semagrow.planner;
 
+import org.openrdf.query.algebra.TupleExpr;
+
 /**
  * Created by angel on 18/5/2015.
  */
 class QueryEdge {
 
-    private QueryVertex from;
+    private TupleExpr from;
 
-    private QueryVertex to;
+    private TupleExpr to;
 
     /*
     private Collection<QueryVertex> from;
@@ -16,23 +18,23 @@ class QueryEdge {
     */
 
 
-    private QueryGraph.QueryPredicate predicate;
+    private QueryPredicate predicate;
 
-    public QueryEdge(QueryVertex from, QueryVertex to, QueryGraph.QueryPredicate predicate) {
+    public QueryEdge(TupleExpr from, TupleExpr to, QueryPredicate predicate) {
         this.from = from;
         this.to = to;
         this.predicate = predicate;
     }
 
-    public QueryVertex getFrom() {
+    public TupleExpr getFrom() {
         return from;
     }
 
-    public QueryVertex getTo() {
+    public TupleExpr getTo() {
         return to;
     }
 
-    public QueryGraph.QueryPredicate getPredicate() {
+    public QueryPredicate getPredicate() {
         return predicate;
     }
 }

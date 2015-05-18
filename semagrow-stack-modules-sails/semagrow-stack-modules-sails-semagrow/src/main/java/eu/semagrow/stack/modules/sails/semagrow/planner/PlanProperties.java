@@ -1,6 +1,11 @@
 package eu.semagrow.stack.modules.sails.semagrow.planner;
 
 
+import org.openrdf.query.algebra.TupleExpr;
+
+import java.util.HashSet;
+import java.util.Set;
+
 /**
  * Created by angel on 21/4/2015.
  */
@@ -15,6 +20,8 @@ public class PlanProperties {
     private long cardinality;
 
     private Site site;
+
+    private Set<TupleExpr> relations;
 
     public long getCardinality() { return cardinality; }
 
@@ -45,6 +52,9 @@ public class PlanProperties {
 
     public void setOrdering(Ordering ordering) { this.ordering = ordering; }
 
+    public Set<TupleExpr> getRelations() { return relations; }
+
+    public void setRelations(Set<TupleExpr> relations) { this.relations = relations; }
 
     public static PlanProperties defaultProperties() {
         PlanProperties p = new PlanProperties();
@@ -58,6 +68,7 @@ public class PlanProperties {
         p.nodeCost = this.nodeCost;
         p.ordering = this.ordering;
         p.site = this.site;
+        p.relations = new HashSet<>(this.relations);
         return p;
     }
 

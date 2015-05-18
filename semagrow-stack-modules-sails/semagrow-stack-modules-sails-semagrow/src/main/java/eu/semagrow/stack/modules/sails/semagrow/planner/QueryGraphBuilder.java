@@ -18,6 +18,8 @@ public class QueryGraphBuilder extends QueryModelVisitorBase<RuntimeException> {
 
     private QueryGraph graph;
 
+    private Set<TupleExpr> tab = new HashSet<TupleExpr>();
+
     private static Logger logger = LoggerFactory.getLogger(QueryGraphBuilder.class);
 
     private QueryGraphBuilder() {
@@ -37,6 +39,12 @@ public class QueryGraphBuilder extends QueryModelVisitorBase<RuntimeException> {
         for (String v : joinVars)
             left.put(v, new HashSet<StatementPattern>(varMap.get(v)));
 
+        Set<TupleExpr> leftTab = new HashSet<TupleExpr>(tab);
+        this.tab = new HashSet<>();
+        Set<TupleExpr> rightTab = new HashSet<TupleExpr>(tab);
+        leftTab.addAll(rightTab);
+        this.tab = leftTab;
+
         join.getRightArg().visit(this);
 
         for (String v : joinVars) {
@@ -50,8 +58,13 @@ public class QueryGraphBuilder extends QueryModelVisitorBase<RuntimeException> {
             {
                 for (StatementPattern p2 : right.get(v))
                 {
-                    //graph.addEdge(p1, p2, JoinPredicate(v))
-                    logger.debug("Adding INNER JOIN edge from " + p1 +  " to " + p2);
+                    QueryPredicate p = new JoinPredicate(v);
+                    Set<TupleExpr> eel = new HashSet<>();
+                    eel.add(p1);
+                    eel.add(p2);
+                    p.setEEL(eel);
+                    graph.addEdge(p1, p2, p);
+                    //logger.debug("Adding INNER JOIN edge from " + p1 +  " to " + p2);
                 }
             }
         }
@@ -79,7 +92,8 @@ public class QueryGraphBuilder extends QueryModelVisitorBase<RuntimeException> {
             s.add(pattern);
             varMap.put(varName, s);
         }
-
+        graph.addVertex(pattern);
+        tab.add(pattern);
     }
 
     @Override
@@ -91,8 +105,12 @@ public class QueryGraphBuilder extends QueryModelVisitorBase<RuntimeException> {
 
         leftJoin.getLeftArg().visit(this);
 
+        Set<TupleExpr> leftTab = new HashSet<TupleExpr>(tab);
+
         for (String v : joinVars)
             left.put(v, new HashSet<StatementPattern>(varMap.get(v)));
+
+        this.tab = new HashSet<>();
 
         leftJoin.getRightArg().visit(this);
 
@@ -102,11 +120,20 @@ public class QueryGraphBuilder extends QueryModelVisitorBase<RuntimeException> {
             right.put(v, s);
         }
 
+        Set<TupleExpr> rightTab = new HashSet<TupleExpr>(tab);
+        leftTab.addAll(rightTab);
+        this.tab = leftTab;
+
         for (String v : joinVars) {
             for (StatementPattern p1 : left.get(v)) {
                 for (StatementPattern p2 : right.get(v)) {
-                    //graph.addEdge(p1, p2, LeftJoinPredicate(v))
-                    logger.debug("Adding LEFT  JOIN edge from " + p1 +  " to " + p2);
+                    QueryPredicate p = new LeftJoinPredicate(v);
+                    Set<TupleExpr> eel = new HashSet<>();
+                    eel.add(p1);
+                    eel.add(p2);
+                    eel.addAll(rightTab);
+                    p.setEEL(eel);
+                    graph.addEdge(p1, p2, p);
                 }
             }
         }

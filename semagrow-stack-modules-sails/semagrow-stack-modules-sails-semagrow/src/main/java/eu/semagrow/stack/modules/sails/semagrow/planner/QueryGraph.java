@@ -12,15 +12,15 @@ public class QueryGraph
 {
     private List<QueryEdge> edges = new LinkedList<QueryEdge>();
 
-    private List<QueryVertex> vertices = new LinkedList<QueryVertex>();
+    private List<TupleExpr> vertices = new LinkedList<TupleExpr>();
 
     public QueryGraph() { }
 
-    public Collection<QueryVertex> getVertices() { return vertices; }
+    public Collection<TupleExpr> getVertices() { return vertices; }
 
     public Collection<QueryEdge> getEdges() { return edges; }
 
-    public Collection<QueryEdge> getOutgoingEdges(QueryVertex v) {
+    public Collection<QueryEdge> getOutgoingEdges(TupleExpr v) {
         List<QueryEdge> outgoingEdges = new LinkedList<QueryEdge>();
         for (QueryEdge e : getEdges()) {
             if (e.getFrom().equals(v))
@@ -29,40 +29,30 @@ public class QueryGraph
         return outgoingEdges;
     }
 
-    public Collection<QueryEdge> getOutgoingEdges(Collection<QueryVertex> v)
+    public Collection<QueryEdge> getOutgoingEdges(Collection<TupleExpr> v)
     {
         return null;
     }
 
-    public Collection<QueryVertex> getAdjacent(QueryVertex v) {
+    public Collection<TupleExpr> getAdjacent(TupleExpr v) {
         Collection<QueryEdge> outgoindEdges = getOutgoingEdges(v);
-        Set<QueryVertex> vertices = new HashSet<QueryVertex>();
+        Set<TupleExpr> vertices = new HashSet<TupleExpr>();
         for (QueryEdge e : outgoindEdges) {
             vertices.add(e.getTo());
         }
         return vertices;
     }
 
-    public Collection<QueryVertex> getAdjacent(Collection<QueryVertex> v) { return null; }
+    public Collection<TupleExpr> getAdjacent(Collection<TupleExpr> v) { return null; }
 
-    public void addEdge(QueryVertex v1, QueryVertex v2, QueryPredicate pred)
+    public void addEdge(TupleExpr v1, TupleExpr v2, QueryPredicate pred)
     {
         QueryEdge e = new QueryEdge(v1,v2,pred);
         edges.add(e);
     }
 
-    public void addEdge(Collection<QueryVertex> v1, Collection<QueryVertex> v2, QueryPredicate pred) { }
+    public void addEdge(Collection<TupleExpr> v1, Collection<TupleExpr> v2, QueryPredicate pred) { }
 
-    public void addVertex(TupleExpr expr) { }
-
-    class QueryPredicate {
-
-    }
-
-    class JoinPredicate { private Var joinVariable; }
-
-    class LeftJoinPredicate { private Var joinVariable; }
-
-    class ConditionPredicate { private ValueExpr pred; }
+    public void addVertex(TupleExpr expr) { this.vertices.add(expr); }
 
 }

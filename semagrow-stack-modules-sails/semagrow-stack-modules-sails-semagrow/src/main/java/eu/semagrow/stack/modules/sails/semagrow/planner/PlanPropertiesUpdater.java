@@ -76,6 +76,14 @@ public class PlanPropertiesUpdater extends PlanVisitorBase<RuntimeException> {
     public void meet(BindJoin join) throws RuntimeException  {
         join.getLeftArg().visit(this);
         PlanProperties leftProperties = this.properties;
+        Set<TupleExpr> leftRelations = this.properties.getRelations();
+
+        join.getRightArg().visit(this);
+        Set<TupleExpr> rightRelations = this.properties.getRelations();
+
+        Set<TupleExpr> allRelations = new HashSet<>(leftRelations);
+        allRelations.addAll(rightRelations);
+        this.properties.setRelations(allRelations);
     }
 
     @Override
@@ -83,15 +91,29 @@ public class PlanPropertiesUpdater extends PlanVisitorBase<RuntimeException> {
 
         join.getLeftArg().visit(this);
         PlanProperties leftProperties = this.properties;
+        Set<TupleExpr> leftRelations = this.properties.getRelations();
 
         join.getRightArg().visit(this);
+        Set<TupleExpr> rightRelations = this.properties.getRelations();
 
+        Set<TupleExpr> allRelations = new HashSet<>(leftRelations);
+        allRelations.addAll(rightRelations);
+        this.properties.setRelations(allRelations);
         //this.properties;
     }
 
     @Override
     public void meet(Join join) throws RuntimeException {
+
         join.getLeftArg().visit(this);
+        Set<TupleExpr> leftRelations = this.properties.getRelations();
+
+        join.getRightArg().visit(this);
+        Set<TupleExpr> rightRelations = this.properties.getRelations();
+
+        Set<TupleExpr> allRelations = new HashSet<>(leftRelations);
+        allRelations.addAll(rightRelations);
+        this.properties.setRelations(allRelations);
     }
 
     @Override

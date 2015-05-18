@@ -16,8 +16,6 @@ public class PlanImpl extends UnaryTupleOperator implements Plan
 
     private PlanProperties properties;
 
-    private Set<QueryVertex> queryVertexes;
-
     public PlanImpl(TupleExpr arg) { super(arg); properties = PlanProperties.defaultProperties(); }
 
     @Override

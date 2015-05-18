@@ -97,6 +97,7 @@ public class PlanGeneratorImpl implements PlanGenerator<Plan> {
         }
         */
         p.getProperties().setSite(new Site(source));
+        p.getProperties().setRelations(Collections.singleton(innerExpr));
         updatePlan(p);
 
         return p;
