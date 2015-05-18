@@ -19,61 +19,61 @@ import java.util.Arrays;
  */
 public class QueryLogManager {
 
-    private final static String baseDir = "/var/tmp/log/";
-    private final static String filePrefix = "qfr";
-    private final static String fileSuffix = ".log";
+    private static String logDir;
+    private static String filePrefix;
 
-    public File createNewQfrFile() throws IOException {
-        long ext = getCounter(getLastFile());
-
-        return returnFile(filePrefix + ++ext + fileSuffix, true);
+    public QueryLogManager(String logDir, String filePrefix) {
+        this.logDir = logDir;
+        this.filePrefix = filePrefix;
     }
 
-    private File returnFile(String filename, boolean newFile) throws IOException {
-        File file = new File(baseDir + filename);
-
-        if(newFile) {
-            if(! file.createNewFile()) {
-                return null;
-            }
-        }
-
-        return file;
-    }
-
-    public File getCurrentFile() throws IOException {
-        return returnFile(getLastFile(), false);
-    }
-
-    private String getLastFile() {
+    public String getLastFile() throws QueryLogException {
 
         File[] listOfFiles = getListOfFiles();
 
         if(listOfFiles.length == 0) {
-            return null;
+            String filename = logDir + filePrefix + "." + 0;
+
+            return createFile(filename);
         }
 
-        Arrays.sort(listOfFiles);
+        //Arrays.sort(listOfFiles);
 
-        return listOfFiles[listOfFiles.length - 1].getName();
+        //return logDir + listOfFiles[listOfFiles.length - 1].getName();
+        return logDir + getLastModified(listOfFiles);
+
     }
 
-    public String[] getQfrFileNames() {
-        File folder = new File(baseDir);
+    private String getLastModified(File[] listOfFiles) {
+        String filename = null;
+        long max = 0;
 
-        String[] foundFiles = folder.list(new FilenameFilter() {
-            public boolean accept(File dir, String name) {
-                return name.startsWith(filePrefix);
+        for(int i=0; i<listOfFiles.length; i++) {
+
+            if(listOfFiles[i].lastModified() > max) {
+                max = listOfFiles[i].lastModified();
+                filename = listOfFiles[i].getName();
             }
-        });
+        }
+        return filename;
+    }
 
-        foundFiles = (String[]) ArrayUtils.removeElement(foundFiles, foundFiles[foundFiles.length - 1]);
+    private String createFile(String filename)  throws QueryLogException {
+        File file = new File(filename);
 
-        return foundFiles;
+        try {
+            if(file.createNewFile()) {
+                return filename;
+            }
+        } catch (IOException e) {
+            throw new QueryLogException(e);
+        }
+
+        throw new QueryLogException("Error in creating new qfr file");
     }
 
     private File[] getListOfFiles() {
-        File folder = new File(baseDir);
+        File folder = new File(logDir);
 
         File[] foundFiles = folder.listFiles(new FilenameFilter() {
             public boolean accept(File dir, String name) {
@@ -82,40 +82,6 @@ public class QueryLogManager {
         });
 
         return foundFiles;
-    }
-
-    private long getCounter(String fileName) {
-        if(fileName != null) {
-            String[] ss = fileName.split(filePrefix);
-
-            long counter = Long.parseLong(ss[1].substring(0, ss[1].indexOf(fileSuffix)));
-
-            return counter;
-        } else {
-            return 0;
-        }
-    }
-
-
-    /**
-     * get Creation time of the last file
-     * @return date in milliseconds
-     * @throws java.io.IOException
-     */
-    public long getCreationTime() throws IOException {
-        String file = getLastFile();
-
-        if(file != null) {
-            Path path = Paths.get(baseDir + file);
-            BasicFileAttributes attributes =
-                    Files.readAttributes(path, BasicFileAttributes.class);
-            FileTime creationTime = attributes.creationTime();
-
-            return creationTime.toMillis();
-        } else {
-            // default unix timestamp
-            return System.currentTimeMillis() / 1000L;
-        }
     }
 
 }

@@ -6,7 +6,7 @@ import java.util.LinkedList;
 /**
  * Created by angel on 10/22/14.
  */
-public class QueryLogCollector implements QueryLogHandler {
+public class QueryLogCollector implements QueryLogWriter {
 
     private Collection<QueryLogRecord> collection;
 

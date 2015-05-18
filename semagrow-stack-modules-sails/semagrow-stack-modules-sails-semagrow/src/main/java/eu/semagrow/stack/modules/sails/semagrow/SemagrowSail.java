@@ -12,7 +12,6 @@ import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryEvaluationImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.FileManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.QueryLogRotation;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.rdf.RDFQueryLogFactory;
@@ -60,12 +59,12 @@ public class SemagrowSail extends SailBase implements StackableSail {
 
     private final static String logDir = "/var/tmp/log/";
 
+    private final static String filePrefix = "qfr";
+
     private Sail metadataSail;
     private FederatedQueryEvaluation queryEvaluation;
 
-    private QueryLogHandler handler;
-
-    private QueryLogRotation qfrRotation = new QueryLogRotation();
+    private QueryLogWriter handler;
 
     public SemagrowSail() { }
 
@@ -171,11 +170,18 @@ public class SemagrowSail extends SailBase implements StackableSail {
         return manager;
     }
 
-    public QueryLogHandler getRecordLog() {
+    public QueryLogWriter getRecordLog() {
 
-        QueryLogHandler handler;
+        QueryLogWriter handler;
 
-        File qfrLog  = qfrRotation.checkFileChange();
+        FileQueryLogConfig config = new FileQueryLogConfig();
+        QueryLogManager qfrManager = new QueryLogManager(logDir, filePrefix);
+        try {
+            config.setFilename(qfrManager.getLastFile());
+            config.setCounter(3);
+        } catch (QueryLogException e) {
+            e.printStackTrace();
+        }
 
         RDFFormat rdfFF = RDFFormat.NTRIPLES;
 
@@ -184,13 +190,69 @@ public class SemagrowSail extends SailBase implements StackableSail {
         QueryLogFactory factory = new RDFQueryLogFactory(rdfWriterFactory);
 
         try {
-            OutputStream out = new FileOutputStream(qfrLog, true);
-            handler = factory.getQueryRecordLogger(out);
+            handler = factory.getQueryRecordLogger((FileQueryLogConfig) config);
             return handler;
-        } catch (FileNotFoundException e) {
+        } catch (QueryLogException e) {
             e.printStackTrace();
         }
         return null;
+    }
+
+    private String getLastFile() throws QueryLogException {
+
+        File[] listOfFiles = getListOfFiles();
+
+        if(listOfFiles.length == 0) {
+            String filename = logDir + filePrefix + "." + 0;
+
+            return createFile(filename);
+        }
+
+        //Arrays.sort(listOfFiles);
+
+        //return logDir + listOfFiles[listOfFiles.length - 1].getName();
+        return logDir + getLastModified(listOfFiles);
+
+    }
+
+    private String getLastModified(File[] listOfFiles) {
+        String filename = null;
+        long max = 0;
+
+        for(int i=0; i<listOfFiles.length; i++) {
+
+            if(listOfFiles[i].lastModified() > max) {
+                max = listOfFiles[i].lastModified();
+                filename = listOfFiles[i].getName();
+            }
+        }
+        return filename;
+    }
+
+    private String createFile(String filename)  throws QueryLogException {
+        File file = new File(filename);
+
+        try {
+            if(file.createNewFile()) {
+                return filename;
+            }
+        } catch (IOException e) {
+            throw new QueryLogException(e);
+        }
+
+        throw new QueryLogException("Error in creating new qfr file");
+    }
+
+    private File[] getListOfFiles() {
+        File folder = new File(logDir);
+
+        File[] foundFiles = folder.listFiles(new FilenameFilter() {
+            public boolean accept(File dir, String name) {
+                return name.startsWith(filePrefix);
+            }
+        });
+
+        return foundFiles;
     }
 
     @Override

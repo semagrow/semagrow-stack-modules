@@ -27,6 +27,7 @@ public class SemagrowConnectionTest extends TestCase {
             "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
             "PREFIX void: <http://rdfs.org/ns/void#>\n";
 
+
     public void testEvaluateInternal() throws Exception {
 
         String q1 = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
@@ -44,20 +45,77 @@ public class SemagrowConnectionTest extends TestCase {
                 "{ <htt://localhost/sub> <http://localhost/my> ?z.\n" +
                 "?z <http://rdf.iit.demokritos.gr/2014/my#pred2> \"R\" . } } LIMIT 10" ;
 
+        String q4 = "SELECT ?s ?a WHERE { " +
+                "  ?s <http://purl.org/dc/terms/issued> ?a. " +
+                "  ?s <http://purl.org/dc/terms/type> \"Image\". " +
+                "  FILTER(xsd:integer(?a) > 2005). " +
+                "   FILTER(xsd:integer(?a) < 2009). " +
+                "}";
+
+
         SailImplConfig config = new SemagrowConfig();
 
         SemagrowRepositoryConfig repoConfig = new SemagrowRepositoryConfig();
         SemagrowSailRepository repo = (SemagrowSailRepository) RepositoryRegistry.getInstance().get(repoConfig.getType()).getRepository(repoConfig);
         repo.initialize();
         SemagrowSailRepositoryConnection conn = repo.getConnection();
-        SemagrowTupleQuery query =  conn.prepareTupleQuery(QueryLanguage.SPARQL, q1);
+        SemagrowTupleQuery query =  conn.prepareTupleQuery(QueryLanguage.SPARQL, q4);
         query.setIncludeInferred(true);
         query.setIncludeProvenanceData(true);
 
-        TupleQueryResult result = query.evaluate();
-        System.out.println(Iterations.toString(result, "\n"));
-        Iterations.closeCloseable(result);
+        for(int i=0; i<10; i++) {
+            TupleQueryResult result = query.evaluate();
+            System.out.println(Iterations.toString(result, "\n"));
+            Iterations.closeCloseable(result);
+        }
+
+        repo.shutDown();
     }
+
+
+    public void testEvaluateInternal1() throws Exception {
+
+        String q1 = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX void: <http://rdfs.org/ns/void#>\n" +
+                "SELECT *  { ?s <http://localhost/my> ?z. " +
+                "?z <http://rdf.iit.demokritos.gr/2014/my#pred2> ?y . }" ;
+
+
+        String q = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
+                "PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>\n" +
+                "PREFIX void: <http://rdfs.org/ns/void#>\n" +
+                "SELECT *  { { <htt://localhost/sub> <http://localhost/my> ?z. " +
+                "?z <http://rdf.iit.demokritos.gr/2014/my#pred2> \"R\" . } UNION " +
+                "{ <htt://localhost/sub> <http://localhost/my> ?z.\n" +
+                "?z <http://rdf.iit.demokritos.gr/2014/my#pred2> \"R\" . } } LIMIT 10" ;
+
+        String q4 = "SELECT ?s ?a WHERE { " +
+                "  ?s <http://purl.org/dc/terms/issued> ?a. " +
+                "  ?s <http://purl.org/dc/terms/type> \"Image\". " +
+                "  FILTER(xsd:integer(?a) > 2005). " +
+                "   FILTER(xsd:integer(?a) < 2008). " +
+                "}";
+
+        SailImplConfig config = new SemagrowConfig();
+
+        SemagrowRepositoryConfig repoConfig = new SemagrowRepositoryConfig();
+        SemagrowSailRepository repo = (SemagrowSailRepository) RepositoryRegistry.getInstance().get(repoConfig.getType()).getRepository(repoConfig);
+        repo.initialize();
+        SemagrowSailRepositoryConnection conn = repo.getConnection();
+        SemagrowTupleQuery query =  conn.prepareTupleQuery(QueryLanguage.SPARQL, q4);
+        query.setIncludeInferred(true);
+        query.setIncludeProvenanceData(true);
+
+        for(int i=0; i<5; i++) {
+            TupleQueryResult result = query.evaluate();
+            System.out.println(Iterations.toString(result, "\n"));
+            Iterations.closeCloseable(result);
+        }
+
+        repo.shutDown();
+    }
+
 
 
     public void testEvaluateInternal2() throws Exception {
@@ -99,6 +157,8 @@ public class SemagrowConnectionTest extends TestCase {
         TupleQueryResult result = query.evaluate();
         System.out.println(Iterations.toString(result, "\n"));
         Iterations.closeCloseable(result);
+
+        repo.shutDown();
     }
 
     public void testCrossProduct() throws Exception {
@@ -181,4 +241,5 @@ public class SemagrowConnectionTest extends TestCase {
         conn.commit();
         conn.close();
     }
+
 }

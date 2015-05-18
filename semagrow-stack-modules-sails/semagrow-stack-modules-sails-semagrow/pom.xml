@@ -34,5 +34,6 @@
             <artifactId>semagrow-stack-modules-sails-void</artifactId>
             <version>1.0.0</version>
         </dependency>
+
     </dependencies>
 </project>

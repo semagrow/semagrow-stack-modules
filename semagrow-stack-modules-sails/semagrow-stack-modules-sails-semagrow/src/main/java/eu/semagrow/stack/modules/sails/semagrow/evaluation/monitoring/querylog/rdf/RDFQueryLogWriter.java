@@ -1,9 +1,6 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.rdf;
 
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogException;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogHandler;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogRecord;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogWriter;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.*;
 import eu.semagrow.stack.modules.vocabulary.QFR;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.EmptyModel;
@@ -28,7 +25,7 @@ import java.util.*;
 /**
  * Created by angel on 10/20/14.
  */
-public class RDFQueryLogWriter implements QueryLogHandler {
+public class RDFQueryLogWriter implements QueryLogWriter {
 
     private RDFWriter handler;
     private ValueFactory vf = ValueFactoryImpl.getInstance();
