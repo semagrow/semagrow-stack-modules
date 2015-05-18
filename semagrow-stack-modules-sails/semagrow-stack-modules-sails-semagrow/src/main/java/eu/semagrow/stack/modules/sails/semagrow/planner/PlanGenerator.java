@@ -9,12 +9,12 @@ import java.util.Collection;
 /**
  * Created by angel on 27/4/2015.
  */
-public interface PlanGenerator {
+public interface PlanGenerator<P extends Plan> {
 
-    Collection<Plan> accessPlans(TupleExpr expr, BindingSet bindings, Dataset dataset);
+    Collection<P> accessPlans(TupleExpr expr, BindingSet bindings, Dataset dataset);
 
-    Collection<Plan> joinPlans(Collection<Plan> p1, Collection<Plan> p2);
+    Collection<P> joinPlans(Collection<P> p1, Collection<P> p2);
 
-    Collection<Plan> finalizePlans(Collection<Plan> plans, PlanProperties desiredProperties);
+    Collection<P> finalizePlans(Collection<P> plans, PlanProperties desiredProperties);
 
 }

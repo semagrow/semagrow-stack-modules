@@ -38,6 +38,7 @@ public class DPQueryDecomposer implements QueryDecomposer {
     {
 
         Collection<TupleExpr> basicGraphPatterns = BPGCollector.process(expr);
+        QueryGraph queryGraph = QueryGraphBuilder.build(expr);
 
         for (TupleExpr bgp : basicGraphPatterns)
             decomposebgp(bgp, dataset, bindings);
@@ -47,9 +48,9 @@ public class DPQueryDecomposer implements QueryDecomposer {
     {
         DecomposerContext ctx = getContext(bgp, dataset, bindings);
 
-        PlanGenerator planGenerator = new PlanGeneratorImpl(ctx, sourceSelector, costEstimator, cardinalityEstimator);
+        PlanGenerator<Plan> planGenerator = new PlanGeneratorImpl(ctx, sourceSelector, costEstimator, cardinalityEstimator);
 
-        PlanOptimizer planOptimizer = new DPPlanOptimizer(planGenerator);
+        PlanOptimizer planOptimizer = new DPPlanOptimizer<>(planGenerator);
 
         Plan bestPlan = planOptimizer.getBestPlan(bgp, bindings, dataset);
         bgp.replaceWith(bestPlan);

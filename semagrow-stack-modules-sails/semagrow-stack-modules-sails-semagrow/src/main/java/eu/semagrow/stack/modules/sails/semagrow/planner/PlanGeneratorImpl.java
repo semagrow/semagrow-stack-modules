@@ -12,14 +12,13 @@ import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.algebra.*;
-import org.openrdf.query.algebra.helpers.StatementPatternCollector;
 
 import java.util.*;
 
 /**
  * Created by angel on 27/4/2015.
  */
-public class PlanGeneratorImpl implements PlanGenerator {
+public class PlanGeneratorImpl implements PlanGenerator<Plan> {
 
     private SourceSelector       sourceSelector;
     private CostEstimator        costEstimator;
@@ -46,7 +45,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
         //this.joinImplGenerators.add(new MergeJoinGenerator());
     }
 
-    protected void updatePlanProperties(Plan plan)
+    protected void updatePlanProperties(PlanImpl plan)
     {
         TupleExpr e = plan.getArg();
 
@@ -63,7 +62,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
      * Update the properties of a plan
      * @param plan
      */
-    protected void updatePlan(Plan plan)
+    protected void updatePlan(PlanImpl plan)
     {
         TupleExpr innerExpr = plan.getArg();
 
@@ -75,18 +74,18 @@ public class PlanGeneratorImpl implements PlanGenerator {
         updatePlanProperties(plan);
     }
 
-    protected Plan createPlan(Set<TupleExpr> planId, TupleExpr innerExpr)
+    protected Plan createPlan(TupleExpr innerExpr)
     {
-        Plan p = new Plan(planId, innerExpr);
+        PlanImpl p = new PlanImpl(innerExpr);
         updatePlanProperties(p);
         return p;
     }
 
-    protected Plan createPlan(Set<TupleExpr> planId, TupleExpr innerExpr, SourceMetadata metadata)
+    protected Plan createPlan(TupleExpr innerExpr, SourceMetadata metadata)
     {
         URI source = metadata.getEndpoints().get(0);
 
-        Plan p = new Plan(planId, innerExpr);
+        PlanImpl p = new PlanImpl(innerExpr);
 
         Set<String> varNames = innerExpr.getBindingNames();
 
@@ -103,43 +102,30 @@ public class PlanGeneratorImpl implements PlanGenerator {
         return p;
     }
 
-    @Override
+
     public Collection<Plan> accessPlans(TupleExpr expr, BindingSet bindings, Dataset dataset)
     {
 
         Collection<Plan> plans = new LinkedList<Plan>();
 
-        // extract the statement patterns
-        List<StatementPattern> statementPatterns = StatementPatternCollector.process(expr);
+        // get sources for each pattern
+        Collection<SourceMetadata> sources = getSources(expr, dataset, bindings);
 
-        // extract the filter conditions of the query
+        // apply filters that can be applied to the statementpattern
 
-        for (StatementPattern pattern : statementPatterns) {
+        List<Plan> sourcePlans = new LinkedList<Plan>();
 
-            // get sources for each pattern
-            Collection<SourceMetadata> sources = getSources(pattern, dataset, bindings);
-
-            // apply filters that can be applied to the statementpattern
-            TupleExpr e = pattern;
-
-            Set<TupleExpr> exprLabel =  new HashSet<TupleExpr>();
-            exprLabel.add(e);
-
-            List<Plan> sourcePlans = new LinkedList<Plan>();
-
-            for (SourceMetadata sourceMetadata : sources) {
-                //URI source = sourceMetadata.getEndpoints().get(0);
-                //Plan p1 = createPlan(exprLabel, sourceMetadata.target(), source, ctx);
-                // FIXME: Don't use always the first source.
-                Plan p1 = createPlan(exprLabel, sourceMetadata.target().clone(), sourceMetadata);
-                sourcePlans.add(p1);
-            }
-
-            Plan p  = createUnionPlan(sourcePlans);
-            plans.add(p);
+        for (SourceMetadata sourceMetadata : sources)
+        {
+             //URI source = sourceMetadata.getEndpoints().get(0);
+             //Plan p1 = createPlan(exprLabel, sourceMetadata.target(), source, ctx);
+             // FIXME: Don't use always the first source.
+             Plan p1 = createPlan(sourceMetadata.target().clone(), sourceMetadata);
+             sourcePlans.add(p1);
         }
 
-        // SPLENDID also cluster statementpatterns of the same source.
+        Plan p  = createUnionPlan(sourcePlans);
+        plans.add(p);
 
         return plans;
     }
@@ -156,17 +142,16 @@ public class PlanGeneratorImpl implements PlanGenerator {
 
         while (it.hasNext()) {
             Plan i = it.next();
-            p = createPlan(p.getKey(), new Union(enforceLocalSite(p), enforceLocalSite(i)));
+            p = createPlan(new Union(enforceLocalSite(p), enforceLocalSite(i)));
         }
 
         return p;
     }
 
-    protected Collection<SourceMetadata> getSources(StatementPattern pattern, Dataset dataset, BindingSet bindings) {
+    protected Collection<SourceMetadata> getSources(TupleExpr pattern, Dataset dataset, BindingSet bindings) {
         return sourceSelector.getSources(pattern,dataset,bindings);
     }
 
-    @Override
     public Collection<Plan> joinPlans(Collection<Plan> plan1, Collection<Plan> plan2)
     {
         Collection<Plan> plans = new LinkedList<Plan>();
@@ -175,22 +160,16 @@ public class PlanGeneratorImpl implements PlanGenerator {
 
             for (Plan p1 : plan1) {
                 for (Plan p2 : plan2) {
-                    Set<TupleExpr> s = getKey(p1.getKey(), p2.getKey());
+                    //Set<TupleExpr> s = getKey(p1.getKey(), p2.getKey());
 
                     Collection<Join> joins = generator.generate(p1, p2);
 
                     for (Join j : joins)
-                        plans.add(createPlan(s, j));
+                        plans.add(createPlan(j));
                 }
             }
         }
         return plans;
-    }
-
-    private Set<TupleExpr> getKey(Set<TupleExpr> id1, Set<TupleExpr> id2) {
-        Set<TupleExpr> s = new HashSet<TupleExpr>(id1);
-        s.addAll(id2);
-        return s;
     }
 
     private Plan enforceLocalSite(Plan p)
@@ -199,7 +178,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
         if (s.isLocal())
             return p;
         else
-            return createPlan(p.getKey(), new SourceQuery(p, s.getURI()));
+            return createPlan(new SourceQuery(p, s.getURI()));
     }
 
     private Plan enforceOrdering(Plan p, Ordering ordering)
@@ -207,11 +186,10 @@ public class PlanGeneratorImpl implements PlanGenerator {
         if (p.getProperties().getOrdering().isCoverOf(ordering)) {
             return p;
         } else {
-            return createPlan(p.getKey(), new Order(p, ordering.getOrderElements()));
+            return createPlan(new Order(p, ordering.getOrderElements()));
         }
     }
 
-    @Override
     public Collection<Plan> finalizePlans(Collection<Plan> plans, PlanProperties properties) {
         Collection<Plan> pl = new LinkedList<Plan>();
 
@@ -219,11 +197,6 @@ public class PlanGeneratorImpl implements PlanGenerator {
             pl.add(enforceLocalSite(p));
 
         return pl;
-    }
-
-    protected interface JoinImplGenerator
-    {
-        Collection<Join> generate(Plan p1, Plan p2);
     }
 
     protected interface PropertyEnforcer
@@ -241,7 +214,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
             if (p.getProperties().getSite().equals(s))
                 return p;
             else
-                return createPlan(p.getKey(),new SourceQuery(p, s.getURI()));
+                return createPlan(new SourceQuery(p, s.getURI()));
         }
 
         @Override
@@ -305,7 +278,7 @@ public class PlanGeneratorImpl implements PlanGenerator {
                 }
 
                 @Override
-                public void meet(Plan e) {
+                public void meet(PlanImpl e) {
                     if (e.getProperties().getSite().isRemote())
                         condition = true;
                     else

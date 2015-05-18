@@ -4,7 +4,7 @@ import eu.semagrow.stack.modules.api.evaluation.FederatedEvaluationStrategy;
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.*;
-import eu.semagrow.stack.modules.sails.semagrow.planner.Plan;
+import eu.semagrow.stack.modules.sails.semagrow.planner.PlanImpl;
 import info.aduna.iteration.*;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -78,8 +78,8 @@ public class EvaluationStrategyImpl
             return this.evaluate((SourceQuery) expr, bindings);
         } else if (expr instanceof Transform) {
             return this.evaluate((Transform) expr, bindings);
-        } else if (expr instanceof Plan) {
-            return this.evaluate(((Plan)expr).getArg(), bindings);
+        } else if (expr instanceof PlanImpl) {
+            return this.evaluate(((PlanImpl)expr).getArg(), bindings);
         } else {
             return super.evaluate(expr, bindings);
         }
@@ -211,8 +211,8 @@ public class EvaluationStrategyImpl
     {
         if (expr instanceof Union) {
             return evaluateInternal((Union) expr, iterable);
-        } else if (expr instanceof Plan) {
-            return evaluateInternal((Plan) expr, iterable);
+        } else if (expr instanceof PlanImpl) {
+            return evaluateInternal((PlanImpl) expr, iterable);
         } else {
 
             CloseableIteration<BindingSet, QueryEvaluationException> bIter =
@@ -254,7 +254,7 @@ public class EvaluationStrategyImpl
     }
 
     protected CloseableIteration<BindingSet, QueryEvaluationException>
-        evaluateInternal(final Plan plan, final Iterable<BindingSet> iterable)
+        evaluateInternal(final PlanImpl plan, final Iterable<BindingSet> iterable)
             throws QueryEvaluationException
     {
         return evaluateInternal(plan.getArg(), iterable);

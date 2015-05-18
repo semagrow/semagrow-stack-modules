@@ -7,6 +7,7 @@ import eu.semagrow.stack.modules.sails.semagrow.algebra.MergeJoin;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.SourceQuery;
 import eu.semagrow.stack.modules.sails.semagrow.planner.Cost;
 import eu.semagrow.stack.modules.sails.semagrow.planner.Plan;
+import eu.semagrow.stack.modules.sails.semagrow.planner.PlanImpl;
 import eu.semagrow.stack.modules.sails.semagrow.planner.Site;
 import org.openrdf.model.URI;
 import org.openrdf.query.algebra.*;
@@ -48,7 +49,7 @@ public class CostEstimatorImpl implements CostEstimator {
             return getCost((Join)expr, source);
         else if (expr instanceof Order)
             return getCost((Order)expr, source);
-        else if (expr instanceof Plan)
+        else if (expr instanceof PlanImpl)
             return ((Plan)expr).getProperties().getCost();
         else
             return new Cost(cardinalityEstimator.getCardinality(expr, source));

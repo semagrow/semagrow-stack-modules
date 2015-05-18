@@ -107,7 +107,7 @@ public class PlanPropertiesUpdater extends PlanVisitorBase<RuntimeException> {
     }
 
     @Override
-    public void meet(Plan plan) throws RuntimeException {
+    public void meet(PlanImpl plan) throws RuntimeException {
         this.properties = plan.getProperties().clone();
     }
 

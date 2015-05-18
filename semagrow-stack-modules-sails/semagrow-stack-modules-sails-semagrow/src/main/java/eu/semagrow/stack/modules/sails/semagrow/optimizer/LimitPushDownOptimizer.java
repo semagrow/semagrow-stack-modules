@@ -1,7 +1,7 @@
 package eu.semagrow.stack.modules.sails.semagrow.optimizer;
 
 import eu.semagrow.stack.modules.sails.semagrow.algebra.SourceQuery;
-import eu.semagrow.stack.modules.sails.semagrow.planner.Plan;
+import eu.semagrow.stack.modules.sails.semagrow.planner.PlanImpl;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.algebra.*;
@@ -45,8 +45,8 @@ public class LimitPushDownOptimizer implements QueryOptimizer {
 
             if (node instanceof SourceQuery) {
                 meet((SourceQuery) node);
-            } else if (node instanceof Plan) {
-                meet((Plan)node);
+            } else if (node instanceof PlanImpl) {
+                meet((PlanImpl)node);
             } else {
                 relocate(slice, (TupleExpr) node);
             }
@@ -73,7 +73,7 @@ public class LimitPushDownOptimizer implements QueryOptimizer {
         @Override
         public void meet(Order order) { order.getArg().visit(this); }
 
-        public void meet(Plan p) { p.getArg().visit(this); }
+        public void meet(PlanImpl p) { p.getArg().visit(this); }
 
         public void meet(SourceQuery query) {
             Slice pushedSlice = slice;

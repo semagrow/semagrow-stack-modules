@@ -3,7 +3,9 @@ package eu.semagrow.stack.modules.sails.semagrow.planner;
 import eu.semagrow.stack.modules.sails.semagrow.helpers.CombinationIterator;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
+import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
+import org.openrdf.query.algebra.helpers.StatementPatternCollector;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -12,20 +14,20 @@ import java.util.*;
 /**
  * Created by angel on 27/4/2015.
  */
-public class DPPlanOptimizer implements PlanOptimizer {
+public class DPPlanOptimizer<P extends Plan> implements PlanOptimizer {
 
-    private PlanGenerator planGenerator;
+    private PlanGenerator<P> planGenerator;
 
     private PlanProperties properties = PlanProperties.defaultProperties();
 
     final private Logger logger = LoggerFactory.getLogger(DPPlanOptimizer.class);
 
-    public DPPlanOptimizer(PlanGenerator planGenerator)
+    public DPPlanOptimizer(PlanGenerator<P> planGenerator)
     {
         this.planGenerator = planGenerator;
     }
 
-    protected void prunePlans(Collection<Plan> plans)
+    protected void prunePlans(Collection<? extends Plan> plans)
     {
         List<Plan> bestPlans = new ArrayList<Plan>();
 
@@ -74,42 +76,52 @@ public class DPPlanOptimizer implements PlanOptimizer {
 
     private boolean isPlanComparable(Plan plan1, Plan plan2) {
         // FIXME: take plan properties into account
-        return plan1.getPlanId().equals(plan2.getPlanId()) &&
-                plan1.getProperties().isComparable(plan2.getProperties());
+        return plan1.getProperties().isComparable(plan2.getProperties());
+    }
+
+    private Set<TupleExpr> getKey(Set<TupleExpr> id1, Set<TupleExpr> id2) {
+        Set<TupleExpr> s = new HashSet<TupleExpr>(id1);
+        s.addAll(id2);
+        return s;
+    }
+
+    private Set<TupleExpr> getBaseRelations(TupleExpr expr, BindingSet bindings, Dataset dataset)
+    {
+        Collection<StatementPattern> patterns = StatementPatternCollector.process(expr);
+        return new HashSet<TupleExpr>(patterns);
     }
 
     public Plan getBestPlan(TupleExpr expr, BindingSet bindings, Dataset dataset)
     {
         // optPlans is a function from (Set of Expressions) to (Set of Plans)
-        PlanCollection optPlans = new PlanCollection();
+        PlanCollection<P> optPlans = new PlanCollection<P>();
 
-        Collection<Plan> accessPlans = planGenerator.accessPlans(expr, bindings, dataset);
+        Set<TupleExpr> r = getBaseRelations(expr, bindings, dataset);
 
-        optPlans.addPlan(accessPlans);
-
-        // plans.getExpressions() get basic expressions
-        // subsets S of size i
-        //
-        Set<TupleExpr> r = optPlans.getExpressions();
+        for (TupleExpr baseRelation : r)
+        {
+            Collection<P> accessPlans = planGenerator.accessPlans(baseRelation, bindings, dataset);
+            prunePlans(accessPlans);
+            optPlans.addPlan(Collections.singleton(baseRelation), accessPlans);
+        }
 
         for (Pair<Set<TupleExpr>, Set<TupleExpr>> p : pairsubsets(r))
         {
-            Set<TupleExpr> o1 = p.getFirst();
-            Set<TupleExpr> o2 = p.getSecond();
-            Set<TupleExpr> s  = new HashSet<>(o1);
-            s.addAll(o2);
 
-            Collection<Plan> plans1 = optPlans.get(o1);
-            Collection<Plan> plans2 = optPlans.get(o2);
+            Collection<P> plans1 = optPlans.get(p.getFirst());
+            Collection<P> plans2 = optPlans.get(p.getSecond());
 
-            Collection<Plan> newPlans = planGenerator.joinPlans(plans1, plans2);
+            Collection<P> newPlans = planGenerator.joinPlans(plans1, plans2);
 
-            optPlans.addPlan(newPlans);
+            Set<TupleExpr> s = getKey(p.getFirst(), p.getSecond());
+
+            optPlans.addPlan(s, newPlans);
 
             prunePlans(optPlans.get(s));
         }
 
-        Collection<Plan> fullPlans = optPlans.get(r);
+        Collection<P> fullPlans = optPlans.get(r);
+
         fullPlans = planGenerator.finalizePlans(fullPlans, properties);
 
         if (!fullPlans.isEmpty()) {
@@ -119,7 +131,7 @@ public class DPPlanOptimizer implements PlanOptimizer {
         return getBestPlan(fullPlans);
     }
 
-    private Plan getBestPlan(Collection<Plan> plans)
+    private Plan getBestPlan(Collection<? extends Plan> plans)
     {
         if (plans.isEmpty())
             return null;
@@ -133,17 +145,9 @@ public class DPPlanOptimizer implements PlanOptimizer {
         return bestPlan;
     }
 
-    /*
-    private static <T> Iterable<Set<T>> subsetsOf(Set<T> s, int k) {
-        return new CombinationIterator<T>(k, s);
-    }
-    */
-
     private static <T> Iterable<Pair<Set<T>, Set<T>>> pairsubsets(Set<T> s) {
         return new PairSubsetIterator<T>(s);
     }
-
-
 
     static private class Pair<A, B>
     {
@@ -212,7 +216,6 @@ public class DPPlanOptimizer implements PlanOptimizer {
             return current.next();
         }
     }
-
 
     static public class PairSubsetIterator<T> implements Iterator<Pair<Set<T>, Set<T>>>, Iterable<Pair<Set<T>,Set<T>>>
     {

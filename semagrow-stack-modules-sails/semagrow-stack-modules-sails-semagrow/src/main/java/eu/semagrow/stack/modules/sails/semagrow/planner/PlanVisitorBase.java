@@ -17,7 +17,7 @@ public class PlanVisitorBase<X extends Exception> extends QueryModelVisitorBase<
 
     }
 
-    public void meet(Plan plan) throws X {
+    public void meet(PlanImpl plan) throws X {
         meetPlan(plan);
     }
 
@@ -40,8 +40,8 @@ public class PlanVisitorBase<X extends Exception> extends QueryModelVisitorBase<
     @Override
     public void meetOther(QueryModelNode node) throws X {
 
-        if (node instanceof Plan)
-            meet((Plan)node);
+        if (node instanceof PlanImpl)
+            meet((PlanImpl)node);
         else if (node instanceof SourceQuery)
             meet((SourceQuery)node);
         else if (node instanceof BindJoin)
