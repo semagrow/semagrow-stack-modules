@@ -130,7 +130,6 @@ public class RDFQueryLogFactory implements QueryLogFactory {
         private QueryLogWriter newWriter() throws QueryLogException
         {
             String filename = computeNextFilename();
-            System.out.println("filename = "+filename);
 
             try {
                 QueryLogWriter handler = getQueryRecordLogger(filename);

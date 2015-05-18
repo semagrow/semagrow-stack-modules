@@ -11,7 +11,6 @@ public interface QueryLogConfig {
 
     boolean rotate();
 
-
     void setCounter(int counter);
 
     int getCounter();
