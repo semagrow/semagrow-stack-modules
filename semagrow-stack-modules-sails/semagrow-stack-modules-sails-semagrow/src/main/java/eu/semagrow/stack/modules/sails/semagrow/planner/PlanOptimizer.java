@@ -9,6 +9,13 @@ import org.openrdf.query.algebra.TupleExpr;
  */
 public interface PlanOptimizer {
 
+    /**
+     * Creates a Plan that is considered as optimal
+     * @param expr the expression
+     * @param bindings potential bindings of variables
+     * @param dataset not sure if needed
+     * @return an execution plan of the expression 'expr'
+     */
     Plan getBestPlan(TupleExpr expr, BindingSet bindings, Dataset dataset);
 
 }

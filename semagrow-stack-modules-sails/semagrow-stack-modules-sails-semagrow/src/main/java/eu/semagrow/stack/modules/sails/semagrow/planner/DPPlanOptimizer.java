@@ -100,7 +100,7 @@ public class DPPlanOptimizer<P extends Plan> implements PlanOptimizer {
 
         for (TupleExpr baseRelation : r)
         {
-            Collection<P> accessPlans = planGenerator.accessPlans(baseRelation, bindings, dataset);
+            Collection<P> accessPlans = planGenerator.access(baseRelation, bindings, dataset);
             prunePlans(accessPlans);
             optPlans.addPlan(Collections.singleton(baseRelation), accessPlans);
         }
@@ -111,7 +111,7 @@ public class DPPlanOptimizer<P extends Plan> implements PlanOptimizer {
             Collection<P> plans1 = optPlans.get(p.getFirst());
             Collection<P> plans2 = optPlans.get(p.getSecond());
 
-            Collection<P> newPlans = planGenerator.joinPlans(plans1, plans2);
+            Collection<P> newPlans = planGenerator.combine(plans1, plans2);
 
             Set<TupleExpr> s = getKey(p.getFirst(), p.getSecond());
 
@@ -122,7 +122,7 @@ public class DPPlanOptimizer<P extends Plan> implements PlanOptimizer {
 
         Collection<P> fullPlans = optPlans.get(r);
 
-        fullPlans = planGenerator.finalizePlans(fullPlans, properties);
+        fullPlans = planGenerator.finalize(fullPlans, properties);
 
         if (!fullPlans.isEmpty()) {
             logger.info("Found " + fullPlans.size() + " complete optimal plans");

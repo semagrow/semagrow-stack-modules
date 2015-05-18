@@ -16,9 +16,9 @@ public class PlanImpl extends UnaryTupleOperator implements Plan
 
     private PlanProperties properties;
 
+    private Set<QueryVertex> queryVertexes;
 
     public PlanImpl(TupleExpr arg) { super(arg); properties = PlanProperties.defaultProperties(); }
-
 
     @Override
     public PlanProperties getProperties() { return properties; }
@@ -39,4 +39,21 @@ public class PlanImpl extends UnaryTupleOperator implements Plan
         sb.append("(cost=" + getProperties().getCost().toString() +")");
         return sb.toString();
     }
+
+
+    static public Plan createPlan(TupleExpr expr)
+    {
+        PlanImpl p = new PlanImpl(expr);
+        updatePlanProperties(p);
+        return p;
+    }
+
+
+    static public void updatePlanProperties(Plan plan)
+    {
+        TupleExpr e = plan.getArg();
+        PlanProperties properties = PlanPropertiesUpdater.process(e, plan.getProperties());
+        plan.setProperties(properties);
+    }
+
 }

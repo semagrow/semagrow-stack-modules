@@ -46,8 +46,10 @@ public class QueryGraphBuilder extends QueryModelVisitorBase<RuntimeException> {
         }
 
         for (String v : joinVars) {
-            for (StatementPattern p1 : left.get(v)) {
-                for (StatementPattern p2 : right.get(v)) {
+            for (StatementPattern p1 : left.get(v))
+            {
+                for (StatementPattern p2 : right.get(v))
+                {
                     //graph.addEdge(p1, p2, JoinPredicate(v))
                     logger.debug("Adding INNER JOIN edge from " + p1 +  " to " + p2);
                 }

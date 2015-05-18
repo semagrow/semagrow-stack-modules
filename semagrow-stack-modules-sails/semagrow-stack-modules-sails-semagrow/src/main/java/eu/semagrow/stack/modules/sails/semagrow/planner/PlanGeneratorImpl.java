@@ -45,7 +45,23 @@ public class PlanGeneratorImpl implements PlanGenerator<Plan> {
         //this.joinImplGenerators.add(new MergeJoinGenerator());
     }
 
-    protected void updatePlanProperties(PlanImpl plan)
+    /**
+     * Update the properties of a plan
+     * @param plan
+     */
+    protected void updatePlan(Plan plan)
+    {
+        TupleExpr innerExpr = plan.getArg();
+
+        // apply filters that can be applied
+        TupleExpr e = PlanUtils.applyRemainingFilters(innerExpr.clone(), ctx.filters);
+
+        plan.getArg().replaceWith(e);
+
+        updatePlanProperties(plan);
+    }
+
+    protected void updatePlanProperties(Plan plan)
     {
         TupleExpr e = plan.getArg();
 
@@ -56,22 +72,6 @@ public class PlanGeneratorImpl implements PlanGenerator<Plan> {
         // update cardinality and cost properties
         plan.getProperties().setCost(costEstimator.getCost(e, plan.getProperties().getSite()));
         plan.getProperties().setCardinality(cardinalityEstimator.getCardinality(e, plan.getProperties().getSite().getURI()));
-    }
-
-    /**
-     * Update the properties of a plan
-     * @param plan
-     */
-    protected void updatePlan(PlanImpl plan)
-    {
-        TupleExpr innerExpr = plan.getArg();
-
-        // apply filters that can be applied
-        TupleExpr e = PlanUtils.applyRemainingFilters(innerExpr.clone(), ctx.filters);
-
-        plan.getArg().replaceWith(e);
-
-        updatePlanProperties(plan);
     }
 
     protected Plan createPlan(TupleExpr innerExpr)
@@ -102,8 +102,25 @@ public class PlanGeneratorImpl implements PlanGenerator<Plan> {
         return p;
     }
 
+    public Plan createUnionPlan(List<Plan> plans)
+    {
+        Iterator<Plan> it = plans.iterator();
+        Plan p;
 
-    public Collection<Plan> accessPlans(TupleExpr expr, BindingSet bindings, Dataset dataset)
+        if (it.hasNext())
+            p = it.next();
+        else
+            return null;
+
+        while (it.hasNext()) {
+            Plan i = it.next();
+            p = createPlan(new Union(enforceLocalSite(p), enforceLocalSite(i)));
+        }
+
+        return p;
+    }
+
+    public Collection<Plan> access(TupleExpr expr, BindingSet bindings, Dataset dataset)
     {
 
         Collection<Plan> plans = new LinkedList<Plan>();
@@ -130,29 +147,11 @@ public class PlanGeneratorImpl implements PlanGenerator<Plan> {
         return plans;
     }
 
-    public Plan createUnionPlan(List<Plan> plans)
-    {
-        Iterator<Plan> it = plans.iterator();
-        Plan p;
-
-        if (it.hasNext())
-            p = it.next();
-        else
-            return null;
-
-        while (it.hasNext()) {
-            Plan i = it.next();
-            p = createPlan(new Union(enforceLocalSite(p), enforceLocalSite(i)));
-        }
-
-        return p;
-    }
-
     protected Collection<SourceMetadata> getSources(TupleExpr pattern, Dataset dataset, BindingSet bindings) {
         return sourceSelector.getSources(pattern,dataset,bindings);
     }
 
-    public Collection<Plan> joinPlans(Collection<Plan> plan1, Collection<Plan> plan2)
+    public Collection<Plan> combine(Collection<Plan> plan1, Collection<Plan> plan2)
     {
         Collection<Plan> plans = new LinkedList<Plan>();
 
@@ -172,6 +171,16 @@ public class PlanGeneratorImpl implements PlanGenerator<Plan> {
         return plans;
     }
 
+    public Collection<Plan> finalize(Collection<Plan> plans, PlanProperties properties) {
+        Collection<Plan> pl = new LinkedList<Plan>();
+
+        for (Plan p : plans)
+            pl.add(enforceLocalSite(p));
+
+        return pl;
+    }
+
+
     private Plan enforceLocalSite(Plan p)
     {
         Site s = p.getProperties().getSite();
@@ -188,15 +197,6 @@ public class PlanGeneratorImpl implements PlanGenerator<Plan> {
         } else {
             return createPlan(new Order(p, ordering.getOrderElements()));
         }
-    }
-
-    public Collection<Plan> finalizePlans(Collection<Plan> plans, PlanProperties properties) {
-        Collection<Plan> pl = new LinkedList<Plan>();
-
-        for (Plan p : plans)
-            pl.add(enforceLocalSite(p));
-
-        return pl;
     }
 
     protected interface PropertyEnforcer

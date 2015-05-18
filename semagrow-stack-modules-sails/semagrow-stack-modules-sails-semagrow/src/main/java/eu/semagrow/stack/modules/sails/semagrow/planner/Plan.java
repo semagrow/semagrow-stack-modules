@@ -8,7 +8,10 @@ import org.openrdf.query.algebra.TupleExpr;
  */
 public interface Plan extends QueryModelNode, TupleExpr {
 
+    TupleExpr getArg();
+
     PlanProperties getProperties();
 
     void setProperties(PlanProperties properties);
+
 }

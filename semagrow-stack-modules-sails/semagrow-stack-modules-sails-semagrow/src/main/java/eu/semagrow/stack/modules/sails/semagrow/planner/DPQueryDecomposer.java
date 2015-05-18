@@ -38,6 +38,7 @@ public class DPQueryDecomposer implements QueryDecomposer {
     {
 
         Collection<TupleExpr> basicGraphPatterns = BPGCollector.process(expr);
+
         QueryGraph queryGraph = QueryGraphBuilder.build(expr);
 
         for (TupleExpr bgp : basicGraphPatterns)
