@@ -34,7 +34,7 @@ public class PlanImpl extends UnaryTupleOperator implements Plan
         StringBuilder sb = new StringBuilder(128);
 
         sb.append(super.getSignature());
-        sb.append("(cost=" + getProperties().getCost().toString() +")");
+        sb.append("(cost=" + getProperties().getCost().toString() +", card=" + getProperties().getCardinality() +")");
         return sb.toString();
     }
 

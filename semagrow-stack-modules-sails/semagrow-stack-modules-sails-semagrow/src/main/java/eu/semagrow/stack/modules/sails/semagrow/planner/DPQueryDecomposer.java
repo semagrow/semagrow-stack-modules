@@ -49,9 +49,9 @@ public class DPQueryDecomposer implements QueryDecomposer {
     {
         DecomposerContext ctx = getContext(bgp, dataset, bindings);
 
-        PlanGenerator<Plan> planGenerator = new PlanGeneratorImpl(ctx, sourceSelector, costEstimator, cardinalityEstimator);
+        PlanGenerator<Plan> planGenerator = new QueryGraphPlanGenerator(ctx, sourceSelector, costEstimator, cardinalityEstimator);
 
-        PlanOptimizer planOptimizer = new DPPlanOptimizer<>(planGenerator);
+        PlanOptimizer planOptimizer = new DPPlanOptimizer<>(ctx.queryGraph, planGenerator);
 
         Plan bestPlan = planOptimizer.getBestPlan(bgp, bindings, dataset);
         bgp.replaceWith(bestPlan);
@@ -60,6 +60,7 @@ public class DPQueryDecomposer implements QueryDecomposer {
     protected DecomposerContext getContext(TupleExpr bgp, Dataset dataset, BindingSet bindings) {
         DecomposerContext ctx = new DecomposerContext();
         ctx.filters = FilterCollector.process(bgp);
+        ctx.queryGraph = QueryGraphBuilder.build(bgp);
         return ctx;
     }
 

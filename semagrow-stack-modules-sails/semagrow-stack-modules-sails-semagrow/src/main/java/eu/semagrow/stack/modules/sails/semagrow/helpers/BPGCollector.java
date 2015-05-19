@@ -99,4 +99,28 @@ public class BPGCollector extends QueryModelVisitorBase<RuntimeException> {
         if (valid)
             lastBGPNode = join;
     }
+
+
+    @Override
+    public void meet(LeftJoin join) throws RuntimeException {
+
+        boolean valid = true;
+
+        // visit join arguments and check that all are valid BGPS
+        for (TupleExpr expr : new TupleExpr[] { join.getLeftArg(), join.getRightArg() }) {
+            expr.visit(this);
+            if (lastBGPNode == null) {
+                // child is not a BGP -> join is not a BGP
+                valid = false;
+            } else {
+                if (!valid) {
+                    // last child is a BGP but another child was not
+                    this.bgps.add(lastBGPNode);
+                    lastBGPNode = null;
+                }
+            }
+        }
+        if (valid)
+            lastBGPNode = join;
+    }
 }

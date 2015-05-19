@@ -111,7 +111,7 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
         double sel = getJoinSelectivity(dummyJoin, source);
 
         // TODO: check the second half of the equation
-        return (long)(card1 * card2 * sel) + (long)(card1 * (1/sel));
+        return (long)(card1 * card2 * sel) + (long)(card1);
     }
 
     public long getCardinality(SourceQuery query, URI source) {

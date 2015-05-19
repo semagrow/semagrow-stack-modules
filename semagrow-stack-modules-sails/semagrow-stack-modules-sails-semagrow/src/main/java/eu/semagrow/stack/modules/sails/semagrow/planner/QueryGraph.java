@@ -31,7 +31,13 @@ public class QueryGraph
 
     public Collection<QueryEdge> getOutgoingEdges(Collection<TupleExpr> v)
     {
-        return null;
+        Collection<QueryEdge> outgoingEdges = new LinkedList<>();
+
+        for (TupleExpr e : v)
+        {
+            outgoingEdges.addAll(getOutgoingEdges(e));
+        }
+        return outgoingEdges;
     }
 
     public Collection<TupleExpr> getAdjacent(TupleExpr v) {
@@ -42,6 +48,8 @@ public class QueryGraph
         }
         return vertices;
     }
+
+
 
     public Collection<TupleExpr> getAdjacent(Collection<TupleExpr> v) { return null; }
 

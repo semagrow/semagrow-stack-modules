@@ -24,7 +24,7 @@ public class PlanGeneratorImpl implements PlanGenerator<Plan> {
     private CostEstimator        costEstimator;
     private CardinalityEstimator cardinalityEstimator;
 
-    private DecomposerContext ctx;
+    protected DecomposerContext ctx;
 
     protected Collection<JoinImplGenerator> joinImplGenerators;
 
@@ -182,7 +182,7 @@ public class PlanGeneratorImpl implements PlanGenerator<Plan> {
     }
 
 
-    private Plan enforceLocalSite(Plan p)
+    protected Plan enforceLocalSite(Plan p)
     {
         Site s = p.getProperties().getSite();
         if (s.isLocal())
@@ -191,7 +191,7 @@ public class PlanGeneratorImpl implements PlanGenerator<Plan> {
             return createPlan(new SourceQuery(p, s.getURI()));
     }
 
-    private Plan enforceOrdering(Plan p, Ordering ordering)
+    protected Plan enforceOrdering(Plan p, Ordering ordering)
     {
         if (p.getProperties().getOrdering().isCoverOf(ordering)) {
             return p;

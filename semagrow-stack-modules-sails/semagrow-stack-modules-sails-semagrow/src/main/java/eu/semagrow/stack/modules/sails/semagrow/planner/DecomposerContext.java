@@ -16,4 +16,5 @@ public class DecomposerContext {
 
     int limit;
 
+    public QueryGraph queryGraph;
 }

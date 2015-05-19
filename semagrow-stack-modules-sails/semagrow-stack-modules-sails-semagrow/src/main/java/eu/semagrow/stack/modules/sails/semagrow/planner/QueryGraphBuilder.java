@@ -47,6 +47,7 @@ public class QueryGraphBuilder extends QueryModelVisitorBase<RuntimeException> {
 
         join.getRightArg().visit(this);
 
+
         for (String v : joinVars) {
             Set<StatementPattern> s = new HashSet<StatementPattern>(varMap.get(v));
             s.removeAll(left.get(v));
@@ -67,6 +68,26 @@ public class QueryGraphBuilder extends QueryModelVisitorBase<RuntimeException> {
                     //logger.debug("Adding INNER JOIN edge from " + p1 +  " to " + p2);
                 }
             }
+        }
+    }
+
+    private void mergeMap(HashMap<String, Set<StatementPattern>> oldVarMap,
+                          HashMap<String, Set<StatementPattern>> varMap)
+    {
+        for (String v : varMap.keySet())
+        {
+            Set<StatementPattern> s = oldVarMap.get(v);
+
+            if (s != null) {
+                s.addAll(varMap.getOrDefault(v, new HashSet<StatementPattern>()));
+            } else {
+                s = varMap.get(v);
+            }
+
+            if (s != null) {
+                oldVarMap.put(v, s);
+            }
+
         }
     }
 
@@ -111,8 +132,15 @@ public class QueryGraphBuilder extends QueryModelVisitorBase<RuntimeException> {
             left.put(v, new HashSet<StatementPattern>(varMap.get(v)));
 
         this.tab = new HashSet<>();
+        HashMap<String, Set<StatementPattern>> oldVarMap = this.varMap;
+        this.varMap = new HashMap<>();
+
 
         leftJoin.getRightArg().visit(this);
+
+        mergeMap(oldVarMap, this.varMap);
+        this.varMap = oldVarMap;
+
 
         for (String v : joinVars) {
             Set<StatementPattern> s = new HashSet<StatementPattern>(varMap.get(v));

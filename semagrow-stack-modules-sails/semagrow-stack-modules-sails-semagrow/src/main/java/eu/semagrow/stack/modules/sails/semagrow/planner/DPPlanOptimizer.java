@@ -20,10 +20,13 @@ public class DPPlanOptimizer<P extends Plan> implements PlanOptimizer {
 
     private PlanProperties properties = PlanProperties.defaultProperties();
 
+    private QueryGraph queryGraph;
+
     final private Logger logger = LoggerFactory.getLogger(DPPlanOptimizer.class);
 
-    public DPPlanOptimizer(PlanGenerator<P> planGenerator)
+    public DPPlanOptimizer(QueryGraph query, PlanGenerator<P> planGenerator)
     {
+        this.queryGraph = query;
         this.planGenerator = planGenerator;
     }
 
@@ -87,8 +90,9 @@ public class DPPlanOptimizer<P extends Plan> implements PlanOptimizer {
 
     private Set<TupleExpr> getBaseRelations(TupleExpr expr, BindingSet bindings, Dataset dataset)
     {
-        Collection<StatementPattern> patterns = StatementPatternCollector.process(expr);
-        return new HashSet<TupleExpr>(patterns);
+        //Collection<StatementPattern> patterns = StatementPatternCollector.process(expr);
+        //return new HashSet<TupleExpr>(patterns);
+        return new HashSet<TupleExpr>(queryGraph.getVertices());
     }
 
     public Plan getBestPlan(TupleExpr expr, BindingSet bindings, Dataset dataset)
