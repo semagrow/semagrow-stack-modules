@@ -11,7 +11,7 @@ import java.nio.file.Paths;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.nio.file.attribute.FileTime;
 import java.util.Arrays;
-
+import java.util.Comparator;
 
 
 /**
@@ -21,26 +21,37 @@ public class QueryLogManager {
 
     private static String logDir;
     private static String filePrefix;
+    private File[] listOfFiles;
 
     public QueryLogManager(String logDir, String filePrefix) {
         this.logDir = logDir;
-        this.filePrefix = filePrefix;
+        this.filePrefix = filePrefix + ".";
     }
 
     public String getLastFile() throws QueryLogException {
 
-        File[] listOfFiles = getListOfFiles();
+        listOfFiles = getListOfFiles();
 
         if(listOfFiles.length == 0) {
-            String filename = logDir + filePrefix + "." + 0;
+            String filename = logDir + filePrefix + 0;
 
             return createFile(filename);
         }
 
-        //Arrays.sort(listOfFiles);
+        getNameSorted();
 
         //return logDir + listOfFiles[listOfFiles.length - 1].getName();
-        return logDir + getLastModified(listOfFiles);
+        return logDir + listOfFiles[listOfFiles.length - 1].getName();
+
+    }
+
+    private void getNameSorted() {
+        Arrays.sort(listOfFiles, new Comparator<File>() {
+            public int compare(File f1, File f2) {
+                return Long.valueOf(f1.getName().split(filePrefix)[1]).compareTo(Long.valueOf(f2.getName().split(filePrefix)[1]));
+                //return Long.valueOf(f1.lastModified()).compareTo(f2.lastModified());
+            }
+        });
 
     }
 
