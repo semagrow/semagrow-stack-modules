@@ -169,17 +169,17 @@ public class SemagrowSailConnection extends SailConnectionBase {
         TupleExpr decomposed = null;
         //////////////////////////////////////////////////
         // NA VGEI!!!
-        try {
-            decomposed = new StaticOptimizer().decompose(tupleExpr);
-        } catch (MalformedQueryException e) {
-            e.printStackTrace();
-        }
-        if (decomposed != null) {
-            logger.debug("Query decomposed to " + decomposed.toString());
-            logger.info("Decomposed query: " + decomposed.toString());
-            System.out.println(decomposed.toString());
-            return evaluateOnlyReactive(decomposed, dataset, bindings, b, p);
-        }
+        //try {
+        //    decomposed = new StaticOptimizer().decompose(tupleExpr);
+        //} catch (MalformedQueryException e) {
+        //    e.printStackTrace();
+        //}
+        //if (decomposed != null) {
+        //    logger.debug("Query decomposed to " + decomposed.toString());
+        //    logger.info("Decomposed query: " + decomposed.toString());
+        //    System.out.println(decomposed.toString());
+        //    return evaluateOnlyReactive(decomposed, dataset, bindings, b, p);
+        //}
         /////////////////////////////////////////////////
         try {
             decomposed = decompose(tupleExpr, dataset, bindings, includeOnlySources, excludeSources);
