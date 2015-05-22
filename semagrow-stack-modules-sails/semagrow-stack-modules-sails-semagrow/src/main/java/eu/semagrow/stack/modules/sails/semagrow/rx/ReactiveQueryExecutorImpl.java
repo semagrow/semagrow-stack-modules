@@ -165,7 +165,7 @@ public class ReactiveQueryExecutorImpl
 
         result = result.map(b -> convertUnionBindings(b, bindings, FederatedReactiveEvaluationStrategyImpl::joinBindings));
 
-        if (!relevant.isEmpty()) {
+        /*if (!relevant.isEmpty()) {
 
             final Observable<BindingSet> r = result;
 
@@ -191,7 +191,7 @@ public class ReactiveQueryExecutorImpl
                         (b) -> Observable.never(),
                         (b) -> Observable.never(),
                         FederatedReactiveEvaluationStrategyImpl::joinBindings);
-        }
+        }*/
 
         return result;
     }

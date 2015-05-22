@@ -164,7 +164,7 @@ public class ReactorQueryExecutorImpl
 
         result = result.map(b -> convertUnionBindings(b, bindings));
 
-        if (!relevant.isEmpty()) {
+        /*if (!relevant.isEmpty()) {
 
             final Stream<BindingSet> r = result;
 
@@ -194,7 +194,7 @@ public class ReactorQueryExecutorImpl
             result = r.concatMap(b ->
                      Streams.from(bindings).map(bbb -> FederatedReactiveEvaluationStrategyImpl.joinBindings(b, bbb))
             );
-        }
+        }*/
 
         return result;
     }
