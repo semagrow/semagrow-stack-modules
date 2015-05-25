@@ -1,6 +1,7 @@
 package eu.semagrow.stack.modules.sails.semagrow.evaluation.file;
 
 import info.aduna.iteration.CloseableIteration;
+import org.openrdf.http.client.BackgroundTupleResult;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.query.BindingSet;
@@ -49,7 +50,7 @@ public class FileManager implements MaterializationManager {
             TupleQueryResultParserFactory factory = registry.get(ff);
             TupleQueryResultParser parser = factory.getParser();
             InputStream in = new FileInputStream(f);
-            BackgroundTupleResult result = new BackgroundTupleResult(parser, in);
+            BackgroundTupleResult result = new BackgroundTupleResult(parser, in, null);
 
            // execute(result);
             return result;
