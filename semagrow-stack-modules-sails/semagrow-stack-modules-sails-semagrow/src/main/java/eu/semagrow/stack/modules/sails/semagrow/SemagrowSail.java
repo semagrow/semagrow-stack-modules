@@ -145,7 +145,7 @@ public class SemagrowSail extends SailBase {
 
     public MaterializationManager getManager() {
         File baseDir = new File(logDir);
-        TupleQueryResultFormat resultFF = TupleQueryResultFormat.CSV;
+        TupleQueryResultFormat resultFF = TupleQueryResultFormat.TSV;
 
         TupleQueryResultWriterRegistry  registry = TupleQueryResultWriterRegistry.getInstance();
         TupleQueryResultWriterFactory writerFactory = registry.get(resultFF);
@@ -185,6 +185,7 @@ public class SemagrowSail extends SailBase {
     @Override
     public void shutDownInternal() throws SailException {
 
+
         if (handler != null) {
             try {
                 handler.endQueryLog();
@@ -192,7 +193,7 @@ public class SemagrowSail extends SailBase {
                 throw new SailException(e);
             }
         }
-        super.shutDown();
+       // super.shutDown();
 
     }
 
