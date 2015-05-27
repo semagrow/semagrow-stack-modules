@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.querydecomp.selector;
+package eu.semagrow.stack.modules.sails.semagrow.selector;
 
 import eu.semagrow.stack.modules.api.source.SourceMetadata;
 import eu.semagrow.stack.modules.api.source.SourceSelector;

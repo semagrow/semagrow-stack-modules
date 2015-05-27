@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.querydecomp.selector;
+package eu.semagrow.stack.modules.sails.semagrow.selector;
 
 import org.apache.commons.io.filefilter.NameFileFilter;
 import org.apache.commons.io.monitor.FileAlterationListenerAdaptor;

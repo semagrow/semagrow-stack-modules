@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.querydecomp.selector;
+package eu.semagrow.stack.modules.sails.semagrow.selector;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -7,12 +7,9 @@ import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;
-import org.openrdf.query.BooleanQuery;
 import org.openrdf.query.Dataset;
-import org.openrdf.query.QueryLanguage;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
-import org.openrdf.query.algebra.Var;
 import org.openrdf.query.algebra.helpers.StatementPatternCollector;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;

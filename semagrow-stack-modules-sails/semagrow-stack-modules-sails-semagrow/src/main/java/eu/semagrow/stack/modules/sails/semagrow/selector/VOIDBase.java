@@ -1,8 +1,7 @@
-package eu.semagrow.stack.modules.querydecomp.selector;
+package eu.semagrow.stack.modules.sails.semagrow.selector;
 
 import eu.semagrow.stack.modules.vocabulary.SEVOD;
 import eu.semagrow.stack.modules.vocabulary.VOID;
-import info.aduna.iteration.Iterations;
 import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;

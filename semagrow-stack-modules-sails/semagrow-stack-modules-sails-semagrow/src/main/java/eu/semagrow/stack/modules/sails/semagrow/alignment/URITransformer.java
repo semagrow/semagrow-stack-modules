@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.alignment;
+package eu.semagrow.stack.modules.sails.semagrow.alignment;
 
 import eu.semagrow.stack.modules.api.transformation.QueryTransformation;
 import org.openrdf.model.URI;

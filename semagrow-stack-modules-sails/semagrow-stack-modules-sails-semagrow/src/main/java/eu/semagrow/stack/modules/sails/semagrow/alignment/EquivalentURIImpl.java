@@ -1,7 +1,7 @@
 /**
  * 
  */
-package eu.semagrow.stack.modules.alignment;
+package eu.semagrow.stack.modules.sails.semagrow.alignment;
 
 import org.openrdf.model.URI;
 

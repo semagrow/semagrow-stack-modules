@@ -1,10 +1,9 @@
-package eu.semagrow.stack.modules.querydecomp.selector;
+package eu.semagrow.stack.modules.sails.semagrow.selector;
 
 import eu.semagrow.stack.modules.api.source.SourceMetadata;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.api.transformation.EquivalentURI;
 import eu.semagrow.stack.modules.api.transformation.QueryTransformation;
-import org.openrdf.model.Literal;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
 import org.openrdf.query.BindingSet;

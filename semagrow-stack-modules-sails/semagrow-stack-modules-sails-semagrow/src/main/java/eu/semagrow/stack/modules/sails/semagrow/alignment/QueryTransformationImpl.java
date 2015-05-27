@@ -2,7 +2,7 @@
  * To change this template, choose Tools | Templates
  * and open the template in the editor.
  */
-package eu.semagrow.stack.modules.alignment;
+package eu.semagrow.stack.modules.sails.semagrow.alignment;
 
 import eu.semagrow.stack.modules.api.transformation.EquivalentURI;
 import eu.semagrow.stack.modules.api.transformation.QueryTransformation;

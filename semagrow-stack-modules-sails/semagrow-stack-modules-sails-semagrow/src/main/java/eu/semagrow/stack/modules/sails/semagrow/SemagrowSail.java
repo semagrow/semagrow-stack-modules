@@ -5,7 +5,7 @@ import eu.semagrow.stack.modules.api.evaluation.FederatedQueryEvaluation;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimator;
-import eu.semagrow.stack.modules.querydecomp.selector.*;
+import eu.semagrow.stack.modules.sails.semagrow.selector.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryEvaluationImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.FileManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;

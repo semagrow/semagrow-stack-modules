@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.querydecomp.selector;
+package eu.semagrow.stack.modules.sails.semagrow.selector;
 
 import eu.semagrow.stack.modules.utils.resourceselector.ResourceSelector;
 import eu.semagrow.stack.modules.utils.resourceselector.SelectedResource;
