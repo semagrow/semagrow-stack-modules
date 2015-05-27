@@ -74,8 +74,7 @@ public class DPPlanOptimizer implements PlanOptimizer {
 
     private boolean isPlanComparable(Plan plan1, Plan plan2) {
         // FIXME: take plan properties into account
-        return plan1.getPlanId().equals(plan2.getPlanId()) &&
-                plan1.getProperties().isComparable(plan2.getProperties());
+        return  plan1.getProperties().isComparable(plan2.getProperties());
     }
 
     public Plan getBestPlan(TupleExpr expr, BindingSet bindings, Dataset dataset)
