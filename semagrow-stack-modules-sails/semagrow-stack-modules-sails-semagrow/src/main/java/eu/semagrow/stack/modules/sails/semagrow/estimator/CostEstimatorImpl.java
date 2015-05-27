@@ -20,7 +20,7 @@ public class CostEstimatorImpl implements CostEstimator {
     private CardinalityEstimator cardinalityEstimator;
 
     private static double C_TRANSFER_TUPLE = 0.1;
-    private static double C_TRANSFER_QUERY = 50;
+    private static double C_TRANSFER_QUERY = 500;
 
     private static double C_PROBE_TUPLE = 0.001;   //cost to probe a tuple against a hash table
     private static double C_HASH_TUPLE = 0.003;    //cost to hash a tuple to a hash table
@@ -47,8 +47,10 @@ public class CostEstimatorImpl implements CostEstimator {
             return getCost((SourceQuery)expr, source);
         else if (expr instanceof Join)
             return getCost((Join)expr, source);
+        else if (expr instanceof LeftJoin)
+            return getCost((LeftJoin)expr, source);
         else if (expr instanceof Order)
-            return getCost((Order)expr, source);
+            return getCost((Order) expr, source);
         else if (expr instanceof PlanImpl)
             return ((Plan)expr).getProperties().getCost();
         else
@@ -118,6 +120,23 @@ public class CostEstimatorImpl implements CostEstimator {
         long rightCard = cardinalityEstimator.getCardinality(join.getRightArg(), source);
 
         return new Cost((leftCard + rightCard) * C_TRANSFER_TUPLE + 2 * C_TRANSFER_QUERY);
+    }
+
+
+    public Cost getCost(LeftJoin join, URI source) {
+
+        long leftCard = cardinalityEstimator.getCardinality(join.getLeftArg(), source);
+        long rightCard = cardinalityEstimator.getCardinality(join.getRightArg(), source);
+        long joinCard = cardinalityEstimator.getCardinality(join, source);
+
+        double commuCost = C_TRANSFER_QUERY +
+                leftCard * (C_TRANSFER_QUERY + C_TRANSFER_TUPLE)
+                + joinCard * C_TRANSFER_TUPLE;
+
+        if (source != null)
+            return getCost(join.getLeftArg(), source);
+        else
+            return getCost(join.getLeftArg()).add(getCost(join.getRightArg())).add(new Cost(commuCost));
     }
 
     public Cost getCost(Order order, URI source){

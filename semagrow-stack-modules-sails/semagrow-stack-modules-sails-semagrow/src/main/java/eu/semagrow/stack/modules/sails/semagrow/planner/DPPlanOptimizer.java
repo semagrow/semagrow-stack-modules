@@ -45,11 +45,8 @@ public class DPPlanOptimizer<P extends Plan> implements PlanOptimizer {
 
                 if (isPlanComparable(candidatePlan, plan)) {
                     inComparable = false;
+
                     int plan_comp = comparePlan(candidatePlan, plan);
-
-
-                    if (plan_comp != 0)
-                        inComparable = false;
 
                     if (plan_comp < 1) {
                         pIter.remove();
@@ -121,7 +118,13 @@ public class DPPlanOptimizer<P extends Plan> implements PlanOptimizer {
 
             optPlans.addPlan(s, newPlans);
 
+            if (s.size() == 4) {
+                int j;
+                j = 0;
+            }
+
             prunePlans(optPlans.get(s));
+
         }
 
         Collection<P> fullPlans = optPlans.get(r);

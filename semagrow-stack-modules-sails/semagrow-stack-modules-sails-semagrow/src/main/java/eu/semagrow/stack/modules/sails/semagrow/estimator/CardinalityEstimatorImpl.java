@@ -111,7 +111,7 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
         double sel = getJoinSelectivity(dummyJoin, source);
 
         // TODO: check the second half of the equation
-        return (long)(card1 * card2 * sel) + (long)(card1);
+        return (long)(card1 * card2 * sel) + (long)(card1 * (1 - sel));
     }
 
     public long getCardinality(SourceQuery query, URI source) {
@@ -193,6 +193,8 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
     public double getVarSelectivity(String varName, TupleExpr expr, URI source) {
         if (expr instanceof StatementPattern)
             return getVarSelectivity(varName, (StatementPattern)expr, source);
+        else if (expr instanceof LeftJoin)
+            return getVarSelectivity(varName, (LeftJoin)expr, source);
         else if (expr instanceof BinaryTupleOperator)
             return getVarSelectivity(varName, (BinaryTupleOperator)expr, source);
         else if (expr instanceof UnaryTupleOperator)
@@ -238,6 +240,10 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
         double leftSel = getVarSelectivity(varName, expr.getLeftArg(), source);
         double rightSel = getVarSelectivity(varName, expr.getRightArg(), source);
         return Math.min(leftSel, rightSel);
+    }
+
+    public double getVarSelectivity(String varName, LeftJoin join, URI source) {
+        return getVarSelectivity(varName, join.getLeftArg(), source);
     }
 
     /**

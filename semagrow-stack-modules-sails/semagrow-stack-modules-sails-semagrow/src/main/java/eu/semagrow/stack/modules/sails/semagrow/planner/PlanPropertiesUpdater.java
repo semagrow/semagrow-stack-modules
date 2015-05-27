@@ -117,6 +117,20 @@ public class PlanPropertiesUpdater extends PlanVisitorBase<RuntimeException> {
     }
 
     @Override
+    public void meet(LeftJoin join) throws RuntimeException {
+
+        join.getLeftArg().visit(this);
+        Set<TupleExpr> leftRelations = this.properties.getRelations();
+
+        join.getRightArg().visit(this);
+        Set<TupleExpr> rightRelations = this.properties.getRelations();
+
+        Set<TupleExpr> allRelations = new HashSet<>(leftRelations);
+        allRelations.addAll(rightRelations);
+        this.properties.setRelations(allRelations);
+    }
+
+    @Override
     public void meet(SourceQuery query) throws RuntimeException  {
         query.getArg().visit(this);
         this.properties.setSite(Site.LOCAL);
