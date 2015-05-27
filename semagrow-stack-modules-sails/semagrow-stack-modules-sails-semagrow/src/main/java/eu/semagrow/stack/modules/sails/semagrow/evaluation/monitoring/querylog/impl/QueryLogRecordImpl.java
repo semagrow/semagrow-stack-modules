@@ -4,19 +4,18 @@ import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationHandle;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogRecord;
 import org.openrdf.model.URI;
+import org.openrdf.query.BindingSet;
 import org.openrdf.query.algebra.TupleExpr;
 
-import java.util.Collection;
-import java.util.Date;
-import java.util.LinkedList;
-import java.util.List;
+import java.util.*;
 
 /**
 * Created by angel on 10/20/14.
 */
 public class QueryLogRecordImpl implements QueryLogRecord {
 
-    private QueryEvaluationSession session;
+    //private QueryEvaluationSession session;
+    private UUID session;
 
     private TupleExpr query;
 
@@ -32,9 +31,19 @@ public class QueryLogRecordImpl implements QueryLogRecord {
 
     private long duration;
 
-    private MaterializationHandle results;
+    private URI results;
 
-    public QueryLogRecordImpl(QueryEvaluationSession session, URI endpoint, TupleExpr query) {
+    private BindingSet bindings;
+
+    public QueryLogRecordImpl(UUID session, URI endpoint, TupleExpr query, BindingSet bindings) {
+        this.session = session;
+        this.endpoint = endpoint;
+        this.query = query;
+        this.bindings = bindings;
+        this.bindingNames = new LinkedList<String>();
+    }
+
+   /* public QueryLogRecordImpl(QueryEvaluationSession session, URI endpoint, TupleExpr query) {
         this.session = session;
         this.endpoint = endpoint;
         this.query = query;
@@ -46,7 +55,16 @@ public class QueryLogRecordImpl implements QueryLogRecord {
         this.endpoint = endpoint;
         this.query = query;
         this.bindingNames = new LinkedList<String>(bindingNames);
+    }*/
+
+    public QueryLogRecordImpl(UUID session, URI endpoint, TupleExpr query, BindingSet bindings, Collection<String> bindingNames) {
+        this.session = session;
+        this.endpoint = endpoint;
+        this.query = query;
+        this.bindings = bindings;
+        this.bindingNames = new LinkedList<String>(bindingNames);
     }
+
 
     @Override
     public URI getEndpoint() { return endpoint; }
@@ -54,11 +72,19 @@ public class QueryLogRecordImpl implements QueryLogRecord {
     @Override
     public TupleExpr getQuery() { return query; }
 
+    /*
     @Override
     public QueryEvaluationSession getSession() { return session; }
+    */
+
+    @Override
+    public UUID getSession() { return session; }
 
     @Override
     public List<String> getBindingNames() { return bindingNames; }
+
+    @Override
+    public BindingSet getBindings() {  return bindings;  }
 
     @Override
     public void setCardinality(long card) { cardinality = card; }
@@ -74,7 +100,7 @@ public class QueryLogRecordImpl implements QueryLogRecord {
     }
 
     @Override
-    public void setResults(MaterializationHandle handle) { results = handle; }
+    public void setResults(URI handle) { results = handle; }
 
     @Override
     public Date getStartTime() { return startTime; }
@@ -86,5 +112,5 @@ public class QueryLogRecordImpl implements QueryLogRecord {
     public long getDuration() { return duration; }
 
     @Override
-    public MaterializationHandle getResults() { return results; }
+    public URI getResults() { return results; }
 }

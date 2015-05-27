@@ -16,6 +16,7 @@ import org.openrdf.query.algebra.evaluation.federation.JoinExecutorBase;
 import org.openrdf.query.algebra.evaluation.iterator.CollectionIteration;
 import org.openrdf.query.impl.EmptyBindingSet;
 
+import javax.management.QueryEval;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;

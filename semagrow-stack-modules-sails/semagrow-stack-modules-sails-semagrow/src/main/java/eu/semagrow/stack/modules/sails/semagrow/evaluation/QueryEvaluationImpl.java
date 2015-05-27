@@ -61,7 +61,6 @@ public class QueryEvaluationImpl implements FederatedQueryEvaluation {
     protected class FederatedQueryEvaluationSessionImpl
             extends FederatedQueryEvaluationSessionImplBase {
 
-
         private ExecutorService executor;
 
         public FederatedQueryEvaluationSessionImpl(ExecutorService executor) {
@@ -91,13 +90,13 @@ public class QueryEvaluationImpl implements FederatedQueryEvaluation {
         	Collection<QueryExecutionInterceptor> interceptors = super.getQueryExecutorInterceptors();
         	//interceptors.add(new ObservingInterceptor());
             //interceptors.add(new QueryLogInterceptor(QueryLogRecordFactoryImpl.getInstance(), getQFRHandler(), this.getMaterializationManager()));
+            interceptors.add(new QueryLogInterceptor(getQFRHandler(), this.getMaterializationManager()));
         	return interceptors;
         }
 
         @Override
         public void closeSession(){
             logger.debug("Session " + getSessionId() + " closed");
-
         }
     }
 }

@@ -29,8 +29,10 @@ public class QueryResultObservingIteration extends ObservingIteration<BindingSet
 
         try {
 
-            if (!initialized)
+            if (!initialized) {
                 handler.startQueryResult(new ArrayList<String>(bindings.getBindingNames()));
+                initialized = true;
+            }
 
             handler.handleSolution(bindings);
 

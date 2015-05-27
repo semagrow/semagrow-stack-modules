@@ -5,6 +5,7 @@ import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationM
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.AbstractEvaluationSessionAwareInterceptor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryExecutionInterceptor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.MeasuringIteration;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.impl.QueryLogRecordImpl;
 import info.aduna.iteration.CloseableIteration;
 import info.aduna.iteration.DelayedIteration;
 import info.aduna.iteration.Iteration;
@@ -13,11 +14,10 @@ import org.openrdf.model.URI;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.QueryEvaluationException;
 import org.openrdf.query.algebra.TupleExpr;
+import org.openrdf.query.impl.EmptyBindingSet;
 
-import java.util.Collections;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
+import java.io.IOException;
+import java.util.*;
 
 /**
  * Created by angel on 10/20/14.
@@ -30,31 +30,27 @@ public class QueryLogInterceptor
 
     private QueryLogHandler qfrHandler;
 
-    private QueryLogRecordFactory qlrf;
-
-    public QueryLogInterceptor(QueryLogRecordFactory queryLogRecordFactory,
-                               QueryLogHandler qfrHandler,
-                               MaterializationManager fileManager) {
+    public QueryLogInterceptor(QueryLogHandler qfrHandler, MaterializationManager fileManager) {
         this.qfrHandler = qfrHandler;
         this.fileManager = fileManager;
-        this.qlrf = queryLogRecordFactory;
     }
 
     public MaterializationManager getFileManager() {
         return fileManager;
     }
 
-    @Override
-    public CloseableIteration<BindingSet, QueryEvaluationException>
-        afterExecution(URI endpoint, TupleExpr expr, BindingSet bindings, CloseableIteration<BindingSet, QueryEvaluationException> result) {
 
-        QueryLogRecord metadata = createMetadata(endpoint, expr, bindings.getBindingNames());
+    public CloseableIteration<BindingSet, QueryEvaluationException>
+    afterExecution(URI endpoint, TupleExpr expr, BindingSet bindings, CloseableIteration<BindingSet, QueryEvaluationException> result) {
+
+        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, bindings, bindings.getBindingNames());
+
         return observe(metadata, result);
     }
 
-    @Override
+
     public CloseableIteration<BindingSet, QueryEvaluationException>
-        afterExecution(URI endpoint, TupleExpr expr, CloseableIteration<BindingSet, QueryEvaluationException> bindingIter, CloseableIteration<BindingSet, QueryEvaluationException> result)
+    afterExecution(URI endpoint, TupleExpr expr, CloseableIteration<BindingSet, QueryEvaluationException> bindingIter, CloseableIteration<BindingSet, QueryEvaluationException> result)
     {
 
         List<BindingSet> bindings = Collections.<BindingSet>emptyList();
@@ -69,19 +65,17 @@ public class QueryLogInterceptor
 
         Set<String> bindingNames = (bindings.size() == 0) ? new HashSet<String>() : bindings.get(0).getBindingNames();
 
-        QueryLogRecord metadata = createMetadata(endpoint, expr, bindingNames);
+        QueryLogRecordImpl metadata = createMetadata(endpoint, expr, EmptyBindingSet.getInstance(), bindingNames);
 
         return observe(metadata, result);
     }
 
-    protected QueryLogRecord createMetadata(URI endpoint, TupleExpr expr, Set<String> bindingNames) {
-
-        return qlrf.createQueryLogRecord(endpoint, expr, bindingNames);
-        //return new QueryLogRecordImpl(this.getQueryEvaluationSession(), endpoint, expr, bindingNames);
+    protected QueryLogRecordImpl createMetadata(URI endpoint, TupleExpr expr, BindingSet bindings, Set<String> bindingNames) {
+        return new QueryLogRecordImpl(UUID.randomUUID(), endpoint, expr, bindings, bindingNames);
     }
 
     protected CloseableIteration<BindingSet, QueryEvaluationException>
-        observe(QueryLogRecord metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
+        observe(QueryLogRecordImpl metadata, CloseableIteration<BindingSet, QueryEvaluationException> iter) {
 
         return new QueryObserver(metadata, iter);
     }
@@ -96,14 +90,14 @@ public class QueryLogInterceptor
 
         private MaterializationHandle handle;
 
-        public QueryObserver(QueryLogRecord metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
+        public QueryObserver(QueryLogRecordImpl metadata, Iteration<BindingSet, QueryEvaluationException> iter) {
             queryLogRecord = metadata;
             innerIter = iter;
         }
 
         @Override
         protected Iteration<? extends BindingSet, ? extends QueryEvaluationException>
-            createIteration() throws QueryEvaluationException {
+        createIteration() throws QueryEvaluationException {
 
             MaterializationManager manager = getFileManager();
 
@@ -124,7 +118,11 @@ public class QueryLogInterceptor
             try {
                 return super.next();
             } catch(QueryEvaluationException e) {
-                handle.destroy();
+                try {
+                    handle.destroy();
+                } catch (IOException e2) {
+                    throw new QueryEvaluationException(e2);
+                }
                 throw e;
             }
         }
@@ -135,13 +133,23 @@ public class QueryLogInterceptor
 
             queryLogRecord.setCardinality(measure.getCount());
             queryLogRecord.setDuration(measure.getStartTime(), measure.getEndTime());
-            queryLogRecord.setResults(handle);
+
+            if (queryLogRecord.getCardinality() == 0) {
+                try {
+                    handle.destroy();
+                } catch (IOException e) {
+                    throw new QueryEvaluationException(e);
+                }
+            } else {
+                queryLogRecord.setResults(handle.getId());
+            }
 
             try {
                 qfrHandler.handleQueryRecord(queryLogRecord);
             } catch (QueryLogException e) {
                 throw new QueryEvaluationException(e);
             }
+
         }
 
     }

@@ -7,6 +7,6 @@ import java.io.OutputStream;
  */
 public interface QueryLogFactory {
 
-    QueryLogWriter getQueryLogger(OutputStream out);
+    QueryLogWriter getQueryRecordLogger(QueryLogConfig config) throws QueryLogException;
 
 }

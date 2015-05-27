@@ -3,10 +3,12 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog;
 import eu.semagrow.stack.modules.api.evaluation.QueryEvaluationSession;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationHandle;
 import org.openrdf.model.URI;
+import org.openrdf.query.BindingSet;
 import org.openrdf.query.algebra.TupleExpr;
 
 import java.util.Date;
 import java.util.List;
+import java.util.UUID;
 
 /**
  * Created by angel on 10/20/14.
@@ -16,7 +18,9 @@ public interface QueryLogRecord {
 
     TupleExpr getQuery();
 
-    QueryEvaluationSession getSession();
+    BindingSet getBindings();
+
+    java.util.UUID getSession();
 
     List<String> getBindingNames();
 
@@ -26,7 +30,7 @@ public interface QueryLogRecord {
 
     void setDuration(long start, long end);
 
-    void setResults(MaterializationHandle handle);
+    void setResults(URI handle);
 
     Date getStartTime();
 
@@ -34,5 +38,5 @@ public interface QueryLogRecord {
 
     long getDuration();
 
-    MaterializationHandle getResults();
+    URI getResults();
 }
