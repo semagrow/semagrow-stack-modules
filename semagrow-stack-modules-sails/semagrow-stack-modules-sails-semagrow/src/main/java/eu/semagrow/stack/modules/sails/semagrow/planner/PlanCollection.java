@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.optimizer;
+package eu.semagrow.stack.modules.sails.semagrow.planner;
 
 import org.openrdf.query.algebra.TupleExpr;
 
@@ -48,7 +48,7 @@ public class PlanCollection {
     public void addPlan(Plan plan) {
         List<Plan> plans = new LinkedList<Plan>();
         plans.add(plan);
-        addPlan(plan.getPlanId(), plans);
+        addPlan(plan.getKey(), plans);
     }
 
     public Collection<Plan> get(Set<TupleExpr> set) {

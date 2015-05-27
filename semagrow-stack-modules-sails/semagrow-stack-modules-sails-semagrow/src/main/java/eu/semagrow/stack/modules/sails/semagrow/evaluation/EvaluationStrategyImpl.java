@@ -4,7 +4,7 @@ import eu.semagrow.stack.modules.api.evaluation.FederatedEvaluationStrategy;
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
 import eu.semagrow.stack.modules.sails.semagrow.algebra.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.*;
-import eu.semagrow.stack.modules.sails.semagrow.optimizer.Plan;
+import eu.semagrow.stack.modules.sails.semagrow.planner.Plan;
 import info.aduna.iteration.*;
 import org.openrdf.model.*;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -336,8 +336,14 @@ public class EvaluationStrategyImpl
                 } else {
                     //CloseableIteration<BindingSet, QueryEvaluationException>
                     //        materializedIter = createBatchIter(leftIter, blockSize);
-                    Iterable<BindingSet> iterable = createIterable(leftIter, blockSize);
-                    addResult(evaluateInternal(expr,iterable));
+                    final Iterable<BindingSet> iterable = createIterable(leftIter, blockSize);
+
+                    addResult(new DelayedIteration<BindingSet, QueryEvaluationException>() {
+                        @Override
+                        protected Iteration<? extends BindingSet, ? extends QueryEvaluationException> createIteration() throws QueryEvaluationException {
+                            return evaluateInternal(expr, iterable);
+                        }
+                    });
                 }
             }
         }

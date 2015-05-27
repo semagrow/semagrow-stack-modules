@@ -3,7 +3,9 @@ package eu.semagrow.stack.modules.sails.semagrow.evaluation;
 import eu.semagrow.stack.modules.api.evaluation.QueryExecutor;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.HashJoinIteration;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.InsertValuesBindingsIteration;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.iteration.UnionJoinIteration;
 import info.aduna.iteration.*;
+
 import org.openrdf.model.Literal;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
@@ -27,6 +29,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.*;
+import java.util.regex.Matcher;
 
 /**
  * Created by angel on 6/6/14.
@@ -35,6 +38,8 @@ import java.util.*;
 public class QueryExecutorImpl implements QueryExecutor {
 
     private final Logger logger = LoggerFactory.getLogger(QueryExecutorImpl.class);
+
+    private int countconn = 0;
 
     private Map<URI,Repository> repoMap = new HashMap<URI,Repository>();
 
@@ -57,7 +62,10 @@ public class QueryExecutorImpl implements QueryExecutor {
         if (!repo.isInitialized())
             repo.initialize();
 
-        return repo.getConnection();
+        RepositoryConnection conn = repo.getConnection();
+        logger.debug("Connection " + conn.toString() +" started, currently open " + countconn);
+        countconn++;
+        return conn;
     }
 
     public CloseableIteration<BindingSet, QueryEvaluationException>
@@ -68,7 +76,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         try {
             Set<String> freeVars = computeVars(expr);
 
-            List<String> relevant = getRelevantBindingNames(bindings, freeVars);
+            Set<String> relevant = getRelevantBindingNames(bindings, freeVars);
             final BindingSet relevantBindings = filterRelevant(bindings, relevant);
 
             freeVars.removeAll(bindings.getBindingNames());
@@ -98,7 +106,6 @@ public class QueryExecutorImpl implements QueryExecutor {
                     }
                 };
                 */
-
             } else {
                 String sparqlQuery = buildSPARQLQuery(expr, freeVars);
                 result = sendTupleQuery(endpoint, sparqlQuery, relevantBindings);
@@ -152,16 +159,16 @@ public class QueryExecutorImpl implements QueryExecutor {
                 return result;
             }
 
-            /*
+
             try {
                 result = evaluateInternal(endpoint, expr, bindings);
                 return result;
-            } catch(QueryEvaluationException e) {
+            } catch(Exception e) {
                 logger.debug("Failover to sequential iteration", e);
                 return new SequentialQueryIteration(endpoint, expr, bindings);
             }
-            */
-            return new SequentialQueryIteration(endpoint, expr, bindings);
+
+            //return new SequentialQueryIteration(endpoint, expr, bindings);
 
         } /*catch (MalformedQueryException e) {
                 // this exception must not be silenced, bug in our code
@@ -187,9 +194,10 @@ public class QueryExecutorImpl implements QueryExecutor {
 
         Set<String> exprVars = computeVars(expr);
 
-        List<String> relevant = getRelevantBindingNames(bindings, exprVars);
+        Set<String> relevant = getRelevantBindingNames(bindings, exprVars);
 
-        String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
+        //String sparqlQuery = buildSPARQLQueryVALUES(expr, bindings, relevant);
+        String sparqlQuery = buildSPARQLQueryUNION(expr, bindings, relevant);
 
         result = sendTupleQuery(endpoint, sparqlQuery, EmptyBindingSet.getInstance());
 
@@ -197,19 +205,22 @@ public class QueryExecutorImpl implements QueryExecutor {
             if (rowIdOpt)
                 result = new InsertValuesBindingsIteration(result, bindings);
             else {
-                result = new HashJoinIteration(
+                result = new UnionJoinIteration(
                                 new CollectionIteration<BindingSet, QueryEvaluationException>(bindings),
                                 result,
                                 new HashSet<String>(relevant));
             }
-        }
-        else
-            result = new ServiceCrossProductIteration(result, bindings);
 
+        }
+        else {
+
+        	result = new ServiceCrossProductIteration(result, bindings);
+
+        }
         return result;
     }
 
-    private BindingSet filterRelevant(BindingSet bindings, List<String> relevant) {
+    protected BindingSet filterRelevant(BindingSet bindings, Collection<String> relevant) {
         QueryBindingSet newBindings = new QueryBindingSet();
         for (Binding b : bindings) {
             if (relevant.contains(b.getName())) {
@@ -219,13 +230,16 @@ public class QueryExecutorImpl implements QueryExecutor {
         return newBindings;
     }
 
-    private List<String> getRelevantBindingNames(List<BindingSet> bindings, Set<String> exprVars) {
+    protected Set<String> getRelevantBindingNames(List<BindingSet> bindings, Set<String> exprVars) {
+
+    	if (bindings.isEmpty())
+    		return Collections.emptySet();
 
         return getRelevantBindingNames(bindings.get(0), exprVars);
     }
 
-    private List<String> getRelevantBindingNames(BindingSet bindings, Set<String> exprVars){
-        List<String> relevantBindingNames = new ArrayList<String>(5);
+    protected Set<String> getRelevantBindingNames(BindingSet bindings, Set<String> exprVars){
+        Set<String> relevantBindingNames = new HashSet<String>(5);
         for (String bName : bindings.getBindingNames()) {
             if (exprVars.contains(bName))
                 relevantBindingNames.add(bName);
@@ -240,7 +254,7 @@ public class QueryExecutorImpl implements QueryExecutor {
      *
      * @return the set of variable names in the given service expression
      */
-    private Set<String> computeVars(TupleExpr serviceExpression) {
+    protected Set<String> computeVars(TupleExpr serviceExpression) {
         final Set<String> res = new HashSet<String>();
         serviceExpression.visit(new QueryModelVisitorBase<RuntimeException>() {
 
@@ -269,7 +283,11 @@ public class QueryExecutorImpl implements QueryExecutor {
             query.setBinding(b.getName(), b.getValue());
 
         logger.debug("Sending to " + endpoint.stringValue() + " query " + sparqlQuery.replace('\n', ' '));
-        return query.evaluate();
+        return closeConnAfter(conn, query.evaluate());
+    }
+
+    private static <E,X extends Exception> CloseableIteration<E,X> closeConnAfter(RepositoryConnection conn, CloseableIteration<E,X> iter) {
+        return new CloseConnAfterIteration<E,X>(conn,iter);
     }
 
     protected boolean
@@ -283,7 +301,9 @@ public class QueryExecutorImpl implements QueryExecutor {
             query.setBinding(b.getName(), b.getValue());
 
         logger.debug("Sending to " + endpoint.stringValue() + " query " + sparqlQuery.replace('\n', ' '));
-        return query.evaluate();
+        boolean answer = query.evaluate();
+        conn.close();
+        return answer;
     }
 
     /**
@@ -298,7 +318,7 @@ public class QueryExecutorImpl implements QueryExecutor {
      *         input bindings
      * @throws QueryEvaluationException
      */
-    private String buildVALUESClause(List<BindingSet> bindings, List<String> relevantBindingNames)
+    private String buildVALUESClause(List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws QueryEvaluationException
     {
 
@@ -335,14 +355,14 @@ public class QueryExecutorImpl implements QueryExecutor {
         return sb.toString();
     }
 
-    private String buildSPARQLQuery(TupleExpr expr, Collection<String> projection) throws Exception {
+    protected String buildSPARQLQuery(TupleExpr expr, Collection<String> projection) throws Exception {
         if (projection != null && projection.isEmpty())
             return buildAskSPARQLQuery(expr);
         else
             return buildSelectSPARQLQuery(expr, projection);
     }
 
-    private String buildSelectSPARQLQuery(TupleExpr expr, Collection<String> projection)
+    protected String buildSelectSPARQLQuery(TupleExpr expr, Collection<String> projection)
             throws Exception {
 
 
@@ -372,7 +392,7 @@ public class QueryExecutorImpl implements QueryExecutor {
         return new SPARQLQueryRenderer().render(query);
     }
 
-    private String buildSPARQLQueryVALUES(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+    protected String buildSPARQLQueryVALUES(TupleExpr expr, List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws Exception {
 
         Set<String> freeVars = computeVars(expr);
@@ -385,11 +405,93 @@ public class QueryExecutorImpl implements QueryExecutor {
         return buildSPARQLQuery(expr,freeVars) + buildVALUESClause(bindings,relevantBindingNames);
     }
 
-    private String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, List<String> relevantBindingNames)
+    ////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////
+
+    protected String buildSPARQLQueryUNION(TupleExpr expr, List<BindingSet> bindings, Set<String> relevantBindingNames)
             throws Exception {
 
-        return null;
+        Set<String> freeVars = computeVars(expr);
+        freeVars.removeAll(relevantBindingNames);
+        if (freeVars.isEmpty()) {
+            return buildSPARQLQueryUNIONFILTER(expr, bindings, relevantBindingNames);
+        }
+        String query = new SPARQLQueryRenderer().render(new ParsedTupleQuery(expr));
+        String where = query.substring(query.indexOf('{'));
+        StringBuilder sb = new StringBuilder();
+        int i = 1;
+        boolean flag = false;
+        for (BindingSet b : bindings) {
+            if (flag) {
+                sb.append(" UNION ");
+            }
+            flag = true;
+            String tmpStr = where;
+            for (String name : relevantBindingNames) {
+                String pattern = "[\\?\\$]" + name + "(?=\\W)";
+                StringBuilder val = new StringBuilder();
+                appendValueAsString(val, b.getValue(name));
+                String replacement = val.toString();
+                tmpStr = tmpStr.replaceAll(pattern, Matcher.quoteReplacement(replacement));
+            }
+            for (String name : freeVars) {
+                String pattern = "[\\?\\$]" + name + "(?=\\W)";
+                String replacement = "?" + name + "_" + i;
+                tmpStr = tmpStr.replaceAll(pattern, Matcher.quoteReplacement(replacement));
+            }
+            sb.append(tmpStr);
+            i++;
+        }
+        sb.append(" }");
+        String pr = "SELECT ";
+        for (int j=1; j<i; j++) {
+            for (String name : freeVars) {
+                pr = pr + "?" + name + "_" + j + " ";
+            }
+        }
+        pr = pr + "\nWHERE { ";
+        return (pr + sb.toString());
     }
+    private String buildSPARQLQueryUNIONFILTER(TupleExpr expr, List<BindingSet> bindings, Set<String> relevantBindingNames)
+            throws Exception {
+        String query = new SPARQLQueryRenderer().render(new ParsedTupleQuery(expr));
+        String where = query.substring(query.indexOf('{'));
+        StringBuilder sb = new StringBuilder();
+        int i = 1;
+        for (BindingSet b : bindings) {
+            String tmpStr = where;
+            for (String name : relevantBindingNames) {
+                String pattern = "[\\?\\$]" + name + "(?=\\W)";
+                String replacement = "?" + name + "_" + i;
+                tmpStr = tmpStr.replaceAll(pattern, Matcher.quoteReplacement(replacement));
+            }
+            tmpStr = tmpStr.substring(1,tmpStr.lastIndexOf('}'));
+            sb.append(tmpStr);
+            sb.append(" FILTER (");
+            boolean flag = false;
+            for (String name : relevantBindingNames) {
+                if (flag) {
+                    sb.append(" and ");
+                }
+                flag = true;
+                sb.append("?"+name + "_" + i +"=");
+                appendValueAsString(sb, b.getValue(name));
+            }
+            sb.append(") } UNION {");
+            i++;
+        }
+        sb.append("} }");
+        String pr = "SELECT ";
+        for (int j=1; j<i; j++) {
+            for (String name : relevantBindingNames) {
+                pr = pr + "?" + name + "_" + j + " ";
+            }
+        }
+        pr = pr + "\nWHERE { { ";
+        return (pr + sb.toString());
+    }
+    ////////////////////////////////////////////////////////////////////////////////////
+    ////////////////////////////////////////////////////////////////////////////////////
 
     protected StringBuilder appendValueAsString(StringBuilder sb, Value value) {
 
@@ -437,9 +539,11 @@ public class QueryExecutorImpl implements QueryExecutor {
         //    sb.append(lit.getLanguage());
        // }
         //else {
+        if (lit.getDatatype() != null) {
             sb.append("^^<");
             sb.append(lit.getDatatype().stringValue());
             sb.append('>');
+        }
         //}
         return sb;
     }
@@ -467,4 +571,31 @@ public class QueryExecutorImpl implements QueryExecutor {
             }
         }
     }
+
+
+
+    private static class CloseConnAfterIteration<E,X extends Exception> extends IterationWrapper<E,X> {
+
+        private RepositoryConnection conn;
+
+        public CloseConnAfterIteration(RepositoryConnection conn, Iteration<? extends E, ? extends X> iter) {
+            super(iter);
+            assert conn != null;
+            this.conn = conn;
+        }
+
+        @Override
+        public void handleClose() throws X {
+            super.handleClose();
+
+            try {
+                if (conn != null && conn.isOpen())
+                    conn.close();
+            } catch (RepositoryException e) {
+
+            }
+        }
+    }
+
+
 }

@@ -2,13 +2,14 @@ package eu.semagrow.stack.modules.sails.semagrow.config;
 
 import eu.semagrow.stack.modules.alignment.QueryTransformationImpl;
 import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
-import eu.semagrow.stack.modules.api.estimator.CostEstimator;
+import eu.semagrow.stack.modules.querydecomp.selector.CachedStatisticsProvider;
+import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimator;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
-import eu.semagrow.stack.modules.api.statistics.Statistics;
+import eu.semagrow.stack.modules.api.statistics.StatisticsProvider;
 import eu.semagrow.stack.modules.api.transformation.QueryTransformation;
 import eu.semagrow.stack.modules.querydecomp.selector.SourceSelectorWithQueryTransform;
 import eu.semagrow.stack.modules.querydecomp.selector.VOIDSourceSelector;
-import eu.semagrow.stack.modules.querydecomp.selector.VOIDStatistics;
+import eu.semagrow.stack.modules.querydecomp.selector.VOIDStatisticsProvider;
 import eu.semagrow.stack.modules.sails.semagrow.SemagrowSail;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CardinalityEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimatorImpl;
@@ -137,12 +138,13 @@ public class SemagrowSailFactory implements SailFactory, RepositoryResolverClien
 
     private CardinalityEstimator getCardinalityEstimator(Repository metadata, SemagrowSailConfig config) {
 
-        Statistics statistics = getStatistics(metadata, config);
+        StatisticsProvider statistics = getStatistics(metadata, config);
+        statistics = new CachedStatisticsProvider(statistics);
         return new CardinalityEstimatorImpl(statistics);
     }
 
-    private Statistics getStatistics(Repository metadata, SemagrowSailConfig config) {
-        return new VOIDStatistics(metadata);
+    private StatisticsProvider getStatistics(Repository metadata, SemagrowSailConfig config) {
+        return new VOIDStatisticsProvider(metadata);
     }
 
     public void initializeMetadata(Repository metadata, String filename)
