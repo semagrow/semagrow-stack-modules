@@ -15,6 +15,6 @@ public interface PlanGenerator {
 
     Collection<Plan> joinPlans(Collection<Plan> p1, Collection<Plan> p2);
 
-    Collection<Plan> finalizePlans(Collection<Plan> plans);
+    Collection<Plan> finalizePlans(Collection<Plan> plans, PlanProperties desiredProperties);
 
 }

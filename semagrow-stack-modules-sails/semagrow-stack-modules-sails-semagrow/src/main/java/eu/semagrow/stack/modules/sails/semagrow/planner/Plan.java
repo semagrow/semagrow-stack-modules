@@ -18,7 +18,7 @@ public class Plan extends UnaryTupleOperator {
 
     private PlanProperties properties;
 
-    public Plan(TupleExpr arg) { super(arg); }
+    //public Plan(TupleExpr arg) { super(arg); }
 
     public Plan(Set<TupleExpr> id, TupleExpr arg) {
         super(arg);
@@ -26,7 +26,7 @@ public class Plan extends UnaryTupleOperator {
         properties = PlanProperties.defaultProperties();
     }
 
-    public Set<TupleExpr> getPlanId() { return this.id; }
+    public Set<TupleExpr> getKey() { return this.id; }
 
     public PlanProperties getProperties() { return properties; }
 
@@ -37,7 +37,8 @@ public class Plan extends UnaryTupleOperator {
         xQueryModelVisitor.meetOther(this);
     }
 
-    public String getSignature() {
+    public String getSignature()
+    {
         StringBuilder sb = new StringBuilder(128);
 
         sb.append(super.getSignature());

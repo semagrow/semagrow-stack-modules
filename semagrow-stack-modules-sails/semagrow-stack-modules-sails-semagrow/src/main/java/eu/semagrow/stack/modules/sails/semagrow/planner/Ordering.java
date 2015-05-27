@@ -1,15 +1,20 @@
 package eu.semagrow.stack.modules.sails.semagrow.planner;
 
 import org.openrdf.query.algebra.OrderElem;
+import org.openrdf.query.algebra.ValueExpr;
+import org.openrdf.query.algebra.Var;
 
 import java.util.Iterator;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Set;
 
 /**
  * Created by angel on 10/2/14.
  */
 public class Ordering {
+
+    static public Ordering NOORDERING = new Ordering(new LinkedList<OrderElem>());
 
     private List<OrderElem> orderElements;
 
@@ -17,11 +22,23 @@ public class Ordering {
         this.orderElements = new LinkedList<OrderElem>(orderElements);
     }
 
-    public boolean cover(Ordering ordering) {
-        return isPrefix(orderElements.iterator(), ordering.orderElements.iterator());
+    public Ordering cover(Ordering ordering) {
+        if (isPrefix(orderElements.iterator(), ordering.orderElements.iterator())) {
+            return this.clone();
+        } else if (isPrefix(orderElements.iterator(), ordering.orderElements.iterator())) {
+            return ordering.clone();
+        } else {
+            return null;
+        }
     }
 
-    static public Ordering NoOrdering() { return new Ordering(new LinkedList<OrderElem>()); }
+    public boolean isCoverOf(Ordering ordering) {
+        return isPrefix(ordering.orderElements.iterator(), orderElements.iterator());
+    }
+
+    public Ordering clone() {
+        return new Ordering(this.orderElements);
+    }
 
     static private <T> boolean isPrefix(Iterator<T> iter1, Iterator<T> iter2) {
 
@@ -38,6 +55,21 @@ public class Ordering {
         return true;
     }
 
+
+    public Ordering filter(Set<String> fields) {
+        List<OrderElem> oo = new LinkedList<OrderElem>();
+        for (OrderElem el : this.orderElements) {
+            ValueExpr ve = el.getExpr();
+            if (ve instanceof Var) {
+                Var v = (Var) ve;
+                if (fields.contains(v.getName()))
+                    oo.add(el);
+            }
+        }
+        return new Ordering(oo);
+    }
+
+
     public String toString() {
         if (orderElements.isEmpty())
             return "(no ordering)";
@@ -51,5 +83,9 @@ public class Ordering {
             }
             return s;
         }
+    }
+
+    public Iterable<OrderElem> getOrderElements() {
+        return orderElements;
     }
 }
