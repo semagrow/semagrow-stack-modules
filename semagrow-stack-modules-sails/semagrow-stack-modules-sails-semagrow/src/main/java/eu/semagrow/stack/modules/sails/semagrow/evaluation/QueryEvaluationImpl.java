@@ -8,10 +8,9 @@ import eu.semagrow.stack.modules.sails.semagrow.evaluation.base.FederatedQueryEv
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.InterceptingQueryExecutorWrapper;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.interceptors.QueryExecutionInterceptor;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogHandler;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogInterceptor;
+import eu.semagrow.stack.modules.querylog.api.QueryLogHandler;
+import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.QueryLogInterceptor;
 
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.impl.QueryLogRecordFactoryImpl;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.algebra.TupleExpr;
