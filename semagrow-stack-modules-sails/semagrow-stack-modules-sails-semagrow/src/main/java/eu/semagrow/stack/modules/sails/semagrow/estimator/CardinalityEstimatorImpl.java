@@ -47,6 +47,8 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
             return getCardinality((LeftJoin)expr, source);
         else if (expr instanceof SourceQuery)
             return getCardinality((SourceQuery)expr, source);
+        else if (expr instanceof EmptySet)
+            return getCardinality((EmptySet)expr, source);
         else if (expr instanceof Plan)
             return ((Plan)expr).getProperties().getCardinality();
 
@@ -118,6 +120,10 @@ public class CardinalityEstimatorImpl implements CardinalityEstimator, Selectivi
         for (URI src : query.getSources())
             card += getCardinality(query.getArg(), src);
         return card;
+    }
+
+    public long getCardinality(EmptySet set, URI source) {
+        return 0;
     }
 
     /**
