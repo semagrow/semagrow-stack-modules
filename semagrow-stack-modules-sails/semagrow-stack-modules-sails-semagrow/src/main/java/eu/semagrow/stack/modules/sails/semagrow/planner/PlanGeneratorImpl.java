@@ -127,6 +127,10 @@ public class PlanGeneratorImpl implements PlanGenerator {
 
             List<Plan> sourcePlans = new LinkedList<Plan>();
 
+            if (sources.isEmpty()) {
+                plans.add(createPlan(exprLabel, new EmptySet()));
+            }
+
             for (SourceMetadata sourceMetadata : sources) {
                 //URI source = sourceMetadata.getEndpoints().get(0);
                 //Plan p1 = createPlan(exprLabel, sourceMetadata.target(), source, ctx);
