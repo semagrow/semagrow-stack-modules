@@ -129,18 +129,20 @@ public class PlanGeneratorImpl implements PlanGenerator {
 
             if (sources.isEmpty()) {
                 plans.add(createPlan(exprLabel, new EmptySet()));
-            }
 
-            for (SourceMetadata sourceMetadata : sources) {
-                //URI source = sourceMetadata.getEndpoints().get(0);
-                //Plan p1 = createPlan(exprLabel, sourceMetadata.target(), source, ctx);
-                // FIXME: Don't use always the first source.
-                Plan p1 = createPlan(exprLabel, sourceMetadata.target().clone(), sourceMetadata);
-                sourcePlans.add(p1);
-            }
+            } else {
 
-            Plan p  = createUnionPlan(sourcePlans);
-            plans.add(p);
+                for (SourceMetadata sourceMetadata : sources) {
+                    //URI source = sourceMetadata.getEndpoints().get(0);
+                    //Plan p1 = createPlan(exprLabel, sourceMetadata.target(), source, ctx);
+                    // FIXME: Don't use always the first source.
+                    Plan p1 = createPlan(exprLabel, sourceMetadata.target().clone(), sourceMetadata);
+                    sourcePlans.add(p1);
+                }
+
+                Plan p = createUnionPlan(sourcePlans);
+                plans.add(p);
+            }
         }
 
         // SPLENDID also cluster statementpatterns of the same source.
