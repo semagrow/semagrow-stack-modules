@@ -32,6 +32,16 @@ public class ReactorQueryExecutorImpl
 
     private boolean rowIdOpt = false;
 
+    private int batchSize = 1;
+
+    public void setBatchSize(int b) {
+        batchSize = b;
+    }
+
+    public int getBatchSize() {
+        return batchSize;
+    }
+
     public Publisher<BindingSet> evaluateReactive(final URI endpoint, final TupleExpr expr, final BindingSet bindings)
             throws QueryEvaluationException
     {
@@ -120,7 +130,7 @@ public class ReactorQueryExecutorImpl
         try {
 
 
-            return bindingIter.buffer(10).concatMap(
+            return bindingIter.buffer(batchSize).concatMap(
                     bl ->  { try {
                         return evaluateReactorInternal(endpoint, expr, bl);
                     } catch (Exception e) {
@@ -261,5 +271,4 @@ public class ReactorQueryExecutorImpl
         logger.debug("Sending to " + endpoint.stringValue() + " query " + sparqlQuery.replace('\n', ' ') + " with " + query.getBindings());
         return query.evaluate();
     }
-
 }

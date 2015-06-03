@@ -60,6 +60,8 @@ public class SemagrowSail extends SailBase {
     private CostEstimator costEstimator;
     private CardinalityEstimator cardinalityEstimator;
 
+    private int batchSize;
+
     private ExecutorService executor = Executors.newCachedThreadPool();
 
     public SemagrowSail() { }
@@ -173,5 +175,12 @@ public class SemagrowSail extends SailBase {
         }
     }
 
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int b) {
+        batchSize = b;
+    }
 
 }

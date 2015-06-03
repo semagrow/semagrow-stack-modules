@@ -32,6 +32,7 @@ public class SemagrowSailConfig extends SailImplConfigBase {
     private String metadataRepoId = "semagrow_metadata";
 
     private List<String> filenames = new LinkedList<String>();
+    private int executorBatchSize = 10;
 
     private String queryTransformationUser;
     private String queryTransformationPassword;
@@ -74,6 +75,14 @@ public class SemagrowSailConfig extends SailImplConfigBase {
 
     public void setInitialFiles(List<String> files) { filenames = new LinkedList<String>(files); }
 
+    public void setExecutorBatchSize(int b) {
+        executorBatchSize = b;
+    }
+
+    public int getExecutorBatchSize() {
+        return executorBatchSize;
+    }
+
     @Override
     public Resource export(Graph graph) {
         Resource implNode = super.export(graph);
@@ -96,6 +105,10 @@ public class SemagrowSailConfig extends SailImplConfigBase {
         for (Value o : GraphUtil.getObjects(graph, node, SemagrowSchema.METADATAINIT))
         {
             filenames.add(o.stringValue());
+        }
+
+        for (Value o : GraphUtil.getObjects(graph, node, SemagrowSchema.EXECUTORBATCHSIZE)) {
+            executorBatchSize = Integer.parseInt(o.stringValue());
         }
 
         /*

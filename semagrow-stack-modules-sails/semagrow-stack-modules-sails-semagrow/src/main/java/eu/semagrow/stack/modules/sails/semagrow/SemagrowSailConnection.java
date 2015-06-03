@@ -167,20 +167,6 @@ public class SemagrowSailConnection extends SailConnectionBase {
         logger.debug("Starting decomposition of " + tupleExpr.toString());
 
         TupleExpr decomposed = null;
-        //////////////////////////////////////////////////
-        // NA VGEI!!!
-        //try {
-        //    decomposed = new StaticOptimizer().decompose(tupleExpr);
-        //} catch (MalformedQueryException e) {
-        //    e.printStackTrace();
-        //}
-        //if (decomposed != null) {
-        //    logger.debug("Query decomposed to " + decomposed.toString());
-        //    logger.info("Decomposed query: " + decomposed.toString());
-        //    System.out.println(decomposed.toString());
-        //    return evaluateOnlyReactive(decomposed, dataset, bindings, b, p);
-        //}
-        /////////////////////////////////////////////////
         try {
             decomposed = decompose(tupleExpr, dataset, bindings, includeOnlySources, excludeSources);
         } catch (QueryDecompositionException e) {
@@ -224,6 +210,7 @@ public class SemagrowSailConnection extends SailConnectionBase {
         try {
             ReactorQueryExecutorImpl executor = new ReactorQueryExecutorImpl();
             ReactiveEvaluationStrategy strategy = new FederatedReactorEvaluationStrategyImpl(executor);
+            executor.setBatchSize(semagrowSail.getBatchSize());
             return strategy.evaluateReactive(expr, bindings);
         } catch(QueryEvaluationException e) {
             throw new SailException(e);

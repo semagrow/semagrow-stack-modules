@@ -61,7 +61,8 @@ public class UnionVsValuesTest extends TestCase {
 
         long vv = runQuery(valuesQuery,virtuosoEndpoint);
         long uv = runQuery(unionQuery, virtuosoEndpoint);
-        long vf = runQuery(valuesQuery, fourStoreEndpoint);
+        //long vf = runQuery(valuesQuery, fourStoreEndpoint);
+        long vf = -1;
         long uf = runQuery(unionQuery, fourStoreEndpoint);
 
 

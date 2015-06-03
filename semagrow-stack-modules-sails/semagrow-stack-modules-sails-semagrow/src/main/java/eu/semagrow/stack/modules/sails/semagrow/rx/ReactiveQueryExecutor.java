@@ -16,4 +16,8 @@ public interface ReactiveQueryExecutor {
 
     Publisher<BindingSet> evaluateReactive(URI endpoint, TupleExpr expr, Publisher<BindingSet> bindings)
             throws QueryEvaluationException;
+
+    int getBatchSize();
+
+    void setBatchSize(int b);
 }

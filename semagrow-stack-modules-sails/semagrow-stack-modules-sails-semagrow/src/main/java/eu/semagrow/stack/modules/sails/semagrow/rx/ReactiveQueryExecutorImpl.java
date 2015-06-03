@@ -45,6 +45,16 @@ public class ReactiveQueryExecutorImpl
         return RxReactiveStreams.toPublisher(evaluateReactiveImpl(endpoint, expr, observableBindings));
     }
 
+    @Override
+    public int getBatchSize() {
+        return 0;
+    }
+
+    @Override
+    public void setBatchSize(int b) {
+
+    }
+
     public Observable<BindingSet>
         evaluateReactiveImpl(final URI endpoint, final TupleExpr expr, final BindingSet bindings)
             throws QueryEvaluationException {

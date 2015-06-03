@@ -75,6 +75,8 @@ public class SemagrowSailFactory implements SailFactory, RepositoryResolverClien
             sail.setCostEstimator(costEstimator);
             sail.setCardinalityEstimator(cardEstimator);
 
+            sail.setBatchSize(config.getExecutorBatchSize());
+
             return sail;
 
         } catch (Exception e) {
