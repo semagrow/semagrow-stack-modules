@@ -143,7 +143,7 @@ public class FederatedReactorEvaluationStrategyImpl extends ReactorEvaluationStr
             throws QueryEvaluationException
     {
         return this.evaluateReactorInternal(expr.getLeftArg(), bindings)
-                .buffer(10)
+                .buffer(queryExecutor.getBatchSize())
                 .flatMap((b) -> {
                     try {
                         return evaluateReactorInternal(expr.getRightArg(), b);
