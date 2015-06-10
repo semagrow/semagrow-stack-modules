@@ -67,10 +67,10 @@ public abstract class VOIDBase {
         return evalQuerySet(q, bindings, "dataset");
     }
 
-    protected Set<Resource> getMatchingDatasetsOfClass(URI endpoint) {
+    protected Set<Resource> getMatchingDatasetsOfClass(URI c) {
         String q = "SELECT ?dataset { ?dataset <" + VOID.CLASS + "> ?class. }";
         QueryBindingSet bindings = new QueryBindingSet();
-        bindings.addBinding("class", endpoint);
+        bindings.addBinding("class", c);
         return evalQuerySet(q, bindings, "dataset");
     }
 

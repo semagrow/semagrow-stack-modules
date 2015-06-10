@@ -139,7 +139,7 @@ public class VOIDStatisticsProvider extends VOIDBase implements StatisticsProvid
 
 
         if (isTypeClass(pattern)) {
-            Set<Resource> datasets = getMatchingDatasetsOfClass(source);
+            Set<Resource> datasets = getMatchingDatasetsOfClass((URI)pattern.getObjectVar().getValue());
             if (!datasets.isEmpty()) {
                 return getEntities(datasets);
             }

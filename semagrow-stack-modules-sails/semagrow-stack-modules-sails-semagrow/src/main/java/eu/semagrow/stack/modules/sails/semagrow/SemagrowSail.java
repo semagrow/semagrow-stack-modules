@@ -94,7 +94,6 @@ public class SemagrowSail extends SailBase {
     public QueryDecomposer getDecomposer(Collection<URI> includeOnly, Collection<URI> exclude) {
         SourceSelector selector = getSourceSelector();
         selector = new RestrictiveSourceSelector(selector, includeOnly, exclude);
-        selector = new AskSourceSelector(selector);
         CostEstimator costEstimator = getCostEstimator();
         CardinalityEstimator cardinalityEstimator = getCardinalityEstimator();
         return new DPQueryDecomposer(costEstimator, cardinalityEstimator, selector);
