@@ -66,6 +66,13 @@ public abstract class VOIDBase {
         return evalQuerySet(q, bindings, "dataset");
     }
 
+    protected Set<Resource> getMatchingDatasetsOfClass(URI c) {
+        String q = "SELECT ?dataset { ?dataset <" + VOID.CLASS + "> ?class. }";
+        QueryBindingSet bindings = new QueryBindingSet();
+        bindings.addBinding("class", c);
+        return evalQuerySet(q, bindings, "dataset");
+    }
+
     protected Set<Resource> evalQuerySet(String queryString, BindingSet bindingSet, String proj) {
         RepositoryConnection conn = null;
         try {
@@ -203,6 +210,29 @@ public abstract class VOIDBase {
 
     protected Long getDistinctPredicates(Resource dataset){
         String qStr = "SELECT ?triples { ?dataset <" + VOID.PROPERTIES + "> ?triples }";
+        RepositoryConnection conn = null;
+        try {
+            conn = voidRepository.getConnection();
+            TupleQuery q = conn.prepareTupleQuery(QueryLanguage.SPARQL, qStr);
+            q.setIncludeInferred(true);
+            q.setBinding("dataset", dataset);
+            TupleQueryResult r = q.evaluate();
+            if (!r.hasNext())
+                return null;
+            else
+                return Long.parseLong(r.next().getBinding("triples").getValue().stringValue());
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            if (conn != null)
+                try { conn.close(); }catch(Exception e){ }
+        }
+        return null;
+    }
+
+    protected Long getEntities(Resource dataset) {
+
+        String qStr = "SELECT ?triples { ?dataset <" + VOID.ENTITIES + "> ?triples }";
         RepositoryConnection conn = null;
         try {
             conn = voidRepository.getConnection();

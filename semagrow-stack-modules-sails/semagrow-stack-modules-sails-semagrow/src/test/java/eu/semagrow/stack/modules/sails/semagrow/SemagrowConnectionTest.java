@@ -33,19 +33,23 @@ public class SemagrowConnectionTest extends TestCase {
 
     public void testEvaluateInternal() throws Exception {
 
-        String q = "SELECT ?party ?page  WHERE {\n" +
-                "   <http://dbpedia.org/resource/Barack_Obama> <http://dbpedia.org/ontology/party> ?party .\n" +
-                "   ?x <http://data.nytimes.com/elements/topicPage> ?page .\n" +
-                "   ?x <http://www.w3.org/2002/07/owl#sameAs> <http://dbpedia.org/resource/Barack_Obama> .\n" +
-                "}" ;
+        String q = "SELECT ?drug ?title WHERE { \n" +
+                "  ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/drugCategory> <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugcategory/micronutrient> .\n" +
+                "  ?drug <http://www4.wiwiss.fu-berlin.de/drugbank/resource/drugbank/casRegistryNumber> ?id .\n" +
+                "  ?keggDrug <http://www.w3.org/1999/02/22-rdf-syntax-ns#type> <http://bio2rdf.org/ns/kegg#Drug> .\n" +
+                "  ?keggDrug <http://bio2rdf.org/ns/bio2rdf#xRef> ?id .\n" +
+                "  ?keggDrug <http://purl.org/dc/elements/1.1/title> ?title .\n" +
+                "}";
 
         List<String> mf = new ArrayList<String>();
-        mf.add("/home/antonis/Documents/crossDomain.void.n3");
+        mf.add("/home/antonis/Documents/lifeScience.svd.n3");
 
         SailImplConfig config = new SemagrowSailConfig();
 
         SemagrowRepositoryConfig repoConfig = new SemagrowRepositoryConfig();
         repoConfig.getSemagrowSailConfig().setInitialFiles(mf);
+        repoConfig.getSemagrowSailConfig().setExecutorBatchSize(20);
+
         SemagrowSailRepository repo = (SemagrowSailRepository) RepositoryRegistry.getInstance().get(repoConfig.getType()).getRepository(repoConfig);
         repo.initialize();
         SemagrowSailRepositoryConnection conn = repo.getConnection();

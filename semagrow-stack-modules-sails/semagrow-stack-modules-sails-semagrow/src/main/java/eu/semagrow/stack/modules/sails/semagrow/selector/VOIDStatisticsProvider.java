@@ -5,6 +5,7 @@ import eu.semagrow.stack.modules.api.statistics.StatisticsProvider;
 import org.openrdf.model.Resource;
 import org.openrdf.model.URI;
 import org.openrdf.model.Value;
+import org.openrdf.model.vocabulary.RDF;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.repository.Repository;
@@ -60,6 +61,13 @@ public class VOIDStatisticsProvider extends VOIDBase implements StatisticsProvid
     public long getDistinctSubjects(StatementPattern pattern, URI source) {
         Value pVal = pattern.getPredicateVar().getValue();
         Value sVal = pattern.getSubjectVar().getValue();
+
+        if (isTypeClass(pattern)) {
+            Set<Resource> datasets = getMatchingDatasetsOfClass(source);
+            if (!datasets.isEmpty()) {
+                return getEntities(datasets);
+            }
+        }
 
         Set<Resource> datasets  = getMatchingDatasetsOfEndpoint(source);
 
@@ -128,6 +136,14 @@ public class VOIDStatisticsProvider extends VOIDBase implements StatisticsProvid
 
         if (sVal != null && pVal != null && oVal != null)
             return 1;
+
+
+        if (isTypeClass(pattern)) {
+            Set<Resource> datasets = getMatchingDatasetsOfClass((URI)pattern.getObjectVar().getValue());
+            if (!datasets.isEmpty()) {
+                return getEntities(datasets);
+            }
+        }
 
         Set<Resource> datasets  = getMatchingDatasetsOfEndpoint(source);
 
@@ -248,6 +264,29 @@ public class VOIDStatisticsProvider extends VOIDBase implements StatisticsProvid
             }
         }
         return (i == 0) ? 1 : triples/i;
+    }
+
+    private Long getEntities(Collection<Resource> datasets) {
+        long triples = 0;
+        int i = 0;
+        for (Resource dataset : datasets) {
+            Long t = getEntities(dataset);
+            if (t != null) {
+                triples += t.longValue();
+                i++;
+            }
+        }
+        return (i == 0) ? 1 : triples/i;
+    }
+
+    private boolean isTypeClass(StatementPattern pattern) {
+        Value predVal = pattern.getPredicateVar().getValue();
+        Value objVal = pattern.getObjectVar().getValue();
+
+        if (predVal != null && objVal != null && predVal.equals(RDF.TYPE))
+            return true;
+        else
+            return false;
     }
 
     private class StatisticsImpl implements Statistics {
