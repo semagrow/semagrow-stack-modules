@@ -46,7 +46,7 @@ public class SemagrowSailConnection extends SailConnectionBase {
     public SemagrowSailConnection(SemagrowSail sail)
     {
         super(sail);
-        queryEvaluation = sail.getQueryEvaluation();
+        //queryEvaluation = sail.getQueryEvaluation();
         this.semagrowSail = sail;
     }
 

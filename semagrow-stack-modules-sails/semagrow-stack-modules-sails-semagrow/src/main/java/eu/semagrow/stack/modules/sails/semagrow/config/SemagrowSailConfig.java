@@ -61,7 +61,7 @@ public class SemagrowSailConfig extends SailImplConfigBase {
         if (filenames.isEmpty()) {
             List<String> autoFiles = new LinkedList<String>();
             try {
-                File f =  FileUtils.getFile("metadata.ttl.2");
+                File f =  FileUtils.getFile("metadata.ttl");
                 autoFiles.add(f.getAbsolutePath());
                 return autoFiles;
             } catch (IOException e) {

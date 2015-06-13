@@ -14,8 +14,8 @@ import java.util.Comparator;
  */
 public class QueryLogManager {
 
-    private static String logDir;
-    private static String filePrefix;
+    private String logDir;
+    private String filePrefix;
     private File[] listOfFiles;
 
     public QueryLogManager(String logDir, String filePrefix) {
@@ -27,7 +27,7 @@ public class QueryLogManager {
 
         listOfFiles = getListOfFiles();
 
-        if(listOfFiles.length == 0) {
+        if(listOfFiles == null || listOfFiles.length == 0) {
             String filename = logDir + filePrefix + 0;
 
             return createFile(filename);
