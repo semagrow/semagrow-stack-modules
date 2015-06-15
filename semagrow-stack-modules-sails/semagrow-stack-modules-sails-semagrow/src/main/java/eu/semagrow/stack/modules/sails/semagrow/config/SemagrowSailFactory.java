@@ -1,18 +1,17 @@
 package eu.semagrow.stack.modules.sails.semagrow.config;
 
-import eu.semagrow.stack.modules.alignment.QueryTransformationImpl;
+import eu.semagrow.stack.modules.sails.semagrow.alignment.QueryTransformationImpl;
 import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
-import eu.semagrow.stack.modules.querydecomp.selector.CachedStatisticsProvider;
+import eu.semagrow.stack.modules.sails.semagrow.selector.*;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimator;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.api.statistics.StatisticsProvider;
 import eu.semagrow.stack.modules.api.transformation.QueryTransformation;
-import eu.semagrow.stack.modules.querydecomp.selector.SourceSelectorWithQueryTransform;
-import eu.semagrow.stack.modules.querydecomp.selector.VOIDSourceSelector;
-import eu.semagrow.stack.modules.querydecomp.selector.VOIDStatisticsProvider;
 import eu.semagrow.stack.modules.sails.semagrow.SemagrowSail;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CardinalityEstimatorImpl;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimatorImpl;
+import eu.semagrow.stack.modules.sails.semagrow.selector.SourceSelectorWithQueryTransform;
+import eu.semagrow.stack.modules.sails.semagrow.selector.VOIDSourceSelector;
 import org.openrdf.repository.Repository;
 import org.openrdf.repository.RepositoryConnection;
 import org.openrdf.repository.RepositoryException;
@@ -64,6 +63,8 @@ public class SemagrowSailFactory implements SailFactory, RepositoryResolverClien
                 initializeMetadata(metadata, file);
             }
 
+            sail.setMetadataRepository(metadata);
+
             SourceSelector selector = getSourceSelector(metadata, config, config.getSourceSelectorConfig());
 
             sail.setSourceSelector(selector);
@@ -74,6 +75,8 @@ public class SemagrowSailFactory implements SailFactory, RepositoryResolverClien
 
             sail.setCostEstimator(costEstimator);
             sail.setCardinalityEstimator(cardEstimator);
+
+            sail.setBatchSize(config.getExecutorBatchSize());
 
             return sail;
 
@@ -115,6 +118,9 @@ public class SemagrowSailFactory implements SailFactory, RepositoryResolverClien
 
             if (transformation != null)
                 selector = new SourceSelectorWithQueryTransform(selector, transformation);
+
+            selector = new AskSourceSelector(selector);
+            selector = new CachedSourceSelector(selector);
 
             return selector;
         }

@@ -16,9 +16,11 @@ import org.openrdf.query.algebra.evaluation.federation.JoinExecutorBase;
 import org.openrdf.query.algebra.evaluation.iterator.CollectionIteration;
 import org.openrdf.query.impl.EmptyBindingSet;
 
+import javax.management.QueryEval;
 import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 
 /**
@@ -336,13 +338,11 @@ public class EvaluationStrategyImpl
                     //CloseableIteration<BindingSet, QueryEvaluationException>
                     //        materializedIter = createBatchIter(leftIter, blockSize);
                     final Iterable<BindingSet> iterable = createIterable(leftIter, blockSize);
+
                     addResult(new DelayedIteration<BindingSet, QueryEvaluationException>() {
                         @Override
-                        protected Iteration<? extends BindingSet, ? extends QueryEvaluationException> createIteration()
-                                throws QueryEvaluationException
-                        {
-
-                            return evaluateInternal(expr,iterable);
+                        protected Iteration<? extends BindingSet, ? extends QueryEvaluationException> createIteration() throws QueryEvaluationException {
+                            return evaluateInternal(expr, iterable);
                         }
                     });
                 }

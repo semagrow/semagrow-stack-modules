@@ -4,14 +4,17 @@ import eu.semagrow.stack.modules.api.decomposer.QueryDecomposer;
 import eu.semagrow.stack.modules.api.evaluation.FederatedQueryEvaluation;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.api.estimator.CardinalityEstimator;
+import eu.semagrow.stack.modules.querylog.api.QueryLogException;
+import eu.semagrow.stack.modules.querylog.api.QueryLogFactory;
+import eu.semagrow.stack.modules.querylog.api.QueryLogWriter;
+import eu.semagrow.stack.modules.querylog.config.FileQueryLogConfig;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimator;
-import eu.semagrow.stack.modules.querydecomp.selector.*;
+import eu.semagrow.stack.modules.sails.semagrow.selector.*;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.QueryEvaluationImpl;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.FileManager;
 import eu.semagrow.stack.modules.sails.semagrow.evaluation.file.MaterializationManager;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.*;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.QueryLogFactory;
-import eu.semagrow.stack.modules.sails.semagrow.evaluation.monitoring.querylog.rdf.RDFQueryLogFactory;
+import eu.semagrow.stack.modules.querylog.*;
+import eu.semagrow.stack.modules.querylog.rdf.RDFQueryLogFactory;
 import eu.semagrow.stack.modules.sails.semagrow.planner.DPQueryDecomposer;
 import org.openrdf.model.URI;
 import org.openrdf.model.ValueFactory;
@@ -24,6 +27,7 @@ import org.openrdf.query.algebra.evaluation.util.QueryOptimizerList;
 import org.openrdf.query.resultio.TupleQueryResultFormat;
 import org.openrdf.query.resultio.TupleQueryResultWriterFactory;
 import org.openrdf.query.resultio.TupleQueryResultWriterRegistry;
+import org.openrdf.repository.Repository;
 import org.openrdf.rio.RDFFormat;
 import org.openrdf.rio.RDFWriterFactory;
 import org.openrdf.rio.RDFWriterRegistry;
@@ -31,10 +35,7 @@ import org.openrdf.sail.SailConnection;
 import org.openrdf.sail.SailException;
 import org.openrdf.sail.helpers.SailBase;
 
-import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileOutputStream;
-import java.io.OutputStream;
+import java.io.*;
 import java.util.Collection;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -54,14 +55,19 @@ import java.util.concurrent.Executors;
 public class SemagrowSail extends SailBase {
 
     private FederatedQueryEvaluation queryEvaluation;
+    private final static String logDir = "/var/tmp/log/";
 
     private QueryLogWriter handler;
-
+    private final static String filePrefix = "qfr";
+    
     private SourceSelector sourceSelector;
     private CostEstimator costEstimator;
     private CardinalityEstimator cardinalityEstimator;
 
+    private int batchSize;
+
     private ExecutorService executor = Executors.newCachedThreadPool();
+    private Repository metadataRepository;
 
     public SemagrowSail() { }
 
@@ -131,9 +137,11 @@ public class SemagrowSail extends SailBase {
         this.queryEvaluation = queryEvaluation;
     }
 
+
+
     public MaterializationManager getManager() {
-        File baseDir = new File("/var/tmp/");
-        TupleQueryResultFormat resultFF = TupleQueryResultFormat.BINARY;
+        File baseDir = new File(logDir);
+        TupleQueryResultFormat resultFF = TupleQueryResultFormat.TSV;
 
         TupleQueryResultWriterRegistry  registry = TupleQueryResultWriterRegistry.getInstance();
         TupleQueryResultWriterFactory writerFactory = registry.get(resultFF);
@@ -146,24 +154,34 @@ public class SemagrowSail extends SailBase {
 
         QueryLogWriter handler;
 
-        File qfrLog  = new File("/var/tmp/qfr.log");
+        FileQueryLogConfig config = new FileQueryLogConfig();
+        QueryLogManager qfrManager = new QueryLogManager(logDir, filePrefix);
+        try {
+            config.setFilename(qfrManager.getLastFile());
+            config.setCounter(3);
+        } catch (QueryLogException e) {
+            e.printStackTrace();
+        }
+
         RDFFormat rdfFF = RDFFormat.NTRIPLES;
 
         RDFWriterRegistry writerRegistry = RDFWriterRegistry.getInstance();
         RDFWriterFactory rdfWriterFactory = writerRegistry.get(rdfFF);
         QueryLogFactory factory = new RDFQueryLogFactory(rdfWriterFactory);
-        try {
-            OutputStream out = new FileOutputStream(qfrLog);
-            handler = factory.getQueryLogger(out);
-            return handler;
-        } catch (FileNotFoundException e) {
 
+        try {
+            handler = factory.getQueryRecordLogger((FileQueryLogConfig) config);
+            return handler;
+        } catch (QueryLogException e) {
+            e.printStackTrace();
         }
         return null;
     }
 
     @Override
-    protected void shutDownInternal() throws SailException {
+    public void shutDownInternal() throws SailException {
+
+
         if (handler != null) {
             try {
                 handler.endQueryLog();
@@ -171,7 +189,22 @@ public class SemagrowSail extends SailBase {
                 throw new SailException(e);
             }
         }
+       // super.shutDown();
+
     }
 
+    public int getBatchSize() {
+        return batchSize;
+    }
+
+    public void setBatchSize(int b) {
+        batchSize = b;
+    }
+
+    public Repository getMetadataRepository() {
+        return metadataRepository;
+    }
+
+    public void setMetadataRepository(Repository metadataRepository) { this.metadataRepository = metadataRepository; }
 
 }
