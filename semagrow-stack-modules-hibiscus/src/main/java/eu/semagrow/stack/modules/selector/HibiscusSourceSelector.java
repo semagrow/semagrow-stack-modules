@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules;
+package eu.semagrow.stack.modules.selector;
 
 import com.fluidops.fedx.EndpointManager;
 import com.fluidops.fedx.FedX;
