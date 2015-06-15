@@ -264,7 +264,7 @@
 	    <module>semagrow-stack-modules-api</module>
         <module>semagrow-stack-modules-utils</module>
         <module>semagrow-stack-modules-sails</module>
-    <module>semagrow-stack-modules-querylog</module>
-    <module>semagrow-stack-modules-hibiscus</module>
+        <module>semagrow-stack-modules-querylog</module>
+        <module>semagrow-stack-modules-hibiscus</module>
   </modules>
 </project>

@@ -1,7 +1,9 @@
 package eu.semagrow.stack.modules;
 
+import com.fluidops.fedx.EndpointManager;
 import com.fluidops.fedx.FedX;
 import com.fluidops.fedx.FederationManager;
+import com.fluidops.fedx.algebra.StatementSource;
 import com.fluidops.fedx.cache.Cache;
 import com.fluidops.fedx.structures.Endpoint;
 import eu.semagrow.stack.modules.api.source.SourceMetadata;
@@ -9,6 +11,8 @@ import eu.semagrow.stack.modules.api.source.SourceSelector;
 import org.aksw.simba.hibiscus.HibiscusConfig;
 import org.aksw.simba.hibiscus.HibiscusSourceSelection;
 import org.aksw.sparql.query.algebra.helpers.BGPGroupGenerator;
+import org.openrdf.model.URI;
+import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.MalformedQueryException;
@@ -17,8 +21,7 @@ import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
 import org.openrdf.repository.RepositoryException;
 
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 /**
  * Created by angel on 15/6/2015.
@@ -31,7 +34,7 @@ public class HibiscusSourceSelector implements SourceSelector {
 
     private String mode = "Index_dominant";  //{ASK_dominant, Index_dominant}
 
-    private double commonPredThreshold = 0.33 ;  //considered a predicate as common predicate if it is presenet in 33% available data sources
+    private double commonPredThreshold = 0.33 ;  //considered a predicate as common predicate if it is present in 33% available data sources
 
 
     public HibiscusSourceSelector(String FedSummaries) throws Exception {
@@ -58,7 +61,7 @@ public class HibiscusSourceSelector implements SourceSelector {
         try {
             this.impl = new HibiscusSourceSelection(members, cache, query);
             HashMap<Integer, List<StatementPattern>> bgpGrps =  BGPGroupGenerator.generateBgpGroups(query);
-            this.impl.performSourceSelection(bgpGrps);
+            return toSourceMetadata(this.impl.performSourceSelection(bgpGrps));
         } catch (MalformedQueryException e) {
             e.printStackTrace();
         } catch (RepositoryException e) {
@@ -67,7 +70,60 @@ public class HibiscusSourceSelector implements SourceSelector {
             e.printStackTrace();
         }
 
-
         return null;
+    }
+
+    private List<SourceMetadata> toSourceMetadata(Map<StatementPattern, List<StatementSource>> lst)
+    {
+        List<SourceMetadata> metadata = new LinkedList<>();
+
+        for (StatementPattern pattern : lst.keySet()) {
+            List<StatementSource> sources = lst.get(pattern);
+            if (!sources.isEmpty()) {
+                for (StatementSource src : sources) {
+                    URI endpoint = toURI(src);
+                    metadata.add(new SourceMetadata() {
+                        @Override
+                        public List<URI> getEndpoints() {
+                            return Collections.singletonList(endpoint);
+                        }
+
+                        @Override
+                        public StatementPattern original() {
+                            return pattern;
+                        }
+
+                        @Override
+                        public StatementPattern target() {
+                            return pattern;
+                        }
+
+                        @Override
+                        public Collection<URI> getSchema(String var) {
+                            return null;
+                        }
+
+                        @Override
+                        public boolean isTransformed() {
+                            return false;
+                        }
+
+                        @Override
+                        public double getSemanticProximity() {
+                            return 0;
+                        }
+                    });
+                }
+            }
+        }
+        return metadata;
+    }
+
+    private URI toURI(StatementSource src)
+    {
+        String endpointId = src.getEndpointID();
+
+        return ValueFactoryImpl.getInstance().createURI(
+                EndpointManager.getEndpointManager().getEndpoint(endpointId).getEndpoint() );
     }
 }
