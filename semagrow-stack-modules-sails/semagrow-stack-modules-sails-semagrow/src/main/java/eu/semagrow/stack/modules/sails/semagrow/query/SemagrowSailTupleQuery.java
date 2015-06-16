@@ -22,10 +22,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 /**
  * Created by angel on 6/9/14.
@@ -105,6 +102,8 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
     {
         private TupleQueryResultHandler handler;
 
+        private boolean isStarted = false;
+
         public HandlerSubscriberAdapter(TupleQueryResultHandler handler) {
             this.handler = handler;
         }
@@ -116,6 +115,11 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
         public void onNext(BindingSet bindings) {
             try {
+                if (!isStarted) {
+                    handler.startQueryResult(new ArrayList<>(bindings.getBindingNames()));
+                    isStarted = true;
+                }
+
                 handler.handleSolution(bindings);
             } catch (TupleQueryResultHandlerException e) {
                 logger.error("Tuple handle solution error", e);
@@ -124,15 +128,25 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
 
         public void onError(Throwable throwable) {
+
             logger.error("Evaluation error", throwable);
+            if (isStarted) {
+                try {
+                    handler.endQueryResult();
+                } catch (TupleQueryResultHandlerException e) {
+                    logger.error("Tuple handle solution error", e);
+                }
+            }
         }
 
 
         public void onComplete() {
-            try {
-                handler.endQueryResult();
-            } catch (TupleQueryResultHandlerException e) {
-                logger.error("Tuple handle solution error", e);
+            if (isStarted) {
+                try {
+                    handler.endQueryResult();
+                } catch (TupleQueryResultHandlerException e) {
+                    logger.error("Tuple handle solution error", e);
+                }
             }
         }
     }
