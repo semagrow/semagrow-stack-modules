@@ -1,20 +1,20 @@
 package eu.semagrow.stack.modules.sails.semagrow.config;
 
 import eu.semagrow.modules.fileutils.FileUtils;
+import eu.semagrow.stack.modules.api.config.SemagrowSchema;
+import eu.semagrow.stack.modules.api.config.SourceSelectorConfigException;
+import eu.semagrow.stack.modules.api.config.SourceSelectorFactory;
+import eu.semagrow.stack.modules.api.config.SourceSelectorImplConfig;
 import eu.semagrow.stack.modules.sails.config.SEVODInferencerConfig;
-import org.openrdf.model.*;
+import org.openrdf.model.Literal;
 import org.openrdf.model.util.GraphUtil;
-import org.openrdf.model.util.GraphUtilException;
 import org.openrdf.model.Graph;
 import org.openrdf.model.Resource;
-import org.openrdf.model.Statement;
 import org.openrdf.model.Value;
-import org.openrdf.model.util.GraphUtil;
+import org.openrdf.model.util.GraphUtilException;
 import org.openrdf.repository.config.RepositoryImplConfig;
 import org.openrdf.repository.sail.config.SailRepositoryConfig;
-import org.openrdf.sail.config.SailConfigException;
-import org.openrdf.sail.config.SailImplConfig;
-import org.openrdf.sail.config.SailImplConfigBase;
+import org.openrdf.sail.config.*;
 import org.openrdf.sail.inferencer.fc.config.ForwardChainingRDFSInferencerConfig;
 import org.openrdf.sail.memory.config.MemoryStoreConfig;
 
@@ -22,7 +22,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.LinkedList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * Created by angel on 5/29/14.
@@ -38,10 +37,16 @@ public class SemagrowSailConfig extends SailImplConfigBase {
     private String queryTransformationPassword;
     private String queryTransformationDBString;
 
+    private SourceSelectorImplConfig sourceSelectorConfig = null;
+
     public SemagrowSailConfig() { super(SemagrowSailFactory.SAIL_TYPE); }
 
     public SourceSelectorImplConfig getSourceSelectorConfig() {
-        return new RepositorySourceSelectorConfig();
+
+        if (sourceSelectorConfig != null)
+            return sourceSelectorConfig;
+        else
+            return new RepositorySourceSelectorConfig();
     }
 
     public String getMetadataRepoId() { return metadataRepoId; }
@@ -124,6 +129,30 @@ public class SemagrowSailConfig extends SailImplConfigBase {
             e.printStackTrace();
         }
         */
+
+        try {
+            Literal sourceSelectorImplNode = GraphUtil.getOptionalObjectLiteral(graph, node, SemagrowSchema.SOURCESELECTOR);
+
+            if (sourceSelectorImplNode != null) {
+
+                SourceSelectorFactory factory = SourceSelectorRegistry.getInstance().get(sourceSelectorImplNode.getLabel());
+
+                if (factory == null) {
+                    throw new SailConfigException("Unsupported source selector type: " + sourceSelectorImplNode.getLabel());
+                }
+
+                sourceSelectorConfig = factory.getConfig();
+                try {
+                    sourceSelectorConfig.parse(graph, node);
+                } catch (SourceSelectorConfigException e) {
+                    throw new SailConfigException(e);
+                }
+            }
+
+        }catch(GraphUtilException e) {
+            throw new SailConfigException(e);
+        }
+
         super.parse(graph, node);
     }
 
@@ -141,4 +170,6 @@ public class SemagrowSailConfig extends SailImplConfigBase {
         this.queryTransformationUser = username;
         this.queryTransformationPassword = password;
     }
+
+    public boolean hasSelectorConfig() { return (sourceSelectorConfig != null); }
 }

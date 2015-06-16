@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.config;
+package eu.semagrow.stack.modules.api.config;
 
 import eu.semagrow.stack.modules.api.source.SourceSelector;
 
@@ -10,4 +10,6 @@ public interface SourceSelectorFactory {
     SourceSelectorImplConfig getConfig();
 
     SourceSelector getSourceSelector(SourceSelectorImplConfig config) throws SourceSelectorConfigException;
+
+    String getType();
 }

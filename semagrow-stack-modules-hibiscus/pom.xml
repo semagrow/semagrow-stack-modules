@@ -9,7 +9,7 @@
 
   <groupId>eu.semagrow.stack.modules</groupId>
   <artifactId>semagrow-stack-modules-hibiscus</artifactId>
-  <version>1.0.0-rc1</version>
+  <version>1.3.0</version>
   <packaging>jar</packaging>
 
   <name>semagrow-stack-modules-hibiscus</name>
@@ -17,7 +17,7 @@
   <dependencies>
     <dependency>
       <groupId>eu.semagrow.stack.modules</groupId>
-      <artifactId>semagrow-stack-modules-api-querydecomp</artifactId>
+      <artifactId>semagrow-stack-modules-api</artifactId>
       <version>1.3.0</version>
     </dependency>
     <dependency>

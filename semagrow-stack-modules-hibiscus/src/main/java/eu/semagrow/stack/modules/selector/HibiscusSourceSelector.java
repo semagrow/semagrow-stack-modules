@@ -32,16 +32,12 @@ public class HibiscusSourceSelector implements SourceSelector {
     private Cache cache;
     private List<Endpoint> members;
 
-    private String mode = "Index_dominant";  //{ASK_dominant, Index_dominant}
+    public HibiscusSourceSelector() {
 
-    private double commonPredThreshold = 0.33 ;  //considered a predicate as common predicate if it is present in 33% available data sources
-
-
-    public HibiscusSourceSelector(String FedSummaries) throws Exception {
         FedX fed = FederationManager.getInstance().getFederation();
         List<Endpoint> members = fed.getMembers();
         Cache cache =FederationManager.getInstance().getCache();
-        HibiscusConfig.initialize(FedSummaries, mode, commonPredThreshold);
+
     }
 
     @Override

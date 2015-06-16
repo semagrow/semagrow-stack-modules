@@ -1,4 +1,4 @@
-package eu.semagrow.stack.modules.sails.semagrow.config;
+package eu.semagrow.stack.modules.api.config;
 
 import org.openrdf.model.Graph;
 import org.openrdf.model.Resource;
