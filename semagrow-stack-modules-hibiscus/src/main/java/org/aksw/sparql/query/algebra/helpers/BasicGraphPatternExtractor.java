@@ -84,6 +84,16 @@ public class BasicGraphPatternExtractor extends QueryModelVisitorBase<RuntimeExc
 		}
 	}
 
+	@Override
+	public void meet(QueryRoot node) throws RuntimeException {
+		node.getArg().visit(this);
+		if (lastBGPNode != null) {
+			// child is a BGP node but this node is not
+			this.bgpList.add(lastBGPNode);
+			lastBGPNode = null;
+		}
+	}
+
 	/**
 	 * Handles statement patterns which are always a valid BGP node.
 	 */

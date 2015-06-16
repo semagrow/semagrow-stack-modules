@@ -11,14 +11,17 @@ import eu.semagrow.stack.modules.api.source.SourceSelector;
 import org.aksw.simba.hibiscus.HibiscusConfig;
 import org.aksw.simba.hibiscus.HibiscusSourceSelection;
 import org.aksw.sparql.query.algebra.helpers.BGPGroupGenerator;
+import org.aksw.sparql.query.algebra.helpers.BasicGraphPatternExtractor;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.MalformedQueryException;
 import org.openrdf.query.QueryEvaluationException;
+import org.openrdf.query.algebra.QueryRoot;
 import org.openrdf.query.algebra.StatementPattern;
 import org.openrdf.query.algebra.TupleExpr;
+import org.openrdf.query.algebra.helpers.StatementPatternCollector;
 import org.openrdf.repository.RepositoryException;
 
 import java.util.*;
@@ -56,7 +59,7 @@ public class HibiscusSourceSelector implements SourceSelector {
         String query = null;
         try {
             this.impl = new HibiscusSourceSelection(members, cache, query);
-            HashMap<Integer, List<StatementPattern>> bgpGrps =  BGPGroupGenerator.generateBgpGroups(query);
+            HashMap<Integer, List<StatementPattern>> bgpGrps =  generateBgpGroups(expr);
             return toSourceMetadata(this.impl.performSourceSelection(bgpGrps));
         } catch (MalformedQueryException e) {
             e.printStackTrace();
@@ -121,5 +124,20 @@ public class HibiscusSourceSelector implements SourceSelector {
 
         return ValueFactoryImpl.getInstance().createURI(
                 EndpointManager.getEndpointManager().getEndpoint(endpointId).getEndpoint() );
+    }
+
+    private HashMap<Integer, List<StatementPattern>> generateBgpGroups(TupleExpr expr) {
+
+        HashMap<Integer, List<StatementPattern>> bgpGrps = new HashMap<Integer, List<StatementPattern>>();
+        int grpNo = 0;
+
+        TupleExpr e = new QueryRoot(expr);
+
+        for (TupleExpr bgp : BasicGraphPatternExtractor.process(e)) {
+            List<StatementPattern> patterns = StatementPatternCollector.process(bgp);
+            bgpGrps.put(grpNo, patterns );
+            grpNo++;
+        }
+        return bgpGrps;
     }
 }

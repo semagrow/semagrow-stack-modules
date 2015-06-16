@@ -7,6 +7,7 @@ import eu.semagrow.stack.modules.api.source.SourceSelector;
 import eu.semagrow.stack.modules.sails.semagrow.estimator.CostEstimator;
 import eu.semagrow.stack.modules.sails.semagrow.helpers.BPGCollector;
 import eu.semagrow.stack.modules.sails.semagrow.helpers.FilterCollector;
+import eu.semagrow.stack.modules.sails.semagrow.selector.StaticSourceSelector;
 import org.openrdf.query.BindingSet;
 import org.openrdf.query.Dataset;
 import org.openrdf.query.algebra.TupleExpr;
@@ -47,7 +48,9 @@ public class DPQueryDecomposer implements QueryDecomposer {
     {
         DecomposerContext ctx = getContext(bgp, dataset, bindings);
 
-        PlanGenerator planGenerator = new PlanGeneratorImpl(ctx, sourceSelector, costEstimator, cardinalityEstimator);
+        SourceSelector staticSelector = new StaticSourceSelector(sourceSelector.getSources(bgp, dataset, bindings));
+
+        PlanGenerator planGenerator = new PlanGeneratorImpl(ctx, staticSelector, costEstimator, cardinalityEstimator);
 
         PlanOptimizer planOptimizer = new DPPlanOptimizer(planGenerator);
 
