@@ -1,5 +1,6 @@
 package eu.semagrow.stack.modules.config;
 
+import com.fluidops.fedx.exception.FedXRuntimeException;
 import eu.semagrow.stack.modules.api.config.SourceSelectorConfigException;
 import eu.semagrow.stack.modules.api.config.SourceSelectorFactory;
 import eu.semagrow.stack.modules.api.config.SourceSelectorImplConfig;
@@ -34,7 +35,11 @@ public class HibiscusSourceSelectorFactory implements SourceSelectorFactory
             double commonPredThreshold = hibiscusConfig.getCommonPredicateThreshold();
 
            try {
-               HibiscusConfig.initialize(summaries, mode, commonPredThreshold);
+              try {
+                  HibiscusConfig.initialize(summaries, mode, commonPredThreshold);
+              } catch (FedXRuntimeException e) { }
+
+
                return new HibiscusSourceSelector();
             } catch (Exception e) {
                 throw new SourceSelectorConfigException(e);

@@ -2,6 +2,7 @@ package org.aksw.simba.hibiscus;
 
 import com.fluidops.fedx.Config;
 import com.fluidops.fedx.FedXFactory;
+import com.fluidops.fedx.exception.FedXRuntimeException;
 import org.apache.log4j.Logger;
 import org.openrdf.query.*;
 import org.openrdf.repository.Repository;
@@ -30,7 +31,7 @@ public class HibiscusConfig {
 	public static double commonPredThreshold;  //A threshold value for a predicate ( in % of total data sources) to be considered in common predicate list
 	public static String mode; // Index_dominant , ASK_dominant. In first type of mode we  make use of sbj, obj authorities to find relevant sources for triple patterns with bound subject or objects e.g ?s  owl:sameAs  <http://dbpedia.org/resource/Barack_Obama>, we will perform index lookup for predicate owl:sameAs and objAuthority  <http://dbpedia.org> and all the qualifying sources will be added to the set of capable sources for that triple pattern.
 	                                          // In hybrid mode we make use of SPARQL ASK queries for bound subjects or objects of a common predicate such as owl:sameAs. If Predicate is not common then we use index sbj ,obj authorities parts as explained above
-	
+
 	/**
 	 * HiBISCuS Configurations. Must call this method once before starting source selection.
 	 * mode can be either set to Index_dominant or ASK_dominant. See details in FedSum paper.
@@ -41,7 +42,10 @@ public class HibiscusConfig {
 	 */
 	public static void initialize(String InputFedSummaries, String inputMode, double inputCommonPredThreshold) throws Exception
 	{
-		Config.initialize();
+        try {
+            Config.initialize();
+        } catch (FedXRuntimeException e) { }
+
 		mode = inputMode;  //{ASK_dominant, Index_dominant}
 		commonPredThreshold =inputCommonPredThreshold;  //considered a predicate as common predicate if it is presenet in 33% available data sources
 		//long startTime = System.currentTimeMillis();
@@ -58,7 +62,7 @@ public class HibiscusConfig {
  */
 public static void loadDataSources() throws Exception
 {
-	   String queryString = "SELECT DISTINCT ?url WHERE {?s <http://org.aksw.org/fedsum/url> ?url }";
+	   String queryString = "SELECT DISTINCT ?url WHERE {?s <http://aksw.org/fedsum/url> ?url }";
 	    TupleQuery tupleQuery = con.prepareTupleQuery(QueryLanguage.SPARQL, queryString);
 		 TupleQueryResult result = tupleQuery.evaluate();
 		   while(result.hasNext())
@@ -76,7 +80,7 @@ public static void loadDataSources() throws Exception
  */
 public static void loadCommonPredList() throws RepositoryException, MalformedQueryException, QueryEvaluationException {
 		
-	String queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+	String queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 			+ "SELECT DISTINCT ?p "
 			+ " WHERE {?s ds:predicate ?p. }";
 			
@@ -92,7 +96,7 @@ public static void loadCommonPredList() throws RepositoryException, MalformedQue
 	   for(String predicate:FedSumPredicates)
 	   {
 		   int count = 0;
-		   queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+		   queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 		   		+ "SELECT  Distinct ?url "
 		   	+ " WHERE {?s ds:url ?url. "
 			+ " 		?s ds:capability ?cap. "
@@ -118,10 +122,10 @@ public static void loadCommonPredList() throws RepositoryException, MalformedQue
  * @param FedSummaries Summaries file
  */
 public static void loadFedSummaries(String FedSummaries) {
-	File curfile = new File("summaries/memorystore.data");
-	curfile.delete();
-	File fileDir = new File("summaries\\");
-	Repository myRepository = new SailRepository( new MemoryStore(fileDir) );
+	//File curfile = new File("summaries/memorystore.data");
+	//curfile.delete();
+	//File fileDir = new File("summaries/");
+	Repository myRepository = new SailRepository( new MemoryStore() );
 	try {
 		myRepository.initialize();
 	} catch (RepositoryException e) {
@@ -135,7 +139,7 @@ public static void loadFedSummaries(String FedSummaries) {
 			e.printStackTrace();
 		}
 		   try {
-			con.add(file, "org.aksw.org.simba", RDFFormat.N3);
+			con.add(file, "aksw.org.simba", RDFFormat.N3);
 		} catch (RDFParseException e) {
 			e.printStackTrace();
 		} catch (RepositoryException e) {
