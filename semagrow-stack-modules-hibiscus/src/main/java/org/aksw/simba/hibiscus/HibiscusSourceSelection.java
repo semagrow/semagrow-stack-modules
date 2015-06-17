@@ -355,7 +355,7 @@ public void cache_ASKselection(StatementPattern stmt)
 	{
 		if(sa.equals("null") && oa.equals("null"))
 		{
-		          queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+		          queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 			   		+ "SELECT  Distinct ?url "
 				   	+ " WHERE {?s ds:url ?url. "
 					+ " 		?s ds:capability ?cap. "
@@ -365,7 +365,7 @@ public void cache_ASKselection(StatementPattern stmt)
 		}
 		else if (!sa.equals("null") && !oa.equals("null"))
 		{
-			 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+			 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 				   		+ "SELECT  Distinct ?url "
 					   	+ " WHERE {?s ds:url ?url. "
 						+ " 		?s ds:capability ?cap. "
@@ -375,7 +375,7 @@ public void cache_ASKselection(StatementPattern stmt)
 		}
 		else if (!sa.equals("null") && oa.equals("null"))
 		{
-			 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+			 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 				   		+ "SELECT  Distinct ?url "
 					   	+ " WHERE {?s ds:url ?url. "
 						+ " 		?s ds:capability ?cap. "
@@ -385,7 +385,7 @@ public void cache_ASKselection(StatementPattern stmt)
 		}
 		else if (sa.equals("null") && !oa.equals("null"))
 		{
-			 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+			 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 				   		+ "SELECT  Distinct ?url "
 					   	+ " WHERE {?s ds:url ?url. "
 						+ " 		?s ds:capability ?cap. "
@@ -397,7 +397,7 @@ public void cache_ASKselection(StatementPattern stmt)
 	{
 		if (!sa.equals("null") && !oa.equals("null"))
 		{
-			 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+			 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 				   		+ "SELECT  Distinct ?url "
 					   	+ " WHERE {?s ds:url ?url. "
 						+ " 		?s ds:capability ?cap. "
@@ -406,7 +406,7 @@ public void cache_ASKselection(StatementPattern stmt)
 		}
 		else if (!sa.equals("null") && oa.equals("null"))
 		{
-			 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+			 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 				   		+ "SELECT  Distinct ?url "
 					   	+ " WHERE {?s ds:url ?url. "
 						+ " 		?s ds:capability ?cap. "
@@ -415,7 +415,7 @@ public void cache_ASKselection(StatementPattern stmt)
 		}
 		else if (sa.equals("null") && !oa.equals("null"))
 		{
-			 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+			 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 				   		+ "SELECT  Distinct ?url "
 					   	+ " WHERE {?s ds:url ?url. "
 						+ " 		?s ds:capability ?cap. "
@@ -436,7 +436,7 @@ public void cache_ASKselection(StatementPattern stmt)
 	 */
 	public void FedSumClassLookup(StatementPattern stmt, String p, String o) throws RepositoryException, MalformedQueryException, QueryEvaluationException {
 		
-		  String queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+		  String queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 			   		+ "SELECT  Distinct ?url "
 				   	+ " WHERE {?s ds:url ?url. "
 					+ " 		?s ds:capability ?cap. "
@@ -746,7 +746,7 @@ public void cache_ASKselection(StatementPattern stmt)
 		//------------------------------------------------
 		if(!p.equals("null")) // if predicate is bound
 		{
-		 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+		 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 			   		+ "SELECT  DISTINCT ?sbjAuth "
 				   	+ " WHERE {?s ds:url <" + endPointUrl+">. "
 					+ " 		?s ds:capability ?cap."
@@ -757,7 +757,7 @@ public void cache_ASKselection(StatementPattern stmt)
 		{
 			if(sa.equals("null") && oa.equals("null"))  //and subject , object are not bound
 			{
-				 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+				 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 					   		+ "SELECT  Distinct ?sbjAuth "
 						   	+ " WHERE {?s ds:url <" + endPointUrl+">. "
 							+ " 		?s ds:capability ?cap."
@@ -765,7 +765,7 @@ public void cache_ASKselection(StatementPattern stmt)
 			}
 			else if(!sa.equals("null") && !oa.equals("null")) //and subject, object are bound
 			{
-				 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+				 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 					   		+ "SELECT  Distinct ?sbjAuth "
 						   	+ " WHERE {?s ds:url <" + endPointUrl+">. "
 							+ " 		?s ds:capability ?cap."
@@ -776,7 +776,7 @@ public void cache_ASKselection(StatementPattern stmt)
 			}
 			else if(!sa.equals("null") && oa.equals("null")) //and subject only is bound
 			{
-				 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+				 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 					   		+ "SELECT  Distinct ?sbjAuth "
 						   	+ " WHERE {?s ds:url <" + endPointUrl+">. "
 							+ " 		?s ds:capability ?cap."
@@ -786,7 +786,7 @@ public void cache_ASKselection(StatementPattern stmt)
 			}
 			else if(sa.equals("null") && !oa.equals("null")) //and object is  bound
 			{
-				 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+				 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 					   		+ "SELECT  Distinct ?sbjAuth "
 						   	+ " WHERE {?s ds:url <" + endPointUrl+">. "
 							+ " 		?s ds:capability ?cap."
@@ -954,7 +954,7 @@ public void cache_ASKselection(StatementPattern stmt)
 //	{
 	if(!p.equals("null") && !stmt.getPredicateVar().getName().equals(v.label)) // if predicate is bound
 		{
-		 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+		 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 			   		+ "SELECT DISTINCT  ?objAuth "
 				   	+ " WHERE {?s ds:url <" + endPointUrl+">. "
 					+ " 		?s ds:capability ?cap."
@@ -965,7 +965,7 @@ public void cache_ASKselection(StatementPattern stmt)
 		{
 			if(sa.equals("null") && oa.equals("null"))  //and subject , object are not bound
 			{
-				 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+				 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 					   		+ "SELECT  Distinct ?objAuth "
 						   	+ " WHERE {?s ds:url <" + endPointUrl+">. "
 							+ " 		?s ds:capability ?cap."
@@ -973,7 +973,7 @@ public void cache_ASKselection(StatementPattern stmt)
 			}
 			else if(!sa.equals("null") && !oa.equals("null")) //and subject, object are bound
 			{
-				 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+				 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 					   		+ "SELECT  Distinct ?objAuth "
 						   	+ " WHERE {?s ds:url <" + endPointUrl+">. "
 							+ " 		?s ds:capability ?cap."
@@ -984,7 +984,7 @@ public void cache_ASKselection(StatementPattern stmt)
 			}
 			else if(sa.equals("null") && !oa.equals("null")) //and object only is bound
 			{
-				 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+				 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 					   		+ "SELECT  Distinct ?objAuth "
 						   	+ " WHERE {?s ds:url <" + endPointUrl+">. "
 							+ " 		?s ds:capability ?cap."
@@ -994,7 +994,7 @@ public void cache_ASKselection(StatementPattern stmt)
 			}
 			else if(!sa.equals("null") && oa.equals("null")) //and subject is  bound
 			{
-				 queryString = "Prefix ds:<http://org.aksw.org/fedsum/> "
+				 queryString = "Prefix ds:<http://aksw.org/fedsum/> "
 					   		+ "SELECT  Distinct ?objAuth "
 						   	+ " WHERE {?s ds:url <" + endPointUrl+">. "
 							+ " 		?s ds:capability ?cap."
