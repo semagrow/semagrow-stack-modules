@@ -41,7 +41,7 @@ public class RestrictiveSourceSelector extends SourceSelectorWrapper {
 
     public void includeOnlySource(URI source) { includeOnly.add(source); }
 
-    public void includeOnlySources(Collection<URI> sources) { }
+    public void includeOnlySources(Collection<URI> sources) { includeOnly.addAll(sources); }
 
     public boolean isRestrictive() { return !(includeOnly.isEmpty() && exclude.isEmpty()); }
 
