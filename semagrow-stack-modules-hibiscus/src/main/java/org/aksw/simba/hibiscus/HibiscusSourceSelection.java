@@ -239,20 +239,20 @@ public class HibiscusSourceSelection {
 			// otherwise: No resource seems to provide results
 			
 			if (sources.size()>1) {
-				StatementSourcePattern stmtNode = new StatementSourcePattern(stmt, queryInfo);
-				for (StatementSource s : sources)
-					stmtNode.addStatementSource(s);
-				stmt.replaceWith(stmtNode);
+				//StatementSourcePattern stmtNode = new StatementSourcePattern(stmt, queryInfo);
+				//for (StatementSource s : sources)
+				//	stmtNode.addStatementSource(s);
+				//stmt.replaceWith(stmtNode);
 			}
 		
 			else if (sources.size()==1) {
-				stmt.replaceWith( new ExclusiveStatement(stmt, sources.get(0), queryInfo));
+				//stmt.replaceWith( new ExclusiveStatement(stmt, sources.get(0), queryInfo));
 			}
 			
 			else {
 				if (log.isDebugEnabled())
 					log.debug("Statement " + QueryStringUtil.toString(stmt) + " does not produce any results at the provided sources, replacing node with EmptyStatementPattern." );
-				stmt.replaceWith( new EmptyStatementPattern(stmt));
+				//stmt.replaceWith( new EmptyStatementPattern(stmt));
 			}
 		}
 		 

@@ -131,7 +131,7 @@ public class HibiscusSourceSelector implements SourceSelector {
         HashMap<Integer, List<StatementPattern>> bgpGrps = new HashMap<Integer, List<StatementPattern>>();
         int grpNo = 0;
 
-        TupleExpr e = new QueryRoot(expr);
+        TupleExpr e = new QueryRoot(expr.clone());
 
         for (TupleExpr bgp : BasicGraphPatternExtractor.process(e)) {
             List<StatementPattern> patterns = StatementPatternCollector.process(bgp);

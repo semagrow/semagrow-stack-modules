@@ -48,6 +48,9 @@ public class StaticSourceSelector implements SourceSelector {
 
     @Override
     public List<SourceMetadata> getSources(TupleExpr expr, Dataset dataset, BindingSet bindings) {
-        return null;
+        if (expr instanceof StatementPattern)
+            return getSources((StatementPattern) expr,dataset,bindings);
+        else
+            return Collections.emptyList();
     }
 }
