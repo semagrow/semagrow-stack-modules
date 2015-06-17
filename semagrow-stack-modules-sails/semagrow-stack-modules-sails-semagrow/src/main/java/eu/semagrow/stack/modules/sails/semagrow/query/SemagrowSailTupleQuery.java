@@ -165,6 +165,14 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
                 } catch (TupleQueryResultHandlerException e) {
                     logger.error("Tuple handle solution error", e);
                 }
+            } else {
+                try {
+                    handler.startQueryResult(Collections.emptyList());
+
+                    handler.endQueryResult();
+                } catch (TupleQueryResultHandlerException e) {
+                    logger.error("Tuple handle solution error", e);
+                }
             }
 
         }
@@ -174,6 +182,13 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
             latch.countDown();
             if (isStarted) {
                 try {
+                    handler.endQueryResult();
+                } catch (TupleQueryResultHandlerException e) {
+                    logger.error("Tuple handle solution error", e);
+                }
+            } else {
+                try {
+                    handler.startQueryResult(Collections.emptyList());
                     handler.endQueryResult();
                 } catch (TupleQueryResultHandlerException e) {
                     logger.error("Tuple handle solution error", e);
