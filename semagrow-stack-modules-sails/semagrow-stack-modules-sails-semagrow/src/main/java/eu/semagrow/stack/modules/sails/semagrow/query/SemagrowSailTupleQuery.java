@@ -23,6 +23,7 @@ import org.slf4j.LoggerFactory;
 import rx.Observable;
 
 import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Created by angel on 6/9/14.
@@ -66,6 +67,7 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
         TupleQueryResult queryResult = evaluate();
         QueryResults.report(queryResult, handler);
         */
+
         logger.info("SemaGrow query evaluate with handler");
         TupleExpr tupleExpr = getParsedQuery().getTupleExpr();
 
@@ -79,8 +81,24 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
             //result = enforceMaxQueryTime(bindingsIter);
 
-            result.subscribe(toSubscriber(handler));
+            CountDownLatch latch = new CountDownLatch(1);
 
+            HandlerSubscriberAdapter subscriberAdapter = toSubscriber(handler, latch);
+
+            result.subscribe(subscriberAdapter);
+
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                logger.error("awaiting a latch", e);
+            }
+
+            if (subscriberAdapter.errorOccured) {
+                if (subscriberAdapter.errorThrown instanceof QueryEvaluationException)
+                    throw (QueryEvaluationException) subscriberAdapter.errorThrown;
+                else
+                    throw new QueryEvaluationException(subscriberAdapter.errorThrown);
+            }
         }
         catch (SailException e) {
             throw new QueryEvaluationException(e.getMessage(), e);
@@ -93,8 +111,8 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
     public boolean getIncludeProvenanceData() { return includeProvenanceData; }
 
-    private Subscriber<BindingSet> toSubscriber(TupleQueryResultHandler handler) {
-        return new HandlerSubscriberAdapter(handler);
+    private HandlerSubscriberAdapter toSubscriber(TupleQueryResultHandler handler, CountDownLatch latch) {
+        return new HandlerSubscriberAdapter(handler, latch);
     }
 
 
@@ -104,8 +122,15 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
         private boolean isStarted = false;
 
-        public HandlerSubscriberAdapter(TupleQueryResultHandler handler) {
+        private boolean errorOccured = false;
+
+        private Throwable errorThrown = null;
+
+        private CountDownLatch latch;
+
+        public HandlerSubscriberAdapter(TupleQueryResultHandler handler, CountDownLatch latch) {
             this.handler = handler;
+            this.latch = latch;
         }
 
         public void onSubscribe(Subscription subscription) {
@@ -128,8 +153,12 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
 
         public void onError(Throwable throwable) {
+            errorOccured = true;
+            errorThrown = throwable;
 
             logger.error("Evaluation error", throwable);
+            latch.countDown();
+
             if (isStarted) {
                 try {
                     handler.endQueryResult();
@@ -137,10 +166,12 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
                     logger.error("Tuple handle solution error", e);
                 }
             }
+
         }
 
 
         public void onComplete() {
+            latch.countDown();
             if (isStarted) {
                 try {
                     handler.endQueryResult();
