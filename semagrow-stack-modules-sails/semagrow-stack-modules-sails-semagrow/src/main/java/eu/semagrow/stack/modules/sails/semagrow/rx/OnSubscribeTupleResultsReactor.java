@@ -55,7 +55,7 @@ public class OnSubscribeTupleResultsReactor implements Publisher {
             REQUESTED_UPDATER.set(this, Long.MAX_VALUE); */
 
             try {
-                logger.debug("Sending query " + query.toString() + " with " + query.getBindings().toString());
+                System.out.println("Sending query " + query.toString() + " with " + query.getBindings().toString());
                 query.evaluate(this);
             } catch (Exception e) {
                 subscriber.onError(e);
@@ -87,11 +87,13 @@ public class OnSubscribeTupleResultsReactor implements Publisher {
         @Override
         public void endQueryResult() throws TupleQueryResultHandlerException {
             subscriber.onComplete();
+            System.out.println("completed");
         }
 
         @Override
         public void handleSolution(BindingSet bindingSet) throws TupleQueryResultHandlerException {
             logger.debug(bindingSet.toString());
+            System.out.println(bindingSet);
             subscriber.onNext(bindingSet);
         }
 
