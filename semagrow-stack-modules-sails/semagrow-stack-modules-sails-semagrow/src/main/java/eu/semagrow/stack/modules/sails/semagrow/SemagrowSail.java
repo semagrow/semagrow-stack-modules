@@ -125,9 +125,10 @@ public class SemagrowSail extends SailBase {
     public FederatedQueryEvaluation getQueryEvaluation() {
 
         if (queryEvaluation == null) {
-            MaterializationManager manager = getManager();
-            handler = getRecordLog();
-            queryEvaluation = new QueryEvaluationImpl(manager, handler, executor);
+            //MaterializationManager manager = getManager();
+            //handler = getRecordLog();
+            //queryEvaluation = new QueryEvaluationImpl(manager, handler, executor);
+            queryEvaluation = new QueryEvaluationImpl(null, null,executor);
         }
 
         return queryEvaluation;
