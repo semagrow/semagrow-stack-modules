@@ -63,11 +63,11 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
     public void evaluate(TupleQueryResultHandler handler)
             throws QueryEvaluationException, TupleQueryResultHandlerException
     {
-        /*
+
         TupleQueryResult queryResult = evaluate();
         QueryResults.report(queryResult, handler);
-        */
 
+        /*
         logger.info("SemaGrow query evaluate with handler");
         TupleExpr tupleExpr = getParsedQuery().getTupleExpr();
 
@@ -103,6 +103,7 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
         catch (SailException e) {
             throw new QueryEvaluationException(e.getMessage(), e);
         }
+        */
     }
 
     public void setIncludeProvenanceData(boolean includeProvenance) {
