@@ -71,7 +71,7 @@ public class CostEstimatorImpl implements CostEstimator {
                 cardinalityEstimator.getCardinality(expr.getArg()) * C_TRANSFER_TUPLE;
 
         Cost cost = getCost(expr.getArg()).add(new Cost(communCost));
-
+        cost = new Cost(communCost);
         return cost;
     }
 

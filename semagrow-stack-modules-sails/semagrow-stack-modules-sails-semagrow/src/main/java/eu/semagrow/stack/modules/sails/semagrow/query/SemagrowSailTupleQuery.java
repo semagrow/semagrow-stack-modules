@@ -22,10 +22,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import rx.Observable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
+import java.util.concurrent.CountDownLatch;
 
 /**
  * Created by angel on 6/9/14.
@@ -69,6 +67,7 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
         TupleQueryResult queryResult = evaluate();
         QueryResults.report(queryResult, handler);
         */
+
         logger.info("SemaGrow query evaluate with handler");
         TupleExpr tupleExpr = getParsedQuery().getTupleExpr();
 
@@ -82,8 +81,24 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
             //result = enforceMaxQueryTime(bindingsIter);
 
-            result.subscribe(toSubscriber(handler));
+            CountDownLatch latch = new CountDownLatch(1);
 
+            HandlerSubscriberAdapter subscriberAdapter = toSubscriber(handler, latch);
+
+            result.subscribe(subscriberAdapter);
+
+            try {
+                latch.await();
+            } catch (InterruptedException e) {
+                logger.error("awaiting a latch", e);
+            }
+
+            if (subscriberAdapter.errorOccured) {
+                if (subscriberAdapter.errorThrown instanceof QueryEvaluationException)
+                    throw (QueryEvaluationException) subscriberAdapter.errorThrown;
+                else
+                    throw new QueryEvaluationException(subscriberAdapter.errorThrown);
+            }
         }
         catch (SailException e) {
             throw new QueryEvaluationException(e.getMessage(), e);
@@ -96,8 +111,8 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
     public boolean getIncludeProvenanceData() { return includeProvenanceData; }
 
-    private Subscriber<BindingSet> toSubscriber(TupleQueryResultHandler handler) {
-        return new HandlerSubscriberAdapter(handler);
+    private HandlerSubscriberAdapter toSubscriber(TupleQueryResultHandler handler, CountDownLatch latch) {
+        return new HandlerSubscriberAdapter(handler, latch);
     }
 
 
@@ -105,8 +120,17 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
     {
         private TupleQueryResultHandler handler;
 
-        public HandlerSubscriberAdapter(TupleQueryResultHandler handler) {
+        private boolean isStarted = false;
+
+        private boolean errorOccured = false;
+
+        private Throwable errorThrown = null;
+
+        private CountDownLatch latch;
+
+        public HandlerSubscriberAdapter(TupleQueryResultHandler handler, CountDownLatch latch) {
             this.handler = handler;
+            this.latch = latch;
         }
 
         public void onSubscribe(Subscription subscription) {
@@ -116,6 +140,11 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
         public void onNext(BindingSet bindings) {
             try {
+                if (!isStarted) {
+                    handler.startQueryResult(new ArrayList<>(bindings.getBindingNames()));
+                    isStarted = true;
+                }
+
                 handler.handleSolution(bindings);
             } catch (TupleQueryResultHandlerException e) {
                 logger.error("Tuple handle solution error", e);
@@ -124,15 +153,46 @@ public class SemagrowSailTupleQuery extends SemagrowSailQuery implements Semagro
 
 
         public void onError(Throwable throwable) {
+            errorOccured = true;
+            errorThrown = throwable;
+
             logger.error("Evaluation error", throwable);
+            latch.countDown();
+
+            if (isStarted) {
+                try {
+                    handler.endQueryResult();
+                } catch (TupleQueryResultHandlerException e) {
+                    logger.error("Tuple handle solution error", e);
+                }
+            } else {
+                try {
+                    handler.startQueryResult(Collections.emptyList());
+
+                    handler.endQueryResult();
+                } catch (TupleQueryResultHandlerException e) {
+                    logger.error("Tuple handle solution error", e);
+                }
+            }
+
         }
 
 
         public void onComplete() {
-            try {
-                handler.endQueryResult();
-            } catch (TupleQueryResultHandlerException e) {
-                logger.error("Tuple handle solution error", e);
+            latch.countDown();
+            if (isStarted) {
+                try {
+                    handler.endQueryResult();
+                } catch (TupleQueryResultHandlerException e) {
+                    logger.error("Tuple handle solution error", e);
+                }
+            } else {
+                try {
+                    handler.startQueryResult(Collections.emptyList());
+                    handler.endQueryResult();
+                } catch (TupleQueryResultHandlerException e) {
+                    logger.error("Tuple handle solution error", e);
+                }
             }
         }
     }

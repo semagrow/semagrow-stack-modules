@@ -7,8 +7,7 @@
   </bannerLeft>
   <body>
     <menu ref="parent"/>
-    <menu ref="modules"/>
-    <menu name="semagrow-stack-modules-api">
+    <menu name="semagrow-stack-modules-api-querydecomp">
       <item name="Introduction" href="index.html"/>
       <item name="Building" href="building.html"/>
     </menu>

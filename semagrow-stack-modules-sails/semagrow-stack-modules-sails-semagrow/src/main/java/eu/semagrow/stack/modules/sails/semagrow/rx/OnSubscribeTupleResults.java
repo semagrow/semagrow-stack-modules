@@ -97,8 +97,6 @@ public class OnSubscribeTupleResults implements Observable.OnSubscribe<BindingSe
         public void handleSolution(BindingSet bindings) throws TupleQueryResultHandlerException {
             if (subscriber.isUnsubscribed())
                 return;
-
-            logger.debug(bindings.toString());
             subscriber.onNext(bindings);
         }
     }
