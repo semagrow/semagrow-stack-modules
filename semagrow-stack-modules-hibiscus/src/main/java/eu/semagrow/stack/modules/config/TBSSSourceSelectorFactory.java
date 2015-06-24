@@ -5,16 +5,16 @@ import eu.semagrow.stack.modules.api.config.SourceSelectorConfigException;
 import eu.semagrow.stack.modules.api.config.SourceSelectorFactory;
 import eu.semagrow.stack.modules.api.config.SourceSelectorImplConfig;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
-import eu.semagrow.stack.modules.selector.HibiscusSourceSelector;
-import org.aksw.simba.hibiscus.HibiscusConfig;
+import eu.semagrow.stack.modules.selector.TBSSSourceSelector;
+import org.aksw.simba.quetzal.configuration.QuetzalConfig;
 
 /**
- * Created by angel on 15/6/2015.
+ * Created by angel on 24/6/2015.
  */
-public class HibiscusSourceSelectorFactory implements SourceSelectorFactory
+public class TBSSSourceSelectorFactory implements SourceSelectorFactory
 {
 
-    public static String SRCSELECTOR_TYPE = "aksw:hibiscus";
+    public static String SRCSELECTOR_TYPE = "aksw:tbss";
 
     public SourceSelectorImplConfig getConfig()
     {
@@ -34,13 +34,13 @@ public class HibiscusSourceSelectorFactory implements SourceSelectorFactory
             String mode = hibiscusConfig.getMode();
             double commonPredThreshold = hibiscusConfig.getCommonPredicateThreshold();
 
-           try {
-              try {
-                  HibiscusConfig.initialize(summaries, mode, commonPredThreshold);
-              } catch (FedXRuntimeException e) { }
+            try {
+                try {
+                    QuetzalConfig.initialize(summaries, mode, commonPredThreshold);
+                } catch (FedXRuntimeException e) { }
 
+                return new TBSSSourceSelector();
 
-               return new HibiscusSourceSelector();
             } catch (Exception e) {
                 throw new SourceSelectorConfigException(e);
             }

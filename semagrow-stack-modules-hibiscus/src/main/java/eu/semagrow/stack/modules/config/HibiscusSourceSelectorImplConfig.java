@@ -18,7 +18,7 @@ public class HibiscusSourceSelectorImplConfig extends SourceSelectorImplConfigBa
     private String mode;
     private double commonPredicateThreshold;
 
-    public HibiscusSourceSelectorImplConfig() { super(HibiscusSourceSelectorFactory.SRCSELECTOR_TYPE); }
+    public HibiscusSourceSelectorImplConfig(String type) { super(type); }
 
     public String getSummariesFile() {
         return summariesFile;
