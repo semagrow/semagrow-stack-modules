@@ -36,8 +36,8 @@ public class TBSSSourceSelector implements SourceSelector {
     public TBSSSourceSelector() {
 
         FedX fed = FederationManager.getInstance().getFederation();
-        List<Endpoint> members = fed.getMembers();
-        Cache cache =FederationManager.getInstance().getCache();
+        members = fed.getMembers();
+        cache =FederationManager.getInstance().getCache();
 
     }
 

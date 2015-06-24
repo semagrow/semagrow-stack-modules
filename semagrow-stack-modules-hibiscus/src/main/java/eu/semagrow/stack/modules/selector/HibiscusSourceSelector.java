@@ -8,9 +8,7 @@ import com.fluidops.fedx.cache.Cache;
 import com.fluidops.fedx.structures.Endpoint;
 import eu.semagrow.stack.modules.api.source.SourceMetadata;
 import eu.semagrow.stack.modules.api.source.SourceSelector;
-import org.aksw.simba.hibiscus.HibiscusConfig;
 import org.aksw.simba.hibiscus.HibiscusSourceSelection;
-import org.aksw.sparql.query.algebra.helpers.BGPGroupGenerator;
 import org.aksw.sparql.query.algebra.helpers.BasicGraphPatternExtractor;
 import org.openrdf.model.URI;
 import org.openrdf.model.impl.ValueFactoryImpl;
@@ -38,8 +36,8 @@ public class HibiscusSourceSelector implements SourceSelector {
     public HibiscusSourceSelector() {
 
         FedX fed = FederationManager.getInstance().getFederation();
-        List<Endpoint> members = fed.getMembers();
-        Cache cache =FederationManager.getInstance().getCache();
+        members = fed.getMembers();
+        cache =FederationManager.getInstance().getCache();
 
     }
 
